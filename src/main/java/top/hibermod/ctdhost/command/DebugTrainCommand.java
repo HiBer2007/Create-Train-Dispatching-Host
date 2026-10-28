@@ -127,14 +127,14 @@ public final class DebugTrainCommand {
 
             final Train train = ctor.newInstance(
                 UUID.randomUUID(), null, carriages, spacing, false,
-                Component.literal("CTD-DEBUG"), icon, 0);
+                Component.literal("CTD-DIAG"), icon, 0);
             train.graph = graph;
 
             Create.RAILWAYS.trains.put(train.id, train);
 
             // graph 在循环里赋值，不是 effectively final，先拼好字符串再进 lambda
             final String createdMsg = "debug train created: id=" + train.id
-                + " name=CTD-DEBUG graph=" + (graph == null ? "?" : graph.id);
+                + " name=CTD-DIAG graph=" + (graph == null ? "?" : graph.id);
             src.sendSuccess(() -> Component.literal(createdMsg), false);
             src.sendSuccess(() -> Component.literal(
                 "  /ctd host status should now show trains, units and a resolved assignment"), false);

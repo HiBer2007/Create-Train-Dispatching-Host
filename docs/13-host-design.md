@@ -519,3 +519,56 @@ ok   CALL_ON → GREEN
 
 `SignalApplier.readState(boundary, side)`：读回灯色也走反射，
 把所有 `Catnip` 相关的访问收在一个类里，其它地方不用知道 Catnip 存在。
+
+---
+
+## 18. 第八轮实测：指派驱动时刻表（G4 完成）
+
+### 先发现一个 API 缺口
+
+实现 G4 时发现 `Service`（交路）**没有停站序列**——只有 id / 车次号 / 信号制度 /
+速度等级 / 优先级。而要把车次落成 Create 的 `Schedule`，必须知道停哪几站、按什么顺序。
+
+**没有这个字段，「指派驱动运行」在实现层根本无从下手。**
+
+所以给 `Service` 加了 `List<ResourceLocation> stops`（元素是车站 id，不是世界对象——
+API 层不持有 `GlobalStation`）。
+
+### 落地方式
+
+`ScheduleRuntime.schedule` 是**公开字段**，所以落地就是「构造 Schedule 赋进去」：
+
+```java
+DestinationInstruction ins = new DestinationInstruction();
+ins.getData().putString("Text", stopId.toString());
+entries.add(new ScheduleEntry(ins, List.of()));
+train.runtime.schedule = new Schedule(entries, false, 0);
+```
+
+**只写 schedule，不碰 `currentEntry` / `state`。** 那些由
+`ScheduleRuntime.tick` 自己推进；宿主手动设 `state = ACTIVE` 会和它的状态机打架，
+表现会是「车不动，但时刻表显示在跑」。
+
+### RCON 实测
+
+```
+train       : CTD-DIAG speed=0.000 target=0.000 schedule=2
+resolved    : assignments=1 trains=1 unresolvedUnits=0 incomplete=0
+schedule    : appliedTrains=1 entries=2 noService=0 noStops=0
+```
+
+整条链路，无一环使用 mock：
+
+| 环节 | 证据 |
+|---|---|
+| 诊断内核发指派 | `assignments=1` |
+| 编号 → `UUID` → `Train` | `trains=1 unresolvedUnits=0` |
+| 构造 Create `Schedule` | `entries=2` |
+| 写进 `train.runtime.schedule` | `schedule=2` |
+
+### 仍然没验的
+
+**列车不会真的按时刻表跑起来。** 调试列车没有车厢实体，不 tick 物理，
+所以 `ScheduleRuntime.tick` 里依赖实体与 `DiscoveredPath` 的部分不会真正执行。
+
+「Schedule 写对了」和「列车真的去跑」是两件事——前者已验，后者需要真实组装的列车。

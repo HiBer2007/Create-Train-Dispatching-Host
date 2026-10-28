@@ -58,11 +58,13 @@ public final class HostStatusCommand {
             final String line = "  train       : "
                 + (train.name == null ? "?" : train.name.getString())
                 + " speed=" + String.format("%.3f", train.speed)
-                + " target=" + String.format("%.3f", train.targetSpeed);
+                + " target=" + String.format("%.3f", train.targetSpeed)
+                + " schedule=" + top.hibermod.ctdhost.operation.AssignmentApplier.entriesOf(train);
             src.sendSuccess(() -> Component.literal(line), false);
         }
         src.sendSuccess(() -> Component.literal("  assignments : " + assignments), false);
         src.sendSuccess(() -> Component.literal("  resolved    : " + host.assignments().summary()), false);
+        src.sendSuccess(() -> Component.literal("  schedule    : " + host.assignmentApplier().summary()), false);
         src.sendSuccess(() -> Component.literal("  switches    : " + switchStatus), false);
 
         if (ticks == 0) {

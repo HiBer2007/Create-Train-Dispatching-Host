@@ -46,6 +46,17 @@ public final class DiagnosticKernel implements DispatchKernel {
     public static void registerIfEnabled() {
         if (!ENABLED) return;
         DispatchKernels.register(ID, DiagnosticKernel::new);
+
+        // 诊断用交路：两条停站，供「指派 → 时刻表」这段链路验证。
+        // 停站 id 不需要对应真实的 Create 车站——Applier 只是把它们写进指令的 Text。
+        ResourceLocation svcId = ResourceLocation.fromNamespaceAndPath("ctdapi", "diagnostic");
+        top.hibermod.ctdapi.timetable.Service.register(
+            top.hibermod.ctdapi.timetable.Service.builder(svcId)
+                .code("T0")
+                .signalSystem(ResourceLocation.fromNamespaceAndPath("ctdapi", "diagnostic"))
+                .stop(ResourceLocation.fromNamespaceAndPath("ctdapi", "alpha"))
+                .stop(ResourceLocation.fromNamespaceAndPath("ctdapi", "beta"))
+                .build());
         HostRuntime.LOG.info("ctdhost: diagnostic kernel enabled");
     }
 
