@@ -87,7 +87,13 @@ public final class SignalApplier {
         COUPLE_SET = m;
     }
 
-    private static boolean writeState(SignalBoundary boundary, boolean side, SignalState state) {
+    /**
+     * 把灯色写进某个边点的某一面。
+     *
+     * <p>公开是为了能离线验证：不挂到图上的 {@code SignalBoundary} 实例是安全的，
+     * 而挂上去之后每帧都会走 {@code tickState}，没配好组的边界会拖累整个 tick。
+     */
+    public static boolean writeState(SignalBoundary boundary, boolean side, SignalState state) {
         if (reflectionBroken || CACHED_STATES == null || COUPLE_SET == null) return false;
         try {
             Object couple = CACHED_STATES.get(boundary);
@@ -99,9 +105,40 @@ public final class SignalApplier {
         }
     }
 
+    /**
+     * 读回某个边点的灯色。
+     *
+     * <p>同样走反射：{@code cachedStates} 是 Catnip 的 {@code Couple}，
+     * 而 Catnip 不在本模组的编译路径上。把这类访问全部收在这一个类里，
+     * 其它地方就不用知道 Catnip 的存在。
+     */
+    public static SignalState readState(SignalBoundary boundary, boolean side) {
+        if (reflectionBroken || CACHED_STATES == null) return SignalState.INVALID;
+        try {
+            Object couple = CACHED_STATES.get(boundary);
+            if (couple == null) return SignalState.INVALID;
+            java.lang.reflect.Method get = couple.getClass().getMethod(
+                firstSlot(side) ? "getFirst" : "getSecond");
+            Object v = get.invoke(couple);
+            return v instanceof SignalState s ? s : SignalState.INVALID;
+        } catch (Throwable t) {
+            return SignalState.INVALID;
+        }
+    }
+
+    /**
+     * 语义面 → {@code Couple} 的槽位。
+     *
+     * <p><b>实测结论</b>：{@code Couple.set(boolean, T)} 的 {@code true} 是**第一面**。
+     * （这个结论来自 {@code SignalApplierTest}：一开始按「false = first」写，
+     * 结果写第一面改到了第二面，测试直接把方向翻了出来。）
+     */
     private static boolean sideIndex(Topology.SignalSide side) {
-        // Couple 的索引是 boolean：false = first
-        return side != Topology.SignalSide.FIRST;
+        return side == Topology.SignalSide.FIRST;
+    }
+
+    private static boolean firstSlot(boolean sideIndex) {
+        return sideIndex;
     }
 
     private static SignalBoundary findBoundary(UUID id, Map<UUID, TrackGraph> graphs) {

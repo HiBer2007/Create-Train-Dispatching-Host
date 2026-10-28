@@ -466,3 +466,56 @@ ctdhost: diagnostic frames=3300 trains=1 nodes=2 gameTime=1100
 | 列车真的在世界上跑 | 调试列车没有车厢实体，不会 tick 物理 |
 | 信号灯真的变色 | 需要方块信号机 |
 | 道岔物理扳动 | 需要汽鸣铁道的真实道岔 |
+
+---
+
+## 17. 第七轮实测：信号写入（并抓到一个真 bug）
+
+### 怎么验的
+
+把 `SignalBoundary` 挂到 `TrackGraph` 上会每帧走 `tickState`，而它会去查
+`Create.RAILWAYS.signalEdgeGroups`——手动造的边界没有对应分组，会让**整个 tick** 出问题。
+所以改用一个**不挂图**的 `SignalBoundary` 实例，验「写进去」这一步。
+
+`./gradlew signalApplierTest`：12 项，跑的是真实的 Create 类。
+
+### 抓到的 bug
+
+```
+FAIL 第一面读到 RED   <- GREEN
+FAIL 第二面读到 GREEN <- RED
+```
+
+**`Couple.set(boolean, T)` 的 `true` 是「第一面」**，而我按「false = first」写了：
+
+```java
+return side != Topology.SignalSide.FIRST;   // ❌ 反了
+```
+
+后果：**每一条信号指令都会作用到错误的那一面**。
+表现为「设了绿灯结果对面的红灯变了」，或者「信号怎么不动」。
+
+修好之后：
+
+```
+ok   STOP → RED              ok   第一面写入成功
+ok   DARK → RED              ok   第二面写入成功
+ok   CAUTION → YELLOW        ok   第一面读到 RED
+ok   ADVANCE_CAUTION → YELLOW ok  第二面读到 GREEN
+ok   PROCEED → GREEN         ok   同面二次写入覆盖
+ok   SHUNT → GREEN
+ok   CALL_ON → GREEN
+```
+
+### 为什么这个 bug 值钱
+
+它**不可能**靠读代码发现——`Couple` 的 boolean 参数没有文档，
+`set(false, x)` 到底写哪一面，只能试。而这个测试的成本是十几行。
+
+同时也说明：**「等进游戏再验」是有代价的**。如果等到有信号机才发现，
+排查路径会是「信号机制 → 事件 → 同步 → 最后才怀疑到 Couple」。
+
+### 顺带加的
+
+`SignalApplier.readState(boundary, side)`：读回灯色也走反射，
+把所有 `Catnip` 相关的访问收在一个类里，其它地方不用知道 Catnip 存在。

@@ -89,3 +89,10 @@ jar {
         )
     }
 }
+
+tasks.register('signalApplierTest', JavaExec) {
+    group = 'verification'
+    description = 'C6 验收：语义→灯色映射 + 反射写入 SignalBoundary'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'top.hibermod.ctdhost.tools.SignalApplierTest'
+}
