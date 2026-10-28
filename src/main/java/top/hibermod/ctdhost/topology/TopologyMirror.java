@@ -97,10 +97,10 @@ public final class TopologyMirror {
                         edge.isTurn(),
                         edge.getTrackMaterial() == null ? "create:standard"
                             : edge.getTrackMaterial().id.toString(),
-                        // ⚠ 汽鸣铁道的道岔门控在 TrackEdge#canTravelTo 里，EdgeData 上
-                        // **没有** enabled 字段（已核对 EdgeData.java）。所以这里只能默认 true：
-                        // 「这条股道当前能不能走」对镜像不可见。
-                        true));
+                        // 汽鸣铁道把「股道被扳开」记在 EdgeData 上（mixin 实现
+                        // ISwitchDisabledEdge#isEnabled）。EdgeData 没有字段可读，所以按接口反射。
+                        // 拿不到就当作可通行——「不知道」不能等于「禁用」。
+                        top.hibermod.ctdhost.execute.SwitchApplier.isEdgeEnabled(edge)));
                     edgeCount++;
                 }
             }

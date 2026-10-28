@@ -49,6 +49,11 @@ public final class CtdHost {
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
         DiagnosticKernel.registerIfEnabled();
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.RegisterCommandsEvent e) ->
+            e.getDispatcher().register(
+                net.minecraft.commands.Commands.literal("ctd")
+                    .requires(src -> src.hasPermission(2))
+                    .then(top.hibermod.ctdhost.command.HostStatusCommand.build())));
 
         // 兜底入口：Mixin 不可用（开发环境常见）时仍能每帧调度。
         // 与 Mixin 同时存在时由 HostRuntime 按 (维度, 刻) 去重。

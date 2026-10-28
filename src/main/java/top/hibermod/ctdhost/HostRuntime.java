@@ -224,6 +224,11 @@ public final class HostRuntime {
 
     public top.hibermod.ctdhost.operation.UnitIndex units() { return units; }
 
+    /** 道岔应用器（逻辑锁 + 状态诊断）。 */
+    public top.hibermod.ctdhost.execute.SwitchApplier switches() {
+        return applier == null ? null : applier.switches();
+    }
+
     /**
      * 启动后自检：注入没生效时给出明确告警，而不是让内核静默不工作。
      */

@@ -105,6 +105,46 @@ public final class SwitchApplier {
                                                    : "absent (logical only)");
     }
 
+    // ── 读取汽鸣铁道的股道开通状态 ────────────────────────────────────────
+    //
+    // S&R 把「股道被扳开」记在 EdgeData 上（mixin 实现 ISwitchDisabledEdge）。
+    // EdgeData 本身没有 enabled 字段，所以必须按接口名反射探测。
+    // 拿不到就返回 true —— 「不知道」不能等于「禁用」，否则没装 S&R 的线网会全线堵塞。
+
+    private static Boolean switchEdgeInterfaceAvailable;
+    private static java.lang.reflect.Method isEnabledMethod;
+
+    private static synchronized void resolveSwitchEdgeInterface() {
+        if (switchEdgeInterfaceAvailable != null) return;
+        try {
+            Class<?> iface = Class.forName("com.railwayteam.railways.mixin_interfaces.ISwitchDisabledEdge");
+            isEnabledMethod = iface.getMethod("isEnabled");
+            switchEdgeInterfaceAvailable = Boolean.TRUE;
+        } catch (Throwable t) {
+            switchEdgeInterfaceAvailable = Boolean.FALSE;
+        }
+    }
+
+    /**
+     * 这条边当前是否可通行。
+     *
+     * <p>没装 S&R、或对象没实现该接口时返回 {@code true}：
+     * 失败要朝「放行」方向兜底，因为把整条线网当成禁用会让列车全部停摆。
+     */
+    public static boolean isEdgeEnabled(com.simibubi.create.content.trains.graph.TrackEdge edge) {
+        if (edge == null) return false;
+        resolveSwitchEdgeInterface();
+        if (!Boolean.TRUE.equals(switchEdgeInterfaceAvailable)) return true;
+        try {
+            Object data = edge.getEdgeData();
+            if (data == null || !isEnabledMethod.getDeclaringClass().isInstance(data)) return true;
+            Object v = isEnabledMethod.invoke(data);
+            return !(v instanceof Boolean b) || b;
+        } catch (Throwable t) {
+            return true;
+        }
+    }
+
     // 占位：物理扳动的入口。等进游戏验证过位置匹配规则再填。
     @SuppressWarnings("unused")
     private static Object switchTypeOrNull() {
