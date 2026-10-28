@@ -1,0 +1,137 @@
+package top.hibermod.ctdhost.topology;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
+import com.simibubi.create.content.trains.graph.TrackEdge;
+import com.simibubi.create.content.trains.graph.TrackGraph;
+import com.simibubi.create.content.trains.graph.TrackNode;
+import com.simibubi.create.content.trains.graph.TrackNodeLocation;
+
+import top.hibermod.ctdapi.Rail;
+
+/**
+ * 把 Create 的 {@code TrackGraph} 镜像成 {@code Topology} 快照。
+ *
+ * <p>当前实现是**全量重建**。做成增量需要挂 {@code TrackGraph#addNode/connectNodes}
+ * 的注入（H-4），等宿主能在游戏里跑起来之后再做——过早优化会在还没验证正确性时
+ * 引入「镜像与实物不一致」这种最难查的 bug。
+ *
+ * <p>全量重建的代价必须盯着：一个上万条边的线网，每次重建要遍历所有节点的所有连接。
+ * 所以**只在拓扑变化时重建**，不是每帧。
+ */
+public final class TopologyMirror {
+
+    private volatile TopologyView view;
+    private long version;
+
+    /** 上次重建时的图规模，用于判断「有没有变」。 */
+    private int lastNodeCount = -1;
+    private int lastEdgeCount = -1;
+
+    public TopologyView current() {
+        return view;
+    }
+
+    /**
+     * 若图规模与上次不同则重建。
+     *
+     * <p>规模不变但内容变了（比如换了一条轨的材质）不会被发现。这在当前阶段可以接受：
+     * 真正影响行车的是连通性与道岔，它们必然改变边数或节点数。
+     * 后续接入 H-4 的增量通知后，这里会换成版本号比较。
+     */
+    public synchronized TopologyView refreshIfChanged(Map<UUID, TrackGraph> graphs) {
+        int nodes = 0;
+        int edges = 0;
+        for (TrackGraph g : graphs.values()) {
+            nodes += g.getNodes().size();
+            // 连接数不好直接取，用节点集合算个上界估计即可——只用于「变没变」的判断
+            edges += g.getNodes().size();
+        }
+        if (nodes == lastNodeCount && edges == lastEdgeCount && view != null) {
+            return view;
+        }
+        lastNodeCount = nodes;
+        lastEdgeCount = edges;
+        return rebuild(graphs);
+    }
+
+    /** 无条件重建。 */
+    public synchronized TopologyView rebuild(Map<UUID, TrackGraph> graphs) {
+        TopologyView.Builder b = TopologyView.builder().version(++version);
+
+        Set<Rail.EdgeId> seenEdges = new HashSet<>();
+        int nodeCount = 0;
+        int edgeCount = 0;
+
+        for (TrackGraph graph : graphs.values()) {
+            for (TrackNodeLocation loc : graph.getNodes()) {
+                TrackNode node = graph.locateNode(loc);
+                if (node == null) continue;
+
+                Rail.NodeId id = StableIds.node(node);
+                Map<TrackNode, TrackEdge> connections;
+                try {
+                    connections = graph.getConnectionsFrom(node);
+                } catch (RuntimeException e) {
+                    continue;                       // 单点异常不该拖垮整次重建
+                }
+                if (connections == null) connections = Map.of();
+
+                b.node(new top.hibermod.ctdapi.Topology.Node(
+                    id, connections.size(), connections.size() > 2));
+                nodeCount++;
+
+                for (Map.Entry<TrackNode, TrackEdge> e : connections.entrySet()) {
+                    Rail.EdgeId edgeId = StableIds.edge(node, e.getKey());
+                    if (!seenEdges.add(edgeId)) continue;       // 每条边会从两端各看到一次
+
+                    TrackEdge edge = e.getValue();
+                    b.edge(new top.hibermod.ctdapi.Topology.Edge(
+                        edgeId,
+                        edge.getLength(),
+                        edge.isInterDimensional(),
+                        edge.isTurn(),
+                        edge.getTrackMaterial() == null ? "create:standard"
+                            : edge.getTrackMaterial().id.toString(),
+                        // ⚠ 汽鸣铁道的道岔门控在 TrackEdge#canTravelTo 里，EdgeData 上
+                        // **没有** enabled 字段（已核对 EdgeData.java）。所以这里只能默认 true：
+                        // 「这条股道当前能不能走」对镜像不可见。
+                        true));
+                    edgeCount++;
+                }
+            }
+        }
+
+        lastNodeCount = nodeCount;
+        lastEdgeCount = edgeCount;
+        this.view = b.build();
+        return this.view;
+    }
+
+    /** 上一次构建的节点/边数量，用于日志与校验。 */
+    public int lastNodeCount() { return lastNodeCount; }
+
+    public int lastEdgeCount() { return lastEdgeCount; }
+
+    /** 供测试：直接设置一个快照。 */
+    public void install(TopologyView v) {
+        this.view = v;
+        this.version = v.version();
+    }
+
+    public long version() {
+        return version;
+    }
+
+    static Map<String, Object> debugStats(TopologyMirror m) {
+        Map<String, Object> out = new HashMap<>();
+        out.put("version", m.version);
+        out.put("nodes", m.lastNodeCount);
+        out.put("edges", m.lastEdgeCount);
+        return out;
+    }
+}

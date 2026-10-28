@@ -1,0 +1,70 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.141'
+}
+
+group = project.maven_group
+version = project.mod_version
+base {
+    archivesName = project.archives_name
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+// ── NeoForged maven 镜像（同另外两个仓库）────────────────────────────────
+def neoforgeMirror = { repo ->
+    if (repo instanceof org.gradle.api.artifacts.repositories.MavenArtifactRepository) {
+        def u = repo.url.toString()
+        if (u.contains("://maven.neoforged.net")) {
+            repo.url = uri(u.replace("://maven.neoforged.net", "://neoforged.forgecdn.net"))
+        }
+    }
+}
+repositories.whenObjectAdded(neoforgeMirror)
+repositories.each(neoforgeMirror)
+gradle.projectsEvaluated { project.repositories.each(neoforgeMirror) }
+
+repositories {
+    mavenCentral()
+    // Create / Ponder / Flywheel
+    maven { name = 'CreateMod'; url = 'https://maven.createmod.net' }
+    // Registrate
+    maven { name = 'IThundxr'; url = 'https://maven.ithundxr.dev/snapshots' }
+    maven { name = 'Devos'; url = 'https://mvn.devos.one/releases' }
+}
+
+neoForge {
+    version = project.neo_version
+    // Mixin 配置在 src/main/resources/ctdhost.mixins.json
+}
+
+dependencies {
+    // 契约层
+    implementation files("libs/${project.ctdapi_jar}")
+
+    // Create：编译期依赖，运行期由玩家安装，不打进 jar。
+    //
+    // ⚠ 不要在这里手写 Ponder / Catnip / Flywheel 的版本：
+    // Create 的 POM 已经声明了它们（ponder-neoforge:1.0.85+mc1.21.1 等），
+    // 手写会撞上 Gradle 的 capability 冲突——两边声明同一个能力、
+    // 不同模块坐标，解析直接失败。
+    // 用本地 jar 而不是 maven：maven.createmod.net 对 18MB 的 jar 限速到 0.03 MB/s
+    // 且会中途断连重试。这条路径由 tools/fetch-create.ps1 预先准备。
+    compileOnly files("libs/create-1.21.1-6.0.11-312.jar")
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+jar {
+    manifest {
+        attributes(
+            'Specification-Title'    : project.mod_name,
+            'Implementation-Version' : project.version
+        )
+    }
+}

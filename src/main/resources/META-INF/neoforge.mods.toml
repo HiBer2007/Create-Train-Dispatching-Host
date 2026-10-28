@@ -1,0 +1,48 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "LGPL-3.0-or-later"
+
+[[mods]]
+modId = "ctdhost"
+version = "${file.jarVersion}"
+displayName = "Create Train Dispatching Host"
+authors = "HiBer_2007"
+description = '''
+Host integration for the Create Train Dispatching API.
+
+Mirrors Create's rail graph into the API's stable topology, samples trains each
+tick, executes the dispatch kernel's commands and translates them back onto
+Create. It decides nothing itself: routing, block logic and speed profiles all
+belong to a dispatch kernel.
+
+Requires Create. Without a kernel mod or script runtime installed it does
+nothing at all.
+'''
+
+[[dependencies.ctdhost]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ctdhost]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.22)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.ctdhost]]
+modId = "create"
+type = "required"
+versionRange = "[6.0.11,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.ctdhost]]
+modId = "ctdapi"
+type = "required"
+versionRange = "[0.1,)"
+ordering = "AFTER"
+side = "BOTH"
