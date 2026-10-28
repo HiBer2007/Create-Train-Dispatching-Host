@@ -57,6 +57,7 @@ public final class HostRuntime {
 
     /** 内核 id → 各自的 pass。一车一脚本时会有多个。 */
     private final java.util.Map<ResourceLocation, DispatchPass> passes = new java.util.LinkedHashMap<>();
+    private long kernelRevision = -1;
     private CommandApplier applier;
 
     private HostRuntime() {
@@ -205,8 +206,29 @@ public final class HostRuntime {
      * 后一条很重要：默认「不干预」比「默认随便挑一个内核管」安全得多。
      */
     private void refreshPasses() {
+        // 修订号变了说明注册表被改过——最典型的是**同名工厂被换掉**（热重载）。
+        // 只看 id 集合发现不了这种替换：宿主会一直握着绑在旧实例上的 pass，
+        // 表现为「重载成功，但脚本行为没变」。
+        long rev = top.hibermod.ctdapi.DispatchKernels.revision();
+        if (rev != kernelRevision) {
+            if (kernelRevision >= 0 && !passes.isEmpty()) {
+                LOG.info("[ctdhost] kernel registry changed (rev " + kernelRevision + " -> " + rev
+                    + "), rebuilding " + passes.size() + " pass(es)");
+                passes.clear();
+            }
+            kernelRevision = rev;
+        }
+
         var ids = top.hibermod.ctdapi.DispatchKernels.registeredIds();
         boolean anyBinding = top.hibermod.ctdhost.operation.TrainScripts.size() > 0;
+
+        // 再按 id 剪枝：内核被注销之后，它的 pass 必须立刻停掉。
+        // 只加不减的话，旧脚本会继续驱动列车，而且每重载一次就多一个实例。
+        passes.entrySet().removeIf(e -> {
+            if (ids.contains(e.getKey())) return false;
+            LOG.info("[ctdhost] kernel " + e.getKey() + " retired");
+            return true;
+        });
 
         for (ResourceLocation id : ids) {
             if (passes.containsKey(id)) continue;
