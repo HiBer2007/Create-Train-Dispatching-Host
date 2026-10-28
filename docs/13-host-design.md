@@ -408,3 +408,61 @@ debug track created: graph=f4388db3-... nodes=2
 
 它造出的图**没有对应的方块**，列车会在一条「看不见的轨道」上跑。
 只在 `runServer` + RCON 的验证场景里用，不要在生产档里敲。
+
+---
+
+## 16. 第六轮实测：造出真列车，验到速度钳位
+
+上一轮用 `/ctd host debugtrack` 直接往图里插边，验证了镜像。
+这一轮顺着那条边**凭空造了一列车**。
+
+### 怎么造的
+
+`Train` 的构造器是 private（正常路径是从方块组装），调试命令用反射调用。
+转向架方块从 `BuiltInRegistries.BLOCK` 里找第一个 `AbstractBogeyBlock`
+——`AllBlocks.SMALL_BOGEY` 的返回类型是 Registrate 的 `BlockEntry`，
+而 Registrate 不在本模组的编译路径上。
+
+### 实测
+
+```
+# /ctd host debugtrain
+debug train created: id=55d0b033-... name=CTD-DEBUG graph=b9ef2210-...
+
+# 诊断内核
+ctdhost: diagnostic frames=3300 trains=1 nodes=2 gameTime=1100
+
+# /ctd host status
+  topology    : nodes=2 edges=1
+  units       : 1
+  train       : CTD-DEBUG speed=0.000 target=0.400
+```
+
+一次验证了三层：
+
+| 层 | 证据 |
+|---|---|
+| `TelemetrySampler` | `trains=1` —— 从真实 `Train` 采出 `TrainState` |
+| `UnitIndex` | `units=1` —— `Train.name` → 车辆编号 |
+| **`SpeedApplier`** | `target=0.400` |
+
+### 速度钳位怎么验的
+
+```
+/ctd host debugtrain drive
+→ 原生 targetSpeed 被强制设为 1.0
+→ 同时下发 proceed(cap=0.4)
+→ 下一帧读回 target=0.400
+```
+
+**这就是「只能收紧、不能放宽」的实证**：如果宿主允许指令放宽，
+结果会是 1.000。这条不变式是整个宿主的安全基础——它保证一个写错的内核
+没资格让车开得比 Create 自己想开的还快。
+
+### 仍然没验的
+
+| 项 | 为什么 |
+|---|---|
+| 列车真的在世界上跑 | 调试列车没有车厢实体，不会 tick 物理 |
+| 信号灯真的变色 | 需要方块信号机 |
+| 道岔物理扳动 | 需要汽鸣铁道的真实道岔 |

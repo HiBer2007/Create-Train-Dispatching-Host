@@ -27,7 +27,8 @@ public final class HostStatusCommand {
         return Commands.literal("host")
             .then(Commands.literal("status").executes(ctx -> status(ctx.getSource())))
             .then(Commands.literal("switches").executes(ctx -> switches(ctx.getSource())))
-            .then(DebugTrackCommand.build());
+            .then(DebugTrackCommand.build())
+            .then(DebugTrainCommand.build());
     }
 
     private static int status(CommandSourceStack src) {
@@ -51,6 +52,15 @@ public final class HostStatusCommand {
         src.sendSuccess(() -> Component.literal("  topology    : nodes=" + nodes + " edges=" + edges
             + (someDisabled ? "  (some edges disabled by switches)" : "")), false);
         src.sendSuccess(() -> Component.literal("  units       : " + units), false);
+
+        // 每列车的速度/目标速度：验证「只能收紧」规则时要看这两个数
+        for (var train : com.simibubi.create.Create.RAILWAYS.trains.values()) {
+            final String line = "  train       : "
+                + (train.name == null ? "?" : train.name.getString())
+                + " speed=" + String.format("%.3f", train.speed)
+                + " target=" + String.format("%.3f", train.targetSpeed);
+            src.sendSuccess(() -> Component.literal(line), false);
+        }
         src.sendSuccess(() -> Component.literal("  assignments : " + assignments), false);
         src.sendSuccess(() -> Component.literal("  resolved    : " + host.assignments().summary()), false);
         src.sendSuccess(() -> Component.literal("  switches    : " + switchStatus), false);
