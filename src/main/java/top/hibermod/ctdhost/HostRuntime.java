@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.entity.Train;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
 import top.hibermod.ctdapi.DispatchKernel;
@@ -39,10 +40,13 @@ public final class HostRuntime {
     private static volatile boolean warnedAboutMissingHook;
 
     private final TopologyMirror mirror = new TopologyMirror();
+    private final top.hibermod.ctdhost.operation.UnitIndex units =
+        new top.hibermod.ctdhost.operation.UnitIndex();
     private final SpeedApplier speed = new SpeedApplier();
     private final List<Train> scratch = new ArrayList<>();
 
-    private DispatchPass pass;
+    /** 内核 id → 各自的 pass。一车一脚本时会有多个。 */
+    private final java.util.Map<ResourceLocation, DispatchPass> passes = new java.util.LinkedHashMap<>();
     private CommandApplier applier;
 
     private HostRuntime() {
@@ -51,7 +55,7 @@ public final class HostRuntime {
             () -> Create.RAILWAYS.trackNetworks,
             speed);
 
-        this.pass = new DispatchPass(this::collect, applier);
+        // pass 在第一次 tick 时按已注册内核惰性创建（见 refreshPasses）
     }
 
     public static HostRuntime get() {
@@ -59,7 +63,7 @@ public final class HostRuntime {
         if (h == null) {
             synchronized (HostRuntime.class) {
                 if (instance == null) instance = new HostRuntime();
-                instance.activateFirstKernel();
+                // 内核在第一个 tick 里惰性激活
             }
             h = instance;
         }
@@ -82,31 +86,49 @@ public final class HostRuntime {
     private void tick(Level level) {
         this.gameTime = level.getGameTime();
         applier.setGameTime(gameTime);
-        pass.tick();
+
+        // ① 内核：每帧决策（可能多个，各管各的车）
+        refreshPasses();
+        for (DispatchPass p : passes.values()) p.tick();
+
+        // ② 控制通道：后台/玩家/自动化随时插话。
+        //    刻意在内核之后执行——操作员的扣车不该被脚本下一帧放行。
+        applyControlChannel();
     }
 
-    /** 选一个已注册的内核激活。后续由配置或命令切换。 */
-    private void activateFirstKernel() {
-        for (var id : DispatchKernels.registeredIds()) {
-            DispatchKernel k = DispatchKernels.create(id).orElse(null);
-            if (k != null) {
-                applier.setGameTime(0);
-                pass.activate(k, new Env());
-                System.out.println("[ctdhost] activated kernel " + id);
-                return;
-            }
+    private void applyControlChannel() {
+        var d = top.hibermod.ctdapi.operation.ControlChannel.drain();
+        if (d.isEmpty()) return;
+
+        for (var a : d.assignments()) {
+            top.hibermod.ctdapi.operation.Assignments.publish(a.assignment());
         }
-        System.out.println("[ctdhost] no dispatch kernel registered; running Create native behaviour");
+        if (!d.trains().isEmpty()) {
+            java.util.List<top.hibermod.ctdapi.Command.TrainCommand> list = new java.util.ArrayList<>();
+            for (var c : d.orderedTrains()) list.add(c.command());
+            speed.apply(list, Create.RAILWAYS.trains, gameTime);
+        }
+        if (!d.aspects().isEmpty()) {
+            java.util.List<top.hibermod.ctdapi.Command.AspectCommand> list = new java.util.ArrayList<>();
+            for (var c : d.aspects()) list.add(c.command());
+            applier.applyAspects(list);
+        }
     }
+
 
     // ── 采集 ──────────────────────────────────────────────────────────────
 
-    private DispatchPass.Inputs collect() {
+    private DispatchPass.Inputs collect(java.util.function.Predicate<UUID> filter) {
         var graphs = Create.RAILWAYS.trackNetworks;
         TopologyView view = mirror.refreshIfChanged(graphs);
 
         scratch.clear();
-        scratch.addAll(Create.RAILWAYS.trains.values());
+        for (Train t : Create.RAILWAYS.trains.values()) {
+            if (filter == null || filter.test(t.id)) scratch.add(t);
+        }
+
+        // 车辆编号索引：编号就是 Train.name，每帧对账
+        units.reconcile(scratch);
 
         List<Telemetry.TrainState> states = new ArrayList<>(scratch.size());
         for (Train t : scratch) {
@@ -134,11 +156,44 @@ public final class HostRuntime {
 
     public static long tickCount() { return TICKS.get(); }
 
-    public DispatchPass pass() { return pass; }
+    public java.util.Map<ResourceLocation, DispatchPass> passes() { return passes; }
+
+    /**
+     * 按「已注册内核 × 车-脚本绑定」维护 pass 集合。
+     *
+     * <p>规则：
+     * <ul>
+     *   <li>没有任何绑定 → 单个内核看全部车（兼容默认行为）；</li>
+     *   <li>有绑定 → 每个内核只看绑给它的车；未绑定的车不受任何内核干预。</li>
+     * </ul>
+     * 后一条很重要：默认「不干预」比「默认随便挑一个内核管」安全得多。
+     */
+    private void refreshPasses() {
+        var ids = top.hibermod.ctdapi.DispatchKernels.registeredIds();
+        boolean anyBinding = top.hibermod.ctdhost.operation.TrainScripts.size() > 0;
+
+        for (ResourceLocation id : ids) {
+            if (passes.containsKey(id)) continue;
+            var kernel = top.hibermod.ctdapi.DispatchKernels.create(id).orElse(null);
+            if (kernel == null) continue;
+
+            final java.util.function.Predicate<UUID> filter = anyBinding
+                ? top.hibermod.ctdhost.operation.TrainScripts.trainsOf(id)::contains
+                : null;
+            DispatchPass p = new DispatchPass(() -> collect(filter), applier);
+            p.setTrainFilter(filter);
+            p.activate(kernel, new Env());
+            passes.put(id, p);
+            System.out.println("[ctdhost] kernel " + id + " active"
+                + (anyBinding ? " (" + top.hibermod.ctdhost.operation.TrainScripts.trainsOf(id).size() + " trains)" : " (all trains)"));
+        }
+    }
 
     public TopologyMirror mirror() { return mirror; }
 
     public SpeedApplier speed() { return speed; }
+
+    public top.hibermod.ctdhost.operation.UnitIndex units() { return units; }
 
     /**
      * 启动后自检：注入没生效时给出明确告警，而不是让内核静默不工作。

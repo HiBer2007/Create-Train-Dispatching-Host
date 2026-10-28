@@ -39,6 +39,9 @@ public final class DispatchPass {
     private final DispatchFrameImpl frame = new DispatchFrameImpl();
 
     private DispatchKernel kernel;
+
+    /** 本 pass 只处理这些列车；{@code null} 表示不过滤（全局唯一内核的情况）。 */
+    private java.util.function.Predicate<java.util.UUID> trainFilter;
     private KernelEnv env;
 
     private int consecutiveFailures;
@@ -48,6 +51,15 @@ public final class DispatchPass {
     public DispatchPass(Supplier<Inputs> collector, DispatchFrameImpl.CommandSink sink) {
         this.collector = collector;
         this.sink = sink;
+    }
+
+    /** 只处理通过过滤器的列车。{@code null} 表示全部。 */
+    public void setTrainFilter(java.util.function.Predicate<java.util.UUID> filter) {
+        this.trainFilter = filter;
+    }
+
+    public java.util.function.Predicate<java.util.UUID> trainFilter() {
+        return trainFilter;
     }
 
     /** 激活/切换内核。旧内核会收到 {@code onDetach}。 */

@@ -1,0 +1,9 @@
+{
+  "item.ctdhost.script_timetable.blank": "Script Timetable (blank)",
+  "item.ctdhost.script_timetable.named": "Script Timetable: %s",
+  "item.ctdhost.script_timetable.hint.blank": "No script assigned",
+  "item.ctdhost.script_timetable.hint.bound": "Dispatch script: %s",
+  "item.ctdhost.script_timetable.hint.usage": "Right-click near a train to bind it",
+  "item.ctdhost.script_timetable.no_train": "No train within 48 blocks",
+  "item.ctdhost.script_timetable.bound": "Bound %2$s to script %1$s"
+}
