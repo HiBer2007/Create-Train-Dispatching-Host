@@ -36,7 +36,7 @@ import top.hibermod.ctdhost.topology.TopologyView;
  */
 public final class HostRuntime {
 
-    private static final Logger LOG = LoggerFactory.getLogger("ctdhost");
+    static final Logger LOG = LoggerFactory.getLogger("ctdhost");
 
     private static HostRuntime instance;
 
@@ -75,11 +75,26 @@ public final class HostRuntime {
         return h;
     }
 
-    /** 混入入口。每帧一次。 */
+    /**
+     * 每帧调度入口。**两条路径都调到这里**：
+     *
+     * <ol>
+     *   <li>Mixin {@code GlobalRailwayManager#tick} 的 HEAD（首选：抢在清空占用之前）；</li>
+     *   <li>NeoForge {@code LevelTickEvent.Post}（兜底：Mixin 不可用时仍能工作）。</li>
+     * </ol>
+     *
+     * <p>两条路径都活着时用 (维度, 刻) 去重，只会跑一次——
+     * 抢占入口存在时以它为准，否则退回事件入口（晚一帧，但功能完整）。
+     */
     public static void onRailwayTick(Level level) {
         try {
+            HostRuntime h = HostRuntime.get();
+            String key = level.dimension().location() + "#" + level.getGameTime();
+            if (key.equals(h.lastTickKey)) return;
+            h.lastTickKey = key;
+
             TICKS.incrementAndGet();
-            HostRuntime.get().tick(level);
+            h.tick(level);
         } catch (Throwable t) {
             // 宿主自己炸了不能拖垮服务端：下一个 tick 还要跑
             LOG.error("[ctdhost] dispatch tick failed: " + t);
@@ -88,9 +103,18 @@ public final class HostRuntime {
 
     private long gameTime;
 
+    /** 上一次处理过的 (维度, 游戏刻)，用于两条入口去重。 */
+    private String lastTickKey;
+
     private void tick(Level level) {
         this.gameTime = level.getGameTime();
         applier.setGameTime(gameTime);
+
+        // 首次收到 tick 时打一条，证明调度真的在跑（含入口来源）
+        if (TICKS.get() <= 1) {
+            LOG.info("ctdhost: dispatch ticking (gameTime={}, dim={})",
+                gameTime, level.dimension().location());
+        }
 
         // ① 内核：每帧决策（可能多个，各管各的车）
         refreshPasses();

@@ -47,7 +47,15 @@ public final class CtdHost {
     public CtdHost(IEventBus modBus) {
         LOG.info("ctdhost: constructing (mod bus present: {})", modBus != null);
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
+        DiagnosticKernel.registerIfEnabled();
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
+
+        // 兜底入口：Mixin 不可用（开发环境常见）时仍能每帧调度。
+        // 与 Mixin 同时存在时由 HostRuntime 按 (维度, 刻) 去重。
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.LevelTickEvent.Post e) -> {
+            if (e.getLevel().isClientSide()) return;
+            HostRuntime.onRailwayTick(e.getLevel());
+        });
     }
 
     private void onServerStarting(ServerStartingEvent event) {

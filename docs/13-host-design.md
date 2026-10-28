@@ -263,3 +263,57 @@ class HostSavedData extends SavedData {
 - `neoforge.mods.toml` 里 `version = "${file.jarVersion}"` 在 dev 下渲染成 `0.0NONE`，无害但要知道；
 - Ponder 的 JarJar 已内置 catnip，**再单独加 catnip jar 会导致两个模块导出同一个包**（`ModuleLayerHandler` 报 `ResolutionException`）；
 - `runServer` 任务需要显式声明 `runs { server { server() } }`，ModDevGradle 不会自动创建。
+
+---
+
+## 12. 真实服务端实测记录（第二轮 —— 链路打通）
+
+**结论：宿主 → 内核 → 指令 → 应用 这条链已在真实服务端里跑通。**
+
+日志（`./gradlew runServer`，Create 6.0.11-312 + NeoForge 21.1.219）：
+
+```
+[ctdhost] attached; 1 registry entries
+ctdhost: dispatch ticking (gameTime=1, dim=minecraft:overworld)
+[ctdhost/info] ctdhost: diagnostic kernel attached
+[ctdhost] kernel ctdhost:diagnostic active (all trains)
+ctdhost: diagnostic frames=60  trains=0 nodes=0 gameTime=20
+ctdhost: diagnostic frames=120 trains=0 nodes=0 gameTime=40
+...
+ctdhost: diagnostic frames=420 trains=0 nodes=0 gameTime=140
+```
+
+**frames 与 gameTime 严格 3:1** —— 每刻一次 `onFrame`，不多不少。
+`trains=0 / nodes=0` 是因为新世界既没铺轨也没有列车，镜像返回空快照而没有抛异常，
+这本身就是拓扑镜像的一次有效验证（空图路径）。
+
+### 12.1 入口改成了双路
+
+Mixin 至今没生效（见 §11），所以宿主改成**两条入口都收**：
+
+| 入口 | 优先级 | 特点 |
+|---|---|---|
+| Mixin `GlobalRailwayManager#tick` HEAD | 首选 | 抢在清空占用之前，能看到上一帧真实占用 |
+| NeoForge `LevelTickEvent.Post` | 兜底 | **零风险，已实测可用**；晚一帧（targetSpeed 本来也是下一帧才生效，实际无感） |
+
+两条同时活着时按 `(维度, 游戏刻)` 去重，只会跑一次。所以 Mixin 哪天修好了，
+自动就变回「更早一步」的语义，不需要改代码。
+
+### 12.2 自检内核
+
+`ctdhost:diagnostic`（默认开发环境开启、生产关闭）存在的意义：
+**一个新世界既没轨也没车，工作正常的宿主和完全没工作的宿主长得一模一样。**
+它每 60 帧打一行，把「链还活着」变成可观测事实。
+
+### 12.3 仍然未验证的
+
+| 项 | 为什么没验 | 怎么验 |
+|---|---|---|
+| 列车真的停/发 | 需要铺轨 + 造车 | 进图形客户端，或 `/summon` 后手动组装 |
+| 拓扑镜像的非空路径 | 同上 | 铺一段轨后看 `nodes` 是否 > 0 |
+| 信号写入 | 需要信号机 | 摆一个信号机，脚本下 `aspect` |
+| 道岔物理扳动 | 需要 `railways:switch` 边点 | 装汽鸣铁道 + 摆岔 |
+
+**下一步最有价值的事**：在 `runServer` 的存档里预置一小段轨道。可以用命令
+`/create track` 之类，或在 `world/` 里放一个现成的测试存档。
+只要 `nodes > 0`，镜像的非空路径就被验了。
