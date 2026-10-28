@@ -665,3 +665,55 @@ schedule : appliedTrains=0 entries=0 unresolvedStops=1 worldStations=0
 §18 里写的 `schedule=2` 只证明了**写入路径可用**，不代表那张时刻表能用。
 真实可用的前提是：世界里存在与停站 id 对应的 `GlobalStation`。
 而车站需要玩家摆方块并命名——又一个环境边界。
+
+---
+
+## 24. 第十四轮：为什么调试列车不能参与物理（两次尝试的确切原因）
+
+上一轮说「假列车撑不过物理 tick」，这轮把原因挖到底了，两条都来自真实源码：
+
+### 第一次尝试：空实体 NBT
+
+```
+CarriageEntityHandler.createEntity(level, ...):
+    Entity entity = EntityType.create(serialisedEntity, level).orElse(null);
+    if (!(entity instanceof CarriageContraptionEntity cce)) {
+        train.invalid = true;      // ← 就这里
+        return;
+    }
+```
+
+`Carriage` 构造器把 `serialisedEntity` 初始化成**空 CompoundTag**，
+`EntityType.create` 自然返回 null，于是列车被判 invalid 并从注册表移除。
+
+### 第二次尝试：补上实体 NBT + 空构造
+
+构造出真实的 `CarriageContraptionEntity` 存一份 NBT，再加一份
+`CarriageContraption(Direction.UP).writeNBT(...)` 作为 "Contraption" 字段。
+
+结果：列车**确实开始 tick 了**，然后——
+
+```
+java.lang.NullPointerException: Cannot invoke
+  "com.simibubi.create.content.contraptions.Contraption.readNBT(...)"
+  because "contraption" is null
+```
+
+**整个服务端崩掉。**
+
+### 结论
+
+一辆能被 tick 的列车需要的不是「一个实体」，而是一个**真正从方块组装出来的车厢构造**——
+`Contraption` 里的锚点、方块集合、包围盒都来自玩家的组装动作。
+
+**这是环境边界，不是可以绕过的实现细节。** 已经在 `DebugTrainCommand` 的注释里写清楚，
+避免下一个人重走这两步。
+
+### 顺带确认（脚本链路依然成立）
+
+```
+[demo] id='e41785c3-...' name=CTD-DIAG
+train : CTD-DIAG speed=0.000 target=0.350
+```
+
+原生被抬到 1.0、debug 指令要 0.4、脚本要 0.35 → **0.350**。脚本的指令在真实链路上生效。
