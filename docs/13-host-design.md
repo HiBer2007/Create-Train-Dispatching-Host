@@ -572,3 +572,56 @@ schedule    : appliedTrains=1 entries=2 noService=0 noStops=0
 所以 `ScheduleRuntime.tick` 里依赖实体与 `DiscoveredPath` 的部分不会真正执行。
 
 「Schedule 写对了」和「列车真的去跑」是两件事——前者已验，后者需要真实组装的列车。
+
+---
+
+## 19. 第九轮实测：假列车撑不过物理（负结果）
+
+### 问题
+
+`/ctd host debugtrain` 造出的列车**不参与物理 tick**：给了速度也纹丝不动。
+
+### 查到的原因
+
+`GlobalRailwayManager.tickTrains` 遍历的是 **`waitingTrains` / `movingTrains` 两个持久列表**，
+不是 `trains` 这个 map。直接把车塞进 map，它永远不会被 tick。
+
+### 试了「那就塞进列表」
+
+用反射把车加进 `waitingTrains` 之后：
+
+```
+train : CTD-DIAG ...        ← 之前一直在
+（几秒后）
+units : 0                   ← 车消失了
+```
+
+**它确实开始 tick 了，然后被 `Train.tick` 判为 `invalid`，
+由 `tickTrains` 从 `trains` 里移除。**
+
+代码路径很直接：
+
+```java
+if (train.invalid) {
+    iterator.remove();
+    trains.remove(train.id);
+    CatnipServices.NETWORK.sendToAllClients(new RemoveTrainPacket(train));
+    continue;
+}
+```
+
+原因是没有车厢实体的列车撑不过一轮物理。
+
+### 所以撤回了
+
+调试列车**刻意不加入那两个列表**，只做静态观测：
+遥测、编号、时刻表写入、速度钳位——这些都不需要它动。
+
+「列车真的按时刻表跑」必须用真实组装的列车验。**这条是环境边界，不是实现偷懒。**
+
+### 一个过程教训
+
+这次用脚本改 Java 源码，又一次把文件切坏（重复代码 + 旧代码残留），
+不得不整文件重写。**这已经是第三次**（`HostStatusCommand`、`HostRuntime`、本例）。
+
+规律很稳定：**超过两处插入就该整文件重写**。脚本替换适合改一行，不适合改一段。
