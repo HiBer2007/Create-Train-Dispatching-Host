@@ -54,7 +54,8 @@ public final class DebugTrainCommand {
         return Commands.literal("debugtrain")
             .executes(ctx -> create(ctx.getSource()))
             .then(Commands.literal("drive").executes(ctx -> drive(ctx.getSource())))
-            .then(Commands.literal("push").executes(ctx -> push(ctx.getSource())));
+            .then(Commands.literal("push").executes(ctx -> push(ctx.getSource())))
+;
     }
 
     // ── 造车 ──────────────────────────────────────────────────────────────
@@ -101,35 +102,32 @@ public final class DebugTrainCommand {
             CarriageBogey bogey = new CarriageBogey(bogeyBlock, false, new CompoundTag(), front, back);
             Carriage carriage = new Carriage(bogey, null, 0);
 
-            // 关键：车厢必须能造出自己的实体，否则 Train.tick 会把它判成 invalid。
-            // CarriageEntityHandler.createEntity 里 EntityType.create(空 NBT) 返回 null，
-            // 紧接着就是 train.invalid = true —— 列车随即被 tickTrains 从注册表移除。
-            // 这里用真实实体存一份 NBT 出来，让 EntityType.create 能造出
-            // CarriageContraptionEntity。
-            CompoundTag entityTag = new CompoundTag();
-            try {
-                EntityType<?> cceType = BuiltInRegistries.ENTITY_TYPE.get(
-                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
-                        "create", "carriage_contraption"));
-                var cce = new com.simibubi.create.content.trains.entity.CarriageContraptionEntity(
-                    cceType, level);
-                cce.saveWithoutId(entityTag);
-
-                // 只有实体 id 不够：读档时 CarriageContraptionEntity 会调
-                // Contraption.readNBT(label)，"Contraption" 缺失直接 NPE。
-                // 这里放一份**空车厢构造**：没有方块，但结构合法。
-                var contraption = new com.simibubi.create.content.trains.entity.CarriageContraption(
-                    net.minecraft.core.Direction.UP);
-                entityTag.put("Contraption", contraption.writeNBT(level.registryAccess(), true));
-            } catch (Throwable ignored) {
-                // 造不出来就退化成静态列车，不影响其它验证
-            }
-            entityTag.putString("id", "create:carriage_contraption");
-
-            var serialisedField = Carriage.class.getDeclaredField("serialisedEntity");
-            serialisedField.setAccessible(true);
-            serialisedField.set(carriage, entityTag);
-
+            // ── 为什么这里**不**造车厢实体 ────────────────────────────────────
+            //
+            // 尝试过，四步都撞在同一个前提上：车厢构造必须真正从方块组装出来。
+            //
+            //   ① 空 serialisedEntity
+            //      CarriageEntityHandler.createEntity 里 EntityType.create 返回 null
+            //      → train.invalid = true → tickTrains 把列车从注册表移除。
+            //
+            //   ② 补上实体 NBT
+            //      EntityType.create 造出了 CarriageContraptionEntity，接着 NPE：
+            //      Contraption.fromNBT 里 ContraptionType.fromType("") 返回 null，
+            //      下一行 contraption.readNBT(...) 直接炸。
+            //
+            //   ③ 补上 "Contraption" + "Type": "create:carriage"
+            //      setContraption 之后再 saveWithoutId 仍然失败：
+            //      ReportedException: Saving entity NBT。
+            //
+            //   ④ 换顺序：先 setContraption 再存
+            //      NPE: BlockPos.getX() because "p_129225_" is null
+            //      —— Contraction 的 anchor 是 null。anchor 是组装时那个方块的位置。
+            //
+            // 每一步都能修，修完露出下一步，而下一步依然要求「真实组装」。
+            // 这就是环境边界：一辆能被 tick 的列车需要一个从方块装配出来的车厢构造。
+            //
+            // 所以调试列车只做静态观测（遥测、编号、时刻表、速度钳位、指派），
+            // 不参与物理。想验「列车真的跑」，只能进游戏组装一列。
             List<Carriage> carriages = new ArrayList<>();
             carriages.add(carriage);
             List<Integer> spacing = new ArrayList<>();
