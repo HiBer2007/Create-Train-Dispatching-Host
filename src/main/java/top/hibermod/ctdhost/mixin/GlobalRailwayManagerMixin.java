@@ -32,7 +32,7 @@ import top.hibermod.ctdhost.HostRuntime;
 @Mixin(value = GlobalRailwayManager.class, remap = false)
 public class GlobalRailwayManagerMixin {
 
-    @Inject(method = "tick", at = @At("HEAD"), remap = false, require = 0)
+    @Inject(method = "tick", at = @At("HEAD"), remap = false, require = 1)
     private void ctdhost$dispatchPass(Level level, CallbackInfo ci) {
         HostRuntime.onRailwayTick(level);
     }

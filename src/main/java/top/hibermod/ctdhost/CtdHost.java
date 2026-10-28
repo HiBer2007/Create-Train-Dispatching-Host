@@ -1,8 +1,20 @@
 package top.hibermod.ctdhost;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.neoforged.bus.api.IEventBus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.neoforged.fml.common.Mod;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.neoforged.neoforge.common.NeoForge;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
 import top.hibermod.ctdapi.ApiCatalog;
@@ -24,15 +36,22 @@ import top.hibermod.ctdapi.ApiCatalog;
 @Mod(CtdHost.MOD_ID)
 public final class CtdHost {
 
+    private static final Logger LOG = LoggerFactory.getLogger("ctdhost");
+
     public static final String MOD_ID = "ctdhost";
 
+    static {
+        LOG.info("ctdhost: class loaded");
+    }
+
     public CtdHost(IEventBus modBus) {
+        LOG.info("ctdhost: constructing (mod bus present: {})", modBus != null);
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
     }
 
     private void onServerStarting(ServerStartingEvent event) {
-        System.out.println("[ctdhost] attached; " + ApiCatalog.entries().size() + " registry entries");
+        LOG.info("[ctdhost] attached; " + ApiCatalog.entries().size() + " registry entries");
         // 注入自检：require=0 的注入失败不会报错，只能靠「有没有被调过」发现
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
             (net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) ->

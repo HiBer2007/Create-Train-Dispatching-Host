@@ -26,11 +26,13 @@ public final class CommandApplier implements DispatchFrameImpl.CommandSink {
     private final Supplier<java.util.Map<UUID, TrackGraph>> graphs;
     private final SpeedApplier speed;
     private final SignalApplier signals = new SignalApplier();
+    private final SwitchApplier switches = new SwitchApplier();
 
     private long gameTime;
 
     private int lastAppliedTrains;
     private int lastAppliedSignals;
+    private int lastAppliedSwitches;
 
     public CommandApplier(Supplier<java.util.Map<UUID, Train>> trains,
                           Supplier<java.util.Map<UUID, TrackGraph>> graphs,
@@ -57,7 +59,14 @@ public final class CommandApplier implements DispatchFrameImpl.CommandSink {
 
     // 以下尚未实现。留空而不是抛异常：内核多写一条指令不该让整帧崩掉。
 
-    @Override public void applySwitches(List<Command.SwitchCommand> commands) { }
+    @Override
+    public void applySwitches(List<Command.SwitchCommand> commands) {
+        lastAppliedSwitches = switches.apply(commands, graphs.get());
+    }
+
+    public SwitchApplier switches() { return switches; }
+
+    public int lastAppliedSwitches() { return lastAppliedSwitches; }
 
     @Override public void applyDevices(List<Command.DeviceCommand> commands) { }
 

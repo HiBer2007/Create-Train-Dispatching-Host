@@ -10,6 +10,9 @@ import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.entity.Train;
 
 import net.minecraft.resources.ResourceLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.minecraft.world.level.Level;
 
 import top.hibermod.ctdapi.DispatchKernel;
@@ -32,6 +35,8 @@ import top.hibermod.ctdhost.topology.TopologyView;
  * 都活在这个单例里，帧内只做「填充」，把分配压到最低。
  */
 public final class HostRuntime {
+
+    private static final Logger LOG = LoggerFactory.getLogger("ctdhost");
 
     private static HostRuntime instance;
 
@@ -77,7 +82,7 @@ public final class HostRuntime {
             HostRuntime.get().tick(level);
         } catch (Throwable t) {
             // 宿主自己炸了不能拖垮服务端：下一个 tick 还要跑
-            System.err.println("[ctdhost] dispatch tick failed: " + t);
+            LOG.error("[ctdhost] dispatch tick failed: " + t);
         }
     }
 
@@ -184,7 +189,7 @@ public final class HostRuntime {
             p.setTrainFilter(filter);
             p.activate(kernel, new Env());
             passes.put(id, p);
-            System.out.println("[ctdhost] kernel " + id + " active"
+            LOG.info("[ctdhost] kernel " + id + " active"
                 + (anyBinding ? " (" + top.hibermod.ctdhost.operation.TrainScripts.trainsOf(id).size() + " trains)" : " (all trains)"));
         }
     }
@@ -201,7 +206,7 @@ public final class HostRuntime {
     public static void verifyHook(boolean afterStartup) {
         if (TICKS.get() == 0 && afterStartup && !warnedAboutMissingHook) {
             warnedAboutMissingHook = true;
-            System.err.println("[ctdhost] WARNING: GlobalRailwayManager#tick hook never fired. "
+            LOG.error("[ctdhost] WARNING: GlobalRailwayManager#tick hook never fired. "
                 + "The mixin probably failed to apply (upstream signature changed). "
                 + "Dispatch is inactive; trains use vanilla Create behaviour.");
         }
@@ -225,7 +230,7 @@ public final class HostRuntime {
             for (Object a : args) {
                 out = out.replaceFirst("\\{\\}", java.util.regex.Matcher.quoteReplacement(String.valueOf(a)));
             }
-            System.out.println("[ctdhost/" + level + "] " + out);
+            LOG.info("[ctdhost/" + level + "] " + out);
         }
 
         @Override public Settings settings() {

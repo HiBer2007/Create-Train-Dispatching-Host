@@ -215,3 +215,51 @@ class HostSavedData extends SavedData {
 | C7 | 脚本锁岔 → 汽鸣铁道道岔真的扳过去 |
 | C8 | 重启后内核 state 与限制/应急指令不丢 |
 | C9 | 故意让脚本抛异常 → 列车继续按原生行为跑，不失控 |
+
+---
+
+## 11. 真实服务端实测记录（第一轮）
+
+**环境**：`./gradlew runServer`，NeoForge 21.1.219 + Create 6.0.11-312 + catnip/ponder/flywheel（本地 jar）
+
+### 已验证 ✅
+
+| 项 | 证据 |
+|---|---|
+| 服务端能起来 | `Done (1.198s)! For help, type "help"` |
+| 模组被识别 | Mod List 含 `Create Train Dispatching Host (ctdhost)` |
+| `@Mod` 构造执行 | `[ctdhost/]: ctdhost: constructing (mod bus present: true)` |
+| `ServerStartingEvent` 触发 | `[ctdhost] attached; 0 registry entries` |
+| 自检机制有效 | 未生效时打出了「hook never fired」的 error，而不是静默 |
+
+### 未通过 ❌
+
+**`GlobalRailwayManager#tick` 的 Mixin 没有生效。**
+
+排查过程与结论：
+
+| 配置 | 结果 |
+|---|---|
+| 只有 `mods { ctdhost { ... } }`，toml 不声明 | 服务端正常，注入不生效，`require = 1` 也不崩 → 配置**没进 Mixin** |
+| toml 里加 `[[mixins]] config = ...` | `IllegalArgumentException: Decoration with key 'fabric-modId' already exists on config ctdhost.mixins.json` |
+| 只留 toml 声明 | 同上，仍然重复 |
+
+`require = 1` 不崩是决定性证据：如果配置被 Mixin 读到但注入点匹配不上，`require = 1` 会硬崩。
+没崩说明**配置根本没被 Mixin 处理**。
+
+而 toml 声明会报「重复装饰」，说明**又确实有另一条路径在注册它**——但那条路径注册出来的配置没有被真正加载。
+典型的 ModDevGradle 开发环境行为，产物 jar 里未必复现。
+
+### 下一步（按优先级）
+
+1. 看 `run/logs/debug.log`（不是 latest.log）里的 Mixin 细节——那里才有「Loaded config」「Could not find」这类行；
+2. 试 `neoForge { mixin { config "..." } }`（部分版本的 ModDevGradle 提供显式入口）；
+3. 若开发环境确实无法加载，**先打 jar 放进 `run/mods/` 验证**——这条最接近真实发布形态；
+4. 仍不行则改用不依赖 Mixin 的入口：`LevelTickEvent.Post` + `Create.RAILWAYS.tick` 之后的 NeoForge 事件（精度差一帧，但零 Mixin 风险）。
+
+### 附带发现
+
+- `System.out.println` **不进** `logs/latest.log`（只到 stdout），必须用 SLF4J；
+- `neoforge.mods.toml` 里 `version = "${file.jarVersion}"` 在 dev 下渲染成 `0.0NONE`，无害但要知道；
+- Ponder 的 JarJar 已内置 catnip，**再单独加 catnip jar 会导致两个模块导出同一个包**（`ModuleLayerHandler` 报 `ResolutionException`）；
+- `runServer` 任务需要显式声明 `runs { server { server() } }`，ModDevGradle 不会自动创建。

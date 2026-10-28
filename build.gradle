@@ -37,7 +37,23 @@ repositories {
 
 neoForge {
     version = project.neo_version
-    // Mixin 配置在 src/main/resources/ctdhost.mixins.json
+
+    // ModDevGradle 不会自动创建 runClient/runServer，必须显式声明
+    // 显式声明本模组占用哪个 sourceSet（ModDevGradle 用它在 run 里构建模组文件）
+    mods {
+        ctdhost {
+            sourceSet sourceSets.main
+        }
+    }
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+    }
 }
 
 dependencies {
@@ -53,6 +69,11 @@ dependencies {
     // 用本地 jar 而不是 maven：maven.createmod.net 对 18MB 的 jar 限速到 0.03 MB/s
     // 且会中途断连重试。这条路径由 tools/fetch-create.ps1 预先准备。
     compileOnly files("libs/create-1.21.1-6.0.11-312.jar")
+
+    // 运行时依赖：只为本地 runServer/runClient 验证用，不会打进 jar
+    runtimeOnly files("libs/create-1.21.1-6.0.11-312.jar")
+    runtimeOnly files("libs/flywheel-1.0.7-48.jar")
+    runtimeOnly files("libs/ponder-neoforge-1.0.85+mc1.21.1.jar")
 }
 
 tasks.withType(JavaCompile).configureEach {
