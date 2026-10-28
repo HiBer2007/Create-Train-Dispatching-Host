@@ -47,13 +47,39 @@ public final class DiagnosticKernel implements DispatchKernel {
         if (!ENABLED) return;
         DispatchKernels.register(ID, DiagnosticKernel::new);
 
+        // 诊断用信号制度必须先注册，否则下面那条交路在 freeze 校验时会失败——
+        // 这是两个模组一起跑才暴露的问题：ctdscript 启动时会 freezeAll，
+        // 一个引用不存在制度的交路会让整批校验失败。
+        // 必须先 bootstrap 内置灯色/语义，否则下面按语义登记的制度会缺 STOP 语义，
+        // 校验器会（正确地）拒绝它：「a signal system that cannot stop trains」。
+        // bootstrap 是幂等的。
+        top.hibermod.ctdapi.signal.SignalRegistries.bootstrap();
+
+        ResourceLocation sysId = ResourceLocation.fromNamespaceAndPath("ctdapi", "diagnostic");
+        top.hibermod.ctdapi.signal.SignalRegistries.registerSystem(
+            top.hibermod.ctdapi.signal.SignalSystem.builder(sysId)
+                .name(net.minecraft.network.chat.Component.literal("Diagnostic"))
+                .palette(top.hibermod.ctdapi.signal.LampColor.RED,
+                         top.hibermod.ctdapi.signal.LampColor.GREEN)
+                .aspect(top.hibermod.ctdapi.signal.SignalRegistries.Builtin.STOP)
+                .aspect(top.hibermod.ctdapi.signal.SignalRegistries.Builtin.PROCEED)
+                .type(top.hibermod.ctdapi.signal.SignalRegistries.registerType(
+                    top.hibermod.ctdapi.signal.SignalType
+                        .builder(ResourceLocation.fromNamespaceAndPath("ctdapi", "diagnostic_head"))
+                        .system(sysId)
+                        .name(net.minecraft.network.chat.Component.literal("Diagnostic Head"))
+                        .lamp(top.hibermod.ctdapi.signal.LampColor.RED)
+                        .lamp(top.hibermod.ctdapi.signal.LampColor.GREEN)
+                        .build()))
+                .build());
+
         // 诊断用交路：两条停站，供「指派 → 时刻表」这段链路验证。
         // 停站 id 不需要对应真实的 Create 车站——Applier 只是把它们写进指令的 Text。
         ResourceLocation svcId = ResourceLocation.fromNamespaceAndPath("ctdapi", "diagnostic");
         top.hibermod.ctdapi.timetable.Service.register(
             top.hibermod.ctdapi.timetable.Service.builder(svcId)
                 .code("T0")
-                .signalSystem(ResourceLocation.fromNamespaceAndPath("ctdapi", "diagnostic"))
+                .signalSystem(sysId)
                 .stop(ResourceLocation.fromNamespaceAndPath("ctdapi", "alpha"))
                 .stop(ResourceLocation.fromNamespaceAndPath("ctdapi", "beta"))
                 .build());

@@ -57,6 +57,9 @@ neoForge {
 }
 
 dependencies {
+    // GraalPy 不是 mod：放进 run/mods 不会被当成模组加载，也不会进 classpath。
+    // 必须显式挂到运行期 classpath 上，ctdscript 才找得到 polyglot。
+    runtimeOnly fileTree(dir: "libs/graalpy", include: ["*.jar"])
     // 契约层
     implementation files("libs/${project.ctdapi_jar}")
 
