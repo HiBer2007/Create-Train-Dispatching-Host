@@ -717,3 +717,61 @@ train : CTD-DIAG speed=0.000 target=0.350
 ```
 
 原生被抬到 1.0、debug 指令要 0.4、脚本要 0.35 → **0.350**。脚本的指令在真实链路上生效。
+
+---
+
+## 25. 第十五轮：把 `assign` 实现出来，它立刻抓到一个「沉默的契约」
+
+### 问题
+
+`DispatchFrame#assign` 在 API 里是**默认空实现**：
+
+```java
+default void assign(top.hibermod.ctdapi.operation.Assignment assignment) { }
+```
+
+而**没有任何宿主覆盖它**。按文档写内核的人会调用它，然后什么都不会发生——
+连日志都没有。
+
+### 修复
+
+宿主的 `DispatchFrameImpl` 现在收集指派，帧末与其它指令一起提交：
+
+```java
+for (var assignment : assignments) {
+    Assignments.publish(assignment);
+}
+```
+
+脚本侧也开了口：`out.assign(...)`。它和 `operation.publish(...)` 的区别在**时序**——
+后者立刻生效，前者等所有内核跑完后按「后写覆盖」决出胜负。
+
+### 立刻暴露的第二个问题
+
+第一个用它的内核就被校验拒绝了：
+
+```
+IllegalArgumentException: assignment demo:run900 must reference at least one unit set
+```
+
+这正是空实现一直在掩盖的东西。校验是对的。
+
+### 实测（真实服务端）
+
+```
+assignments: 2
+  demo:run900      run=T900  sets=1 units=1 source=KERNEL
+  ctdhost:diag_run run=T4200 sets=1 units=1 source=KERNEL
+  resolved demo:run900      trains=1 missing=0
+  resolved ctdhost:diag_run trains=1 missing=0
+```
+
+`demo:run900` 来自一个 Python 内核调 `out.assign(...)`，并且解析到了调试列车。
+
+### 一个没查清的疑点（如实记录）
+
+日志里仍有一条 `dispatch tick failed ... must reference at least one unit set`，
+而注册表里那份 `demo:run900` 是合法的、也解析成功。
+说明某个路径上还多发布了一次空集合的副本。**未查清，不下结论。**
+
+另外加了 `/ctd host assignments`，下次排查直接从这条命令看。
