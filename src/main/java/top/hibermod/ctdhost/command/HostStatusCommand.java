@@ -51,6 +51,7 @@ public final class HostStatusCommand {
             + (someDisabled ? "  (some edges disabled by switches)" : "")), false);
         src.sendSuccess(() -> Component.literal("  units       : " + units), false);
         src.sendSuccess(() -> Component.literal("  assignments : " + assignments), false);
+        src.sendSuccess(() -> Component.literal("  resolved    : " + host.assignments().summary()), false);
         src.sendSuccess(() -> Component.literal("  switches    : " + switchStatus), false);
 
         if (ticks == 0) {

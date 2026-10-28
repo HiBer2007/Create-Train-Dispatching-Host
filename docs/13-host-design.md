@@ -337,3 +337,33 @@ ctdhost: diagnostic queued assignment T1200 (registry now 1)
 
 `Assignments` 里的条目还没有驱动 Create 的时刻表。
 「指派 → 列车按车次运行」这一步（G4 的后半段）需要真实列车，仍待图形客户端。
+
+---
+
+## 14. 第四轮实测：指派解析层
+
+```
+CTD host status
+  ticks       : 2643
+  assignments : 1
+  resolved    : assignments=1 trains=0 unresolvedUnits=1 incomplete=1
+  switches    : logical locks=0, railways=absent (logical only)
+  ! topology empty — lay some track to exercise the mirror
+```
+
+诊断内核每 600 帧发一次指派，指向一个不存在的车辆编号 `CTD-DIAG`。
+解析器如实报 `unresolvedUnits=1 / incomplete=1 / trains=0` —— **这正是期望行为**：
+指向不存在的车是正常现象（车被拆了、编号改了），不该让调度停摆，也不该假装成功。
+
+### 分层：解析 vs 应用
+
+| 层 | 做什么 | 状态 |
+|---|---|---|
+| 注册 | `Assignments.publish` 记账 | ✅ 已实测 |
+| **解析** | 编号 → `UUID` → 现有 `Train` | ✅ 已实测（本轮） |
+| **应用** | 让列车真的按交路跑（改 `ScheduleRuntime`） | ❌ 未做 |
+
+**为什么应用层还没写**：改 `ScheduleRuntime` 需要先观察真实的
+`Schedule` / `GlobalStation` 行为——尤其是「同一列车换车次时旧 schedule 怎么清」。
+没观察就写，多半会写出一个看起来能跑、实际不调度的东西。
+分层之后，每一层都能单独验，不必等整套都对。

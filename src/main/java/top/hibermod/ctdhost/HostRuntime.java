@@ -45,6 +45,8 @@ public final class HostRuntime {
     private static volatile boolean warnedAboutMissingHook;
 
     private final TopologyMirror mirror = new TopologyMirror();
+    private final top.hibermod.ctdhost.operation.AssignmentResolver assignments =
+        new top.hibermod.ctdhost.operation.AssignmentResolver();
     private final top.hibermod.ctdhost.operation.UnitIndex units =
         new top.hibermod.ctdhost.operation.UnitIndex();
     private final SpeedApplier speed = new SpeedApplier();
@@ -158,6 +160,7 @@ public final class HostRuntime {
 
         // 车辆编号索引：编号就是 Train.name，每帧对账
         units.reconcile(scratch);
+        assignments.refresh(Create.RAILWAYS.trains, units);
 
         List<Telemetry.TrainState> states = new ArrayList<>(scratch.size());
         for (Train t : scratch) {
@@ -223,6 +226,8 @@ public final class HostRuntime {
     public SpeedApplier speed() { return speed; }
 
     public top.hibermod.ctdhost.operation.UnitIndex units() { return units; }
+
+    public top.hibermod.ctdhost.operation.AssignmentResolver assignments() { return assignments; }
 
     /** 道岔应用器（逻辑锁 + 状态诊断）。 */
     public top.hibermod.ctdhost.execute.SwitchApplier switches() {
