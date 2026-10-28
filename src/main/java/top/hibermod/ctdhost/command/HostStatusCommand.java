@@ -67,6 +67,8 @@ public final class HostStatusCommand {
         src.sendSuccess(() -> Component.literal("  resolved    : " + host.assignments().summary()), false);
         src.sendSuccess(() -> Component.literal("  schedule    : " + host.assignmentApplier().summary()), false);
         src.sendSuccess(() -> Component.literal("  switches    : " + switchStatus), false);
+        final String forwarded = host.applier() == null ? "n/a" : host.applier().forwardedSummary();
+        src.sendSuccess(() -> Component.literal("  forwarded   : " + forwarded), false);
 
         if (ticks == 0) {
             src.sendFailure(Component.literal(

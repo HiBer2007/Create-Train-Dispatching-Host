@@ -251,6 +251,9 @@ public final class HostRuntime {
 
     public SpeedApplier speed() { return speed; }
 
+    /** 指令应用器（含转交计数）。 */
+    public CommandApplier applier() { return applier; }
+
     public top.hibermod.ctdhost.operation.UnitIndex units() { return units; }
 
     public top.hibermod.ctdhost.operation.AssignmentResolver assignments() { return assignments; }

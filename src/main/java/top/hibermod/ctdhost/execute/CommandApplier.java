@@ -68,15 +68,77 @@ public final class CommandApplier implements DispatchFrameImpl.CommandSink {
 
     public int lastAppliedSwitches() { return lastAppliedSwitches; }
 
-    @Override public void applyDevices(List<Command.DeviceCommand> commands) { }
+    // ── 宿主不执行、但必须**转交**的指令 ────────────────────────────────────
+    //
+    // 设备协议、牵引电量、运营服务、HUD、PIS 板面、事件流：它们的实际效果
+    // 属于别的模组（后台调度、供电、PIS 渲染）。
+    //
+    // 早先这里是空实现。空实现的问题不是「没做」，而是**静默**：
+    // 脚本作者看到调用成功、没有异常、没有日志，会以为指令生效了。
+    // 现在统一走 OperationFeed 转交并计数，至少可观测。
 
-    @Override public void applyEnergies(List<Command.EnergyCommand> commands) { }
+    private long forwardedDevices;
+    private long forwardedEnergies;
+    private long forwardedServices;
+    private long forwardedHud;
+    private long forwardedBoards;
+    private long forwardedEvents;
 
-    @Override public void applyServices(List<Command.ServiceCommand> commands) { }
+    @Override
+    public void applyDevices(List<Command.DeviceCommand> commands) {
+        for (Command.DeviceCommand c : commands) {
+            top.hibermod.ctdapi.operation.OperationFeed.deviceCommand(c);
+            forwardedDevices++;
+        }
+    }
 
-    @Override public void applyHud(List<Hud.HudPanel> panels) { }
+    @Override
+    public void applyEnergies(List<Command.EnergyCommand> commands) {
+        for (Command.EnergyCommand c : commands) {
+            top.hibermod.ctdapi.operation.OperationFeed.energyCommand(c);
+            forwardedEnergies++;
+        }
+    }
 
-    @Override public void applyBoards(List<Pis.BoardModel> boards) { }
+    @Override
+    public void applyServices(List<Command.ServiceCommand> commands) {
+        for (Command.ServiceCommand c : commands) {
+            top.hibermod.ctdapi.operation.OperationFeed.serviceCommand(c);
+            forwardedServices++;
+        }
+    }
 
-    @Override public void applyEvents(List<RailwayEvent> events) { }
+    @Override
+    public void applyHud(List<Hud.HudPanel> panels) {
+        for (Hud.HudPanel p : panels) {
+            top.hibermod.ctdapi.operation.OperationFeed.hudPanel(p);
+            forwardedHud++;
+        }
+    }
+
+    @Override
+    public void applyBoards(List<Pis.BoardModel> boards) {
+        for (Pis.BoardModel b : boards) {
+            top.hibermod.ctdapi.operation.OperationFeed.boardModel(b);
+            forwardedBoards++;
+        }
+    }
+
+    @Override
+    public void applyEvents(List<RailwayEvent> events) {
+        for (RailwayEvent e : events) {
+            top.hibermod.ctdapi.operation.OperationFeed.railwayEvent(e);
+            forwardedEvents++;
+        }
+    }
+
+    /** 转交计数摘要，供 `/ctd host status` 显示。 */
+    public String forwardedSummary() {
+        return "devices=" + forwardedDevices
+            + " energy=" + forwardedEnergies
+            + " service=" + forwardedServices
+            + " hud=" + forwardedHud
+            + " boards=" + forwardedBoards
+            + " events=" + forwardedEvents;
+    }
 }

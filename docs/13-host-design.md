@@ -846,3 +846,56 @@ assignments: 1
 上一轮我看到这条错误时报「未查清，不下结论」——按住了编故事的冲动。
 这一轮从 `publish` 读到底，发现它和日志里那个 id 完全对得上：
 报的是**被摘空的那一方**，不是发布方。如果当时急着下结论，很可能会去改校验器。
+
+---
+
+## 27. 第十七轮：六个「静默丢弃」的指令口
+
+### 怎么发现的
+
+上一轮修 `DispatchFrame#assign`（默认空实现，没人覆盖）时想到：同类问题会不会还有？
+
+查 `CommandApplier`：
+
+```java
+@Override public void applyDevices(List<Command.DeviceCommand> commands) { }
+@Override public void applyEnergies(List<Command.EnergyCommand> commands) { }
+@Override public void applyServices(List<Command.ServiceCommand> commands) { }
+@Override public void applyHud(List<Hud.HudPanel> panels) { }
+@Override public void applyBoards(List<Pis.BoardModel> boards) { }
+@Override public void applyEvents(List<RailwayEvent> events) { }
+```
+
+**六个全是空的。** 脚本调 `out.device(...)`、`out.hud(...)` 之类，
+调用成功、无异常、无日志——作者会以为生效了。
+
+### 为什么这是错的（而不是「还没做」）
+
+按设计，这些效果本来就属于**别的模组**：设备协议、供电、PIS 渲染。
+宿主不该自己实现它们。
+
+但宿主也不该**丢**它们。空实现和「转交但没人订阅」在调用者眼里完全一样，
+只有后者的数据还在。
+
+### 改法
+
+`OperationFeed.Listener` 增加六个钩子 + 六个静态发射方法，
+`CommandApplier` 转发并计数：
+
+```
+forwarded : devices=5 energy=0 service=0 hud=0 boards=0 events=0
+```
+
+数字进了 `/ctd host status`，所以「发了但没人收」变成可观测的事。
+
+### 顺带发现的一个陷阱
+
+`out.device(deviceId, payload)` 的第一个参数是 **UUID**，不是命名空间 id：
+
+```java
+UUID id = uuid(deviceId);
+if (id == null) { dropped++; env.log("warn", ...); return; }
+```
+
+我第一次传了 `"ctdapi:platform_display"`，指令被丢弃——**这次有 warn**，
+比静默好，但文档里没写清楚。已经在调用点补了说明。
