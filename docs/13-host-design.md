@@ -625,3 +625,43 @@ if (train.invalid) {
 不得不整文件重写。**这已经是第三次**（`HostStatusCommand`、`HostRuntime`、本例）。
 
 规律很稳定：**超过两处插入就该整文件重写**。脚本替换适合改一行，不适合改一段。
+
+---
+
+## 20. 第十轮：修掉「时刻表永远导航失败」
+
+### 上一轮漏了什么
+
+上一轮把 `schedule=2` 当成「G4 完成」。但读 `DestinationInstruction.start` 才发现：
+
+```java
+for (GlobalStation s : train.graph.getPoints(EdgePointType.STATION))
+    if (!s.name.matches(regex)) continue;
+```
+
+**指令里写的是正则，匹配的是车站名。** 我们写的是 `ctdapi:alpha` 这种 id，
+一个站也匹配不到 → 列车会反复 `failedNavigationNoTarget` + 冷却。
+
+**比不写时刻表更糟。**
+
+### 加了 StationResolver
+
+- 停站 id 的 path 段与车站名做忽略大小写精确匹配；
+- 匹配上后用 `Pattern.quote` 包起来再写（车站名可能含正则元字符）；
+- **匹配不到就整条跳过**，不退化成写 id。
+
+### 现在的行为
+
+```
+schedule : appliedTrains=0 entries=0 unresolvedStops=1 worldStations=0
+```
+
+`worldStations=0` 表示世界里还没有车站——于是**不写时刻表**，并明确报出来。
+
+这比之前「写了条永远失败的指令」正确得多。
+
+### 修正一条记录
+
+§18 里写的 `schedule=2` 只证明了**写入路径可用**，不代表那张时刻表能用。
+真实可用的前提是：世界里存在与停站 id 对应的 `GlobalStation`。
+而车站需要玩家摆方块并命名——又一个环境边界。
