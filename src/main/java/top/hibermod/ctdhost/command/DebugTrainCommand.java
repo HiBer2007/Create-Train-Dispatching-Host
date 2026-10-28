@@ -102,32 +102,40 @@ public final class DebugTrainCommand {
             CarriageBogey bogey = new CarriageBogey(bogeyBlock, false, new CompoundTag(), front, back);
             Carriage carriage = new Carriage(bogey, null, 0);
 
-            // ── 为什么这里**不**造车厢实体 ────────────────────────────────────
+            // ── 为什么这里不造车厢实体：六级失败链 ──────────────────────────
             //
-            // 尝试过，四步都撞在同一个前提上：车厢构造必须真正从方块组装出来。
+            // 试了六次，每次修好一个缺口就露出下一个，而每一个缺口都指向同一个前提：
+            // **车厢构造必须真正从方块组装出来**。完整链条：
             //
             //   ① 空 serialisedEntity
             //      CarriageEntityHandler.createEntity 里 EntityType.create 返回 null
             //      → train.invalid = true → tickTrains 把列车从注册表移除。
             //
-            //   ② 补上实体 NBT
-            //      EntityType.create 造出了 CarriageContraptionEntity，接着 NPE：
+            //   ② 只补实体 NBT
             //      Contraption.fromNBT 里 ContraptionType.fromType("") 返回 null，
-            //      下一行 contraption.readNBT(...) 直接炸。
+            //      下一行 contraption.readNBT(...) 直接 NPE。
             //
-            //   ③ 补上 "Contraption" + "Type": "create:carriage"
-            //      setContraption 之后再 saveWithoutId 仍然失败：
-            //      ReportedException: Saving entity NBT。
+            //   ③ 再补 "Contraption" + "Type": "create:carriage"
+            //      setContraption 之后 saveWithoutId 仍失败：ReportedException: Saving entity NBT。
             //
-            //   ④ 换顺序：先 setContraption 再存
-            //      NPE: BlockPos.getX() because "p_129225_" is null
-            //      —— Contraction 的 anchor 是 null。anchor 是组装时那个方块的位置。
+            //   ④ 先 setContraption 再存
+            //      NPE: BlockPos.getX() —— Contraption.writeNBT 里的
+            //      nbt.put("Anchor", NbtUtils.writeBlockPos(anchor))，anchor 是 null。
             //
-            // 每一步都能修，修完露出下一步，而下一步依然要求「真实组装」。
-            // 这就是环境边界：一辆能被 tick 的列车需要一个从方块装配出来的车厢构造。
+            //   ⑤ 给 anchor 赋值
+            //      NPE: read field "minY" because "contraption.bounds" is null。
             //
-            // 所以调试列车只做静态观测（遥测、编号、时刻表、速度钳位、指派），
-            // 不参与物理。想验「列车真的跑」，只能进游戏组装一列。
+            //   ⑥ 再给 bounds 赋值
+            //      NPE: UUID.getMostSignificantBits() —— 又一个必填的 UUID 字段是 null。
+            //
+            // 每一步都能修，修完露出下一步。**这些字段平时由组装过程填充**：
+            // anchor 是那个方块的位置，bounds 是被移动方块的包围盒，UUID 是这次组装的标识。
+            // 手工填「空但合法」的值，等于在伪造一次从未发生的组装。
+            //
+            // 所以调试列车只做静态观测：遥测、编号、时刻表、速度钳位、指派。
+            // 「列车真的在铁轨上跑」只能进游戏组装一列来验。
+            final String bodyNote = "static (no carriage body; see the six-step note above)";
+
             List<Carriage> carriages = new ArrayList<>();
             carriages.add(carriage);
             List<Integer> spacing = new ArrayList<>();
@@ -159,7 +167,7 @@ public final class DebugTrainCommand {
             // 那是玩家放置动作的产物，程序化造不出来。
             // 所以这个调试列车只做静态观测，不参与物理。
             final String message = "debug train created: id=" + train.id
-                + " name=CTD-DIAG graph=" + graph.id + " (static)";
+                + " name=CTD-DIAG graph=" + graph.id + " " + bodyNote;
             src.sendSuccess(() -> Component.literal(message), false);
             src.sendSuccess(() -> Component.literal(
                 "  static observation only — see the comment for why it is not ticked"), false);
