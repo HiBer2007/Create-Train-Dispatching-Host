@@ -899,3 +899,70 @@ if (id == null) { dropped++; env.log("warn", ...); return; }
 
 我第一次传了 `"ctdapi:platform_display"`，指令被丢弃——**这次有 warn**，
 比静默好，但文档里没写清楚。已经在调用点补了说明。
+
+---
+
+## 28. 第十八轮：把最后一个静默丢弃点堵上
+
+### 上一轮之后还剩什么
+
+`FrameOutput` 里六个方法已经有 warn + 计数，但有四个是**直接 return**：
+
+```java
+public void hold(String trainId, String reason) {
+    UUID id = uuid(trainId);
+    if (id == null) return;          // ← 无声无息
+    ...
+}
+```
+
+`hold` / `proceed` / `command` / `aspect` 都是这个形状。
+脚本作者写错 id 格式，看到的是「调用成功、没有异常」。
+
+### 改法
+
+统一走 `requireId(raw, what)`：解析失败就 `dropped++` 并 `env.log("warn", ...)`。
+
+脚本自己也能读：`out.dropped()`。
+
+### 一个必须修的设计缺陷
+
+`dropped` 是 `FrameOutput` 的实例字段，而 `FrameOutput` **每帧新建**——
+脚本读到的永远是 0。所以计数必须累加到内核上：
+
+```java
+int droppedNow = fo.droppedCount();
+if (droppedNow > 0) {
+    totalDropped += droppedNow;
+    if (totalDropped == droppedNow || totalDropped % 50 < droppedNow) {
+        env.log("warn", "ctd-script: kernel {} has dropped {} command(s) ...",
+            id, totalDropped);
+    }
+}
+```
+
+### 实测
+
+脚本每 100 帧故意传两个坏 id：
+
+```
+[ctdhost/warn] ctd-script: bad train id 'not-a-uuid'
+[ctdhost/warn] ctd-script: bad signal id 'also-bad'
+[script] bad calls dropped so far: 2
+[ctdhost/warn] ctd-script: kernel demo:badargs has dropped 2 command(s) with bad arguments so far
+[ctdhost/warn] ctd-script: kernel demo:badargs has dropped 50 command(s) ...
+```
+
+**三层反馈都有了**：调用点、脚本自检、内核汇总。
+
+### 小结：这一类问题的清单
+
+| 位置 | 症状 | 修法 |
+|---|---|---|
+| `DispatchFrame#assign` | 默认空实现，没人覆盖 | 宿主实现 + 脚本口 |
+| `CommandApplier` 六个 sink | 空方法体 | 转交 `OperationFeed` + 计数 |
+| `FrameOutput` 四个方法 | 坏参数直接 return | `requireId` + 计数 + 汇总 |
+| `out.device(...)` 参数 | 传命名空间 id 会被丢 | 文档写明要 UUID |
+
+**共同点：都不崩、不报错、不留痕。** 这四类修完之后，
+「脚本写了但没生效」应当只剩一种可能——**逻辑写错了**，而不是接口吞了。
