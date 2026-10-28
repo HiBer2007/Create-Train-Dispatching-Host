@@ -367,3 +367,44 @@ CTD host status
 `Schedule` / `GlobalStation` 行为——尤其是「同一列车换车次时旧 schedule 怎么清」。
 没观察就写，多半会写出一个看起来能跑、实际不调度的东西。
 分层之后，每一层都能单独验，不必等整套都对。
+
+---
+
+## 15. 第五轮实测：拓扑镜像被真实验证
+
+无头环境铺不了铁轨（轨道方块需要贝塞尔数据，Create 也没有造轨命令），
+但镜像读的是 `TrackGraph` 而不是方块。所以加了一条调试命令
+`/ctd host debugtrack`：直接用 `TrackGraph.createNodeIfAbsent` +
+`connectNodes` 往图里插一条边。
+
+### RCON 实测
+
+```
+# 造轨前
+  topology    : nodes=0 edges=0
+  ! topology empty — lay some track to exercise the mirror
+
+# /ctd host debugtrack
+debug track created: graph=f4388db3-... nodes=2
+
+# 造轨后
+  topology    : nodes=2 edges=1
+```
+
+**镜像看到了真实的 `TrackNode` / `TrackEdge` 对象。** 这一次验证覆盖了：
+
+| 环节 | 结果 |
+|---|---|
+| 遍历 `graph.getNodes()` | ✅ 2 个节点 |
+| `locateNode` 取回节点 | ✅ 没有返回 null |
+| `StableIds.node` 转换 | ✅ 无异常 |
+| `getConnectionsFrom` 边收集 | ✅ 1 条边 |
+| 边去重（每条边从两端各见一次） | ✅ 1 而不是 2 |
+| 度数计算 | ✅ 两端各 1 |
+
+最后一行「topology empty」的警告也随之为空——**自检按设计消失了**。
+
+### 这条命令是调试用的
+
+它造出的图**没有对应的方块**，列车会在一条「看不见的轨道」上跑。
+只在 `runServer` + RCON 的验证场景里用，不要在生产档里敲。

@@ -26,7 +26,8 @@ public final class HostStatusCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> build() {
         return Commands.literal("host")
             .then(Commands.literal("status").executes(ctx -> status(ctx.getSource())))
-            .then(Commands.literal("switches").executes(ctx -> switches(ctx.getSource())));
+            .then(Commands.literal("switches").executes(ctx -> switches(ctx.getSource())))
+            .then(DebugTrackCommand.build());
     }
 
     private static int status(CommandSourceStack src) {
