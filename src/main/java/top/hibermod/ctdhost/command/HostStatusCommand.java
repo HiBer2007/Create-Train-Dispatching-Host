@@ -27,6 +27,7 @@ public final class HostStatusCommand {
         return Commands.literal("host")
             .then(Commands.literal("status").executes(ctx -> status(ctx.getSource())))
             .then(Commands.literal("switches").executes(ctx -> switches(ctx.getSource())))
+            .then(Commands.literal("assignments").executes(ctx -> assignments(ctx.getSource())))
             .then(DebugTrackCommand.build())
             .then(DebugTrainCommand.build());
     }
@@ -76,6 +77,23 @@ public final class HostStatusCommand {
                 "  ! topology empty — lay some track to exercise the mirror"));
         }
         return ticks;
+    }
+
+    private static int assignments(CommandSourceStack src) {
+        var list = top.hibermod.ctdapi.operation.Assignments.all();
+        src.sendSuccess(() -> Component.literal("assignments: " + list.size()), false);
+        for (var a : list) {
+            final String line = "  " + a.id() + " run=" + a.run().runNumber()
+                + " sets=" + a.sets().size() + " units=" + a.allUnits().size()
+                + " source=" + a.source();
+            src.sendSuccess(() -> Component.literal(line), false);
+        }
+        for (var r : HostRuntime.get().assignments().all()) {
+            final String line = "  resolved " + r.assignment().id()
+                + " trains=" + r.trains().size() + " missing=" + r.missing().size();
+            src.sendSuccess(() -> Component.literal(line), false);
+        }
+        return list.size();
     }
 
     private static int switches(CommandSourceStack src) {

@@ -29,6 +29,14 @@ public final class DispatchFrameImpl implements DispatchFrame {
     private final List<Hud.HudPanel> huds = new ArrayList<>();
     private final List<Pis.BoardModel> boards = new ArrayList<>();
     private final List<RailwayEvent> events = new ArrayList<>();
+    private final List<top.hibermod.ctdapi.operation.Assignment> assignments = new ArrayList<>();
+
+    @Override
+    public void assign(top.hibermod.ctdapi.operation.Assignment assignment) {
+        if (assignment != null) assignments.add(assignment);
+    }
+
+    public List<top.hibermod.ctdapi.operation.Assignment> assignments() { return assignments; }
 
     @Override public void command(Command.TrainCommand command) { trains.add(command); }
     @Override public void aspect(Command.AspectCommand command) { aspects.add(command); }
@@ -56,7 +64,8 @@ public final class DispatchFrameImpl implements DispatchFrame {
     public boolean isEmpty() {
         return trains.isEmpty() && aspects.isEmpty() && switches.isEmpty()
             && devices.isEmpty() && energies.isEmpty() && services.isEmpty()
-            && huds.isEmpty() && boards.isEmpty() && events.isEmpty();
+            && huds.isEmpty() && boards.isEmpty() && events.isEmpty()
+            && assignments.isEmpty();
     }
 
     /**
@@ -75,6 +84,9 @@ public final class DispatchFrameImpl implements DispatchFrame {
         sink.applyHud(huds);
         sink.applyBoards(boards);
         sink.applyEvents(events);
+        for (var assignment : assignments) {
+            top.hibermod.ctdapi.operation.Assignments.publish(assignment);
+        }
     }
 
     /** 指令落地接口。实现方是宿主，持有 Create 的类型。 */
