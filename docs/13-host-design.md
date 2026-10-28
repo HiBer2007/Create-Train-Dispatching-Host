@@ -317,3 +317,23 @@ Mixin 至今没生效（见 §11），所以宿主改成**两条入口都收**�
 **下一步最有价值的事**：在 `runServer` 的存档里预置一小段轨道。可以用命令
 `/create track` 之类，或在 `world/` 里放一个现成的测试存档。
 只要 `nodes > 0`，镜像的非空路径就被验了。
+
+---
+
+## 13. 第三轮实测：运营身份链路
+
+```
+ctdhost: diagnostic queued assignment T600  (registry now 0)
+ctdhost: diagnostic queued assignment T1200 (registry now 1)
+```
+
+第一行 `registry now 0` 是**正确的**：日志打在发布之前，同一帧末尾才落地；
+第二行读到 1，说明上一帧确实进了注册表。
+
+链路：`ControlChannel.assign` → `HostRuntime.applyControlChannel` → `Assignments.publish`。
+这条路径**每帧都在跑**，现在有了实测证据。
+
+### 仍未验证
+
+`Assignments` 里的条目还没有驱动 Create 的时刻表。
+「指派 → 列车按车次运行」这一步（G4 的后半段）需要真实列车，仍待图形客户端。

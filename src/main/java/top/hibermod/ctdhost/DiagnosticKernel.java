@@ -9,6 +9,11 @@ import top.hibermod.ctdapi.DispatchKernels;
 import top.hibermod.ctdapi.FrameContext;
 import top.hibermod.ctdapi.KernelEnv;
 import top.hibermod.ctdapi.Telemetry;
+import top.hibermod.ctdapi.operation.Assignment;
+import top.hibermod.ctdapi.operation.Assignments;
+import top.hibermod.ctdapi.operation.ControlChannel;
+import top.hibermod.ctdapi.operation.Run;
+import top.hibermod.ctdapi.operation.UnitSet;
 
 /**
  * 自检内核：证明「宿主 → 内核 → 指令 → 应用」这条链在真实服务端里是通的。
@@ -58,7 +63,23 @@ public final class DiagnosticKernel implements DispatchKernel {
     public void onFrame(FrameContext in, DispatchFrame out) {
         frames++;
 
-        // 每 200 帧报一次：证明跨语言/跨层调用真的在持续发生，
+        // 自检运营身份链路：每 600 帧发布一次指派，验证 ControlChannel → Assignments 是通的。
+        // 没有列车也能验——断言的是「登记进了注册表」，不是「列车按它跑」。
+        if (frames % 600 == 0) {
+            ResourceLocation setId = ResourceLocation.fromNamespaceAndPath("ctdhost", "diagnostic");
+            ResourceLocation runId = ResourceLocation.fromNamespaceAndPath("ctdapi", "diagnostic");
+            UnitSet unit = new UnitSet(setId,
+                net.minecraft.network.chat.Component.literal("diag"),
+                java.util.List.of(new top.hibermod.ctdapi.operation.UnitNumber("CTD-DIAG")));
+            Run run = new Run(runId, "T" + frames, in.gameTime());
+            Assignment assignment = new Assignment(
+                ResourceLocation.fromNamespaceAndPath("ctdhost", "diag_run"), run,
+                java.util.List.of(unit), Assignment.Source.KERNEL, in.gameTime());
+            ControlChannel.assign(ControlChannel.Source.AUTOMATION, in.gameTime(), assignment);
+            HostRuntime.LOG.info("ctdhost: diagnostic queued assignment {} (registry now {})",
+                "T" + frames, Assignments.size());
+        }
+        // 每 60 帧报一次：证明跨语言/跨层调用真的在持续发生，
         // 而不是只在启动时凑巧调了一次。
         if (frames - lastReport >= 60) {
             lastReport = frames;
