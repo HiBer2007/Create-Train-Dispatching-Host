@@ -775,3 +775,74 @@ assignments: 2
 说明某个路径上还多发布了一次空集合的副本。**未查清，不下结论。**
 
 另外加了 `/ctd host assignments`，下次排查直接从这条命令看。
+
+---
+
+## 26. 第十六轮：改派最后一辆车会崩——找到并修掉
+
+### 上一轮那个「没查清的疑点」
+
+```
+dispatch tick failed: IllegalArgumentException:
+  assignment demo:run900 must reference at least one unit set
+```
+
+注册表里那份 `demo:run900` 明明是合法的，却报「空指派」。追下去发现根因在 `Assignments.publish`：
+
+```java
+if (old != null) {
+    BY_ID.put(other, withoutUnit(old, u));   // ← 这里
+}
+```
+
+`withoutUnit` 把车从旧指派里摘出来，**摘空了照样 new 一个 Assignment**。
+而 `Assignment` 的构造契约是「至少一个车组」：
+
+```java
+if (sets.isEmpty()) {
+    throw new IllegalArgumentException("assignment " + id + " must reference at least one unit set");
+}
+```
+
+### 触发条件极其普通
+
+只要「把某列车的**唯一**车组改派给另一个指派」就会踩到。
+真实场景就是**把车从 A 交路改派到 B 交路**。
+
+后果不崩服，但**整帧调度作废**，日志只有一行 `dispatch tick failed`。
+
+### 修法
+
+```java
+Assignment reduced = withoutUnit(old, u);
+if (reduced == null) {
+    BY_ID.remove(other);                 // 空指派不存在，那就撤掉
+    OperationFeed.assignmentRevoked(old);
+} else {
+    BY_ID.put(other, reduced);
+}
+```
+
+空指派在契约里根本不是一种状态，所以正确答案是**撤销**，不是造一个「空但合法」的壳。
+
+### 回归测试
+
+`./gradlew assignmentsTest`：9 项，覆盖首发、唯一车组改派、多车组部分摘除、撤销后重新占用。全绿。
+
+### 实测
+
+脚本每 200 帧重新发布一次指派，和诊断内核抢同一列车：
+
+```
+assignments: 1
+  demo:run900 run=T900 sets=1 units=1 source=KERNEL
+  resolved demo:run900 trains=1 missing=0
+```
+
+**后发布者胜，输的那个被撤销，日志无错误。**
+
+### 过程教训
+
+上一轮我看到这条错误时报「未查清，不下结论」——按住了编故事的冲动。
+这一轮从 `publish` 读到底，发现它和日志里那个 id 完全对得上：
+报的是**被摘空的那一方**，不是发布方。如果当时急着下结论，很可能会去改校验器。
