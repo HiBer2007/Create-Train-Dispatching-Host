@@ -167,6 +167,7 @@ public final class HostRuntime {
 
         // 线路限速：先于内核指令生效，内核也不能突破它
         top.hibermod.ctdhost.execute.RestrictionsApplier.apply(scratch, gameTime);
+        top.hibermod.ctdhost.execute.HornWatcher.tick(gameTime);
 
         units.reconcile(scratch);
         assignments.refresh(Create.RAILWAYS.trains, units);
