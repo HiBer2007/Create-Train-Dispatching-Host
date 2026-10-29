@@ -74,6 +74,8 @@ dependencies {
     compileOnly files("libs/create-1.21.1-6.0.11-312.jar")
     // Create 的字段类型引用 catnip（Couple 等），缺了它读那些字段会「无法解引用」
     compileOnly files("libs/catnip-0.8.54.jar")
+    // 部分模型（AllPartialModels.*）的类型来自 flywheel，编译期也要能看到
+    compileOnly files("libs/flywheel-1.0.7-48.jar")
 
     // 运行时依赖：只为本地 runServer/runClient 验证用，不会打进 jar
     runtimeOnly files("libs/create-1.21.1-6.0.11-312.jar")

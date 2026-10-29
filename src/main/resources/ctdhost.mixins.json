@@ -6,7 +6,7 @@
   "mixins": [
     "GlobalRailwayManagerMixin",
     "SignalBoundaryMixin",
-    "SignalRendererMixin"
+    "NixieTubeRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1
