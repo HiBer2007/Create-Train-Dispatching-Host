@@ -163,6 +163,8 @@ public final class HostRuntime {
         }
 
         // 车辆编号索引：编号就是 Train.name，每帧对账
+        top.hibermod.ctdhost.telemetry.StationWatcher.tick(gameTime);
+
         units.reconcile(scratch);
         assignments.refresh(Create.RAILWAYS.trains, units);
         assignmentApplier.apply(assignments, Create.RAILWAYS.trains);
