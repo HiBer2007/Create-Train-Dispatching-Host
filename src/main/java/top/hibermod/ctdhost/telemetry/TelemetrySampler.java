@@ -80,6 +80,7 @@ public final class TelemetrySampler {
             train.targetSpeed,
             train.acceleration(),
             train.maxSpeed(),
+            train.maxTurnSpeed(),
             carriages == null ? 0 : carriages.size(),
             train.doubleEnded,
             train.manualTick,

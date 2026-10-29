@@ -50,12 +50,19 @@ public final class TrainFeedSync {
 
         List<TrainFeedPayload.Entry> entries = new ArrayList<>();
         for (Train train : Create.RAILWAYS.trains.values()) {
+            // 许可速度来自**内核的授权**，不是列车自己的 targetSpeed：
+            // 后者是行车策略（没人给目标就是 0），把它当许可速度会显示成「停车」
+            double cap = top.hibermod.ctdapi.status.Authority.speedCap(train.id);
+            double dist = top.hibermod.ctdapi.status.Authority.distance(train.id);
+
             entries.add(new TrainFeedPayload.Entry(
                 train.id,
                 train.speed,
                 train.targetSpeed,
                 train.manualTick || train.runtime == null || train.runtime.paused,
-                gameTime));
+                gameTime,
+                cap,
+                dist));
         }
 
         TrainFeedPayload payload = new TrainFeedPayload(entries);
