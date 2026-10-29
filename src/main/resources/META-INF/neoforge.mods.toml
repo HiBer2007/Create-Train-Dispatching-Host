@@ -19,6 +19,11 @@ Requires Create. Without a kernel mod or script runtime installed it does
 nothing at all.
 '''
 
+# Without this block the mixin config is never loaded: the classes sit inside the
+# jar, no injection happens, and nothing reports an error.
+[[mixins]]
+config = "ctdhost.mixins.json"
+
 [[dependencies.ctdhost]]
 modId = "neoforge"
 type = "required"

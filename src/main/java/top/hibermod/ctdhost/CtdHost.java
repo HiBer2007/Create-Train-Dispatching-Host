@@ -44,9 +44,28 @@ public final class CtdHost {
         LOG.info("ctdhost: class loaded");
     }
 
+    /**
+     * 启动自检：mixin 到底挂上没有。
+     *
+     * <p>mixin 失败有两种表现：注入点找不到（配置成 required 会直接崩），
+     * 或者接口没被织进去（不崩，但所有 instanceof 判断都是 false）。
+     * 后者极难从现象上分辨，所以开机就打一行。
+     */
+    private static void checkSignalMixin() {
+        try {
+            boolean applied = top.hibermod.ctdapi.signal.SignalSystemHolder.class
+                .isAssignableFrom(
+                    com.simibubi.create.content.trains.signal.SignalBoundary.class);
+            System.out.println("[ctdhost] SignalBoundary mixin "
+                + (applied ? "APPLIED" : "MISSING -- signal system selection will not work"));
+        } catch (Throwable t) {
+            System.out.println("[ctdhost] SignalBoundary mixin check failed: " + t);
+        }
+    }
     public CtdHost(IEventBus modBus) {
         LOG.info("ctdhost: constructing (mod bus present: {})", modBus != null);
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
+        checkSignalMixin();
         DiagnosticKernel.registerIfEnabled();
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.RegisterCommandsEvent e) ->
