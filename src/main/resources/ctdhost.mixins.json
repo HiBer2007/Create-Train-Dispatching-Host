@@ -4,7 +4,8 @@
   "package": "top.hibermod.ctdhost.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "GlobalRailwayManagerMixin"
+    "GlobalRailwayManagerMixin",
+    "SignalBoundaryMixin"
   ],
   "injectors": {
     "defaultRequire": 1
