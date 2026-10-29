@@ -72,6 +72,8 @@ dependencies {
     // 用本地 jar 而不是 maven：maven.createmod.net 对 18MB 的 jar 限速到 0.03 MB/s
     // 且会中途断连重试。这条路径由 tools/fetch-create.ps1 预先准备。
     compileOnly files("libs/create-1.21.1-6.0.11-312.jar")
+    // Create 的字段类型引用 catnip（Couple 等），缺了它读那些字段会「无法解引用」
+    compileOnly files("libs/catnip-0.8.54.jar")
 
     // 运行时依赖：只为本地 runServer/runClient 验证用，不会打进 jar
     runtimeOnly files("libs/create-1.21.1-6.0.11-312.jar")

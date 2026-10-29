@@ -106,6 +106,29 @@ public final class TopologyMirror {
             }
         }
 
+        // 信号机：从图的边点里取 SignalBoundary。
+        // 不读它的话 ctx.signals() 永远是空的——内核想控灯也无从控起。
+        for (var graph : graphs.values()) {
+            try {
+                for (com.simibubi.create.content.trains.signal.SignalBoundary boundary
+                        : graph.getPoints(com.simibubi.create.content.trains.graph.EdgePointType.SIGNAL)) {
+                    Rail.EdgeId edgeId = edgeIdOf(boundary);
+                    if (edgeId == null) continue;
+
+                    b.signal(new top.hibermod.ctdapi.Topology.SignalSite(
+                        boundary.id,
+                        edgeId,
+                        boundary.position,
+                        true,
+                        true,
+                        false,
+                        null,
+                        ""));
+                }
+            } catch (Throwable ignored) {
+                // 某个图读不出来不该让整张拓扑失败
+            }
+        }
         lastNodeCount = nodeCount;
         lastEdgeCount = edgeCount;
         this.view = b.build();
@@ -133,5 +156,30 @@ public final class TopologyMirror {
         out.put("nodes", m.lastNodeCount);
         out.put("edges", m.lastEdgeCount);
         return out;
+    }
+    /**
+     * 取信号机所在边。
+     *
+     * <p>用反射读 {@code edgeLocation}：它的类型是 catnip 的 {@code Couple}，
+     * 在只有 Create jar 的编译环境里读它会报「无法解引用」。
+     * 为一个字段把 catnip 拖进编译依赖不值得，反射只在重建拓扑时跑一次。
+     */
+    private static Rail.EdgeId edgeIdOf(
+            com.simibubi.create.content.trains.signal.TrackEdgePoint point) {
+        try {
+            Object couple = com.simibubi.create.content.trains.signal.TrackEdgePoint.class
+                .getField("edgeLocation").get(point);
+            if (couple == null) return null;
+
+            Object first = couple.getClass().getMethod("getFirst").invoke(couple);
+            Object second = couple.getClass().getMethod("getSecond").invoke(couple);
+            if (first == null || second == null) return null;
+
+            return Rail.EdgeId.of(
+                StableIds.node((com.simibubi.create.content.trains.graph.TrackNodeLocation) first),
+                StableIds.node((com.simibubi.create.content.trains.graph.TrackNodeLocation) second));
+        } catch (Throwable t) {
+            return null;
+        }
     }
 }
