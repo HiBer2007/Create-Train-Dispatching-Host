@@ -165,6 +165,9 @@ public final class HostRuntime {
         // 车辆编号索引：编号就是 Train.name，每帧对账
         top.hibermod.ctdhost.telemetry.StationWatcher.tick(gameTime);
 
+        // 线路限速：先于内核指令生效，内核也不能突破它
+        top.hibermod.ctdhost.execute.RestrictionsApplier.apply(scratch, gameTime);
+
         units.reconcile(scratch);
         assignments.refresh(Create.RAILWAYS.trains, units);
         assignmentApplier.apply(assignments, Create.RAILWAYS.trains);
