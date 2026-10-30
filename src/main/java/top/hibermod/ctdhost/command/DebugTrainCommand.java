@@ -64,18 +64,24 @@ public final class DebugTrainCommand {
         try {
             ServerLevel level = src.getLevel();
 
+            // 挑**最大**的那张图。
+            //
+            // 原来取的是「遇到的第一张有连接的图」——HashMap 顺序不定，
+            // 于是经常把车放到 4 格的调试残段上，两端都 blocked，
+            // 车永远不动，而看起来像调度没生效。
             TrackGraph graph = null;
             TrackEdge edge = null;
-            outer:
+            int bestNodes = -1;
+
             for (TrackGraph g : Create.RAILWAYS.trackNetworks.values()) {
                 for (var loc : g.getNodes()) {
                     TrackNode node = g.locateNode(loc);
                     if (node == null) continue;
                     var conns = g.getConnectionsFrom(node);
-                    if (conns != null && !conns.isEmpty()) {
+                    if (conns != null && !conns.isEmpty() && g.getNodes().size() > bestNodes) {
+                        bestNodes = g.getNodes().size();
                         graph = g;
                         edge = conns.values().iterator().next();
-                        break outer;
                     }
                 }
             }
