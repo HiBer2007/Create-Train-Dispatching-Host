@@ -76,6 +76,7 @@ public final class HostStatusCommand {
                 + " manual=" + train.manualTick
                 + " runtime=" + (train.runtime == null ? "NULL" : "ok")
                 + " ticked=" + top.hibermod.ctdhost.command.TrainTickProbe.ticked(train)
+                + " blocked=" + (train.status != null && train.status.track)
                 + " speedReq=" + top.hibermod.ctdhost.execute.SpeedControl.size()
                 + " schedule=" + top.hibermod.ctdhost.operation.AssignmentApplier.entriesOf(train);
             src.sendSuccess(() -> Component.literal(line), false);

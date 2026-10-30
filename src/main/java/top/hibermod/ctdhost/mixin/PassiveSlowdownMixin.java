@@ -22,6 +22,11 @@ import com.simibubi.create.content.trains.entity.Train;
 @Mixin(Train.class)
 public abstract class PassiveSlowdownMixin {
 
+    private static final org.slf4j.Logger LOG =
+        org.slf4j.LoggerFactory.getLogger("ctdhost-passive");
+
+    private static long cancels;
+
     @Inject(method = "tickPassiveSlowdown", at = @At("HEAD"),
         cancellable = true, require = 1, remap = false)
     private void ctd$skipWhenControlled(CallbackInfo ci) {
@@ -29,6 +34,13 @@ public abstract class PassiveSlowdownMixin {
             Train self = (Train) (Object) this;
             if (top.hibermod.ctdhost.execute.SpeedControl.hasRequest(self.id)) {
                 ci.cancel();
+                if (++cancels == 1) {
+                    LOG.info("[passive] first passive-slowdown cancel for {}", self.id);
+                }
+                if (cancels % 400 == 0) {
+                    LOG.info("[passive] cancelled={} speed={} target={}",
+                        cancels, self.speed, self.targetSpeed);
+                }
             }
         } catch (Throwable ignored) {
             // 判断失败就按原版走：被动减速本来就安全
