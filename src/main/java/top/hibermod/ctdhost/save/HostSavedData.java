@@ -187,4 +187,23 @@ public final class HostSavedData extends SavedData {
         }
         return d;
     }
+    // ── 读取入口 ──────────────────────────────────────────────────────────
+
+    /**
+     * 主世界存档里的那一份。没有就新建。
+     *
+     * <p>早先这个类写好了 save/load，但**从来没有被实例化过**：
+     * 内核的 {@code KernelEnv#state()} 返回的是一个临时 {@code CompoundTag}，
+     * {@code markStateDirty()} 是空实现。于是「重启之后内核还在原地」这件事
+     * 从未成立——状态每次重启都是空的，而且没有任何报错。
+     */
+    public static HostSavedData get(net.minecraft.server.MinecraftServer server) {
+        if (server == null) return new HostSavedData();
+        var overworld = server.overworld();
+        if (overworld == null) return new HostSavedData();
+
+        return overworld.getDataStorage().computeIfAbsent(
+            new SavedData.Factory<>(HostSavedData::new, HostSavedData::load),
+            FILE_ID);
+    }
 }

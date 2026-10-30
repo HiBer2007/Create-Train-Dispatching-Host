@@ -296,7 +296,7 @@ public final class HostRuntime {
                 : null;
             DispatchPass p = new DispatchPass(() -> collect(filter), applier);
             p.setTrainFilter(filter);
-            p.activate(kernel, new Env());
+            p.activate(kernel, new Env(id));
             passes.put(id, p);
             LOG.info("[ctdhost] kernel " + id + " active"
                 + (anyBinding ? " (" + top.hibermod.ctdhost.operation.TrainScripts.trainsOf(id).size() + " trains)" : " (all trains)"));
@@ -336,11 +336,36 @@ public final class HostRuntime {
     // ── 最小 KernelEnv ────────────────────────────────────────────────────
 
     private static final class Env implements top.hibermod.ctdapi.KernelEnv {
-        private final net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+        private final net.minecraft.resources.ResourceLocation kernelId;
+        private net.minecraft.nbt.CompoundTag tag;
+
+        Env(net.minecraft.resources.ResourceLocation kernelId) {
+            this.kernelId = kernelId;
+        }
 
         @Override public long gameTime() { return TICKS.get(); }
-        @Override public net.minecraft.nbt.CompoundTag state() { return tag; }
-        @Override public void markStateDirty() { }
+
+        /**
+         * 内核台账 —— **存档里的那一份**，不是新建的空标签。
+         *
+         * <p>以前这里返回刚 new 出来的 {@code CompoundTag}，{@code markStateDirty()} 是空方法：
+         * 脚本写进去的东西重启就没了，而且没有任何报错。写得好好的存档代码
+         * （{@code HostSavedData}）压根没有被实例化过。
+         */
+        @Override public net.minecraft.nbt.CompoundTag state() {
+            if (tag == null) {
+                var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+                tag = top.hibermod.ctdhost.save.HostSavedData.get(server).kernelState(kernelId);
+            }
+            return tag;
+        }
+
+        @Override public void markStateDirty() {
+            var server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+            var data = top.hibermod.ctdhost.save.HostSavedData.get(server);
+            data.putKernelState(kernelId, state());
+            data.setDirty();
+        }
 
         @Override public top.hibermod.ctdapi.Topology topology() {
             return HostRuntime.get().mirror().current();
