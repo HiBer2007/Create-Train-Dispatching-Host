@@ -29,6 +29,7 @@ public final class HostStatusCommand {
             .then(Commands.literal("switches").executes(ctx -> switches(ctx.getSource())))
             .then(Commands.literal("assignments").executes(ctx -> assignments(ctx.getSource())))
             .then(top.hibermod.ctdhost.command.DebugStationCommand.build())
+            .then(top.hibermod.ctdhost.command.ScheduleCommand.build())
             .then(top.hibermod.ctdhost.command.RestrictCommand.build())
             .then(DebugTrackCommand.build())
             .then(DebugTrainCommand.build());
