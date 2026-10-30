@@ -32,6 +32,15 @@ public abstract class TrainTickMixin {
 
     private static long calls;
 
+    /**
+     * 标记方法 —— 存在的唯一目的是让启动自检能看见「这个 mixin 真的织进来了」。
+     *
+     * <p>{@code @Inject} 的处理方法会被内联进目标方法然后丢弃，反射看不到它；
+     * 而 {@code @Unique} 方法会被真正加进目标类。所以自检查的是这个标记。
+     */
+    @org.spongepowered.asm.mixin.Unique
+    private static void ctd$trainTickMarker() {}
+
     @Inject(method = "tick", at = @At("TAIL"), require = 1, remap = false)
     private void ctd$applyKernelSpeed(Level level, CallbackInfo ci) {
         try {

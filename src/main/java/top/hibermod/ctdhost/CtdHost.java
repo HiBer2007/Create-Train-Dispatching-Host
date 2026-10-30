@@ -66,9 +66,14 @@ public final class CtdHost {
         LOG.info("ctdhost: constructing (mod bus present: {})", modBus != null);
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
         // 自检不能在构造期跑：那时 Create 的静态状态还没初始化，
-        // 查出来的「没注入」可能是「还没加载」。放到 common setup 才可靠。
-        modBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent e) ->
-            e.enqueueWork(MixinChecks::run));
+        // 查出来的「没注入」可能是「还没加载」。
+        //
+        // 也不能放在 common setup：那里 Train 往往**还没被加载过**，
+        // 反射看到的是未织入的原生类，自检会把「还没轮到」误报成「注入失败」。
+        // 实测过——它确实这样误报了一次。放到服务器启动完成，那时 Create 早已
+        // 加载过 Train，查到的才是真实结果。
+        NeoForge.EVENT_BUS.addListener(
+            (net.neoforged.neoforge.event.server.ServerStartedEvent e) -> MixinChecks.run());
         DiagnosticKernel.registerIfEnabled();
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.RegisterCommandsEvent e) ->

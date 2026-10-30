@@ -27,6 +27,10 @@ public abstract class PassiveSlowdownMixin {
 
     private static long cancels;
 
+    /** 标记方法：供启动自检确认本 mixin 已织入（理由见 TrainTickMixin 的同类注释）。 */
+    @org.spongepowered.asm.mixin.Unique
+    private static void ctd$passiveMarker() {}
+
     @Inject(method = "tickPassiveSlowdown", at = @At("HEAD"),
         cancellable = true, require = 1, remap = false)
     private void ctd$skipWhenControlled(CallbackInfo ci) {

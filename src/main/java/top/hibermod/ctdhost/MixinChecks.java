@@ -18,6 +18,10 @@ import java.util.List;
  * <h2>为什么不能只靠 {@code require = 1}</h2>
  * {@code require} 只保证「注解在类里且目标方法找得到」，
  * 它管不到「配置文件有没有被 mods.toml 加载」。两道都要。
+ *
+ * <h2>为什么按方法名逐个查</h2>
+ * 三处注入的目标类里有两处都是 {@code Train}。只查「Train 里有没有 {@code ctd$} 方法」
+ * 会在只成功一处时也返回 true——那正是最危险的情况：一半在跑。
  */
 final class MixinChecks {
 
@@ -29,6 +33,20 @@ final class MixinChecks {
 
         if (!boundary()) missing.add("SignalBoundary (signal system NBT/buffer round-trip)");
 
+        // 这两处是「脚本能不能开车」的全部依靠：
+        // 一处把内核的目标速度写进列车，一处拦住 Create 每帧的被动减速。
+        // 少任何一处，车都不动——而且现象完全一样。
+        if (!injected(
+                com.simibubi.create.content.trains.entity.Train.class,
+                "ctd$trainTickMarker")) {
+            missing.add("Train#tick TAIL (kernel speed is applied here)");
+        }
+
+        if (!injected(
+                com.simibubi.create.content.trains.entity.Train.class,
+                "ctd$passiveMarker")) {
+            missing.add("Train#tickPassiveSlowdown (must not fight the kernel)");
+        }
 
         // 渲染是客户端专属：专用服务端连 PoseStack 都加载不了，
         // 在那里查它只会把「分发环境」误报成「注入失败」
@@ -59,7 +77,7 @@ final class MixinChecks {
     /** 辉光管渲染器：注入的方法是否出现在目标类里。 */
     private static boolean tubeRenderer() {
         try {
-            return hasInjectedMethod(
+            return injected(
                 com.simibubi.create.content.redstone.nixieTube.NixieTubeRenderer.class,
                 "ctd$");
         } catch (Throwable t) {
@@ -67,42 +85,15 @@ final class MixinChecks {
         }
     }
 
-    private static boolean trainTickTail() {
-        try {
-            return hasInjectedMethod(
-                com.simibubi.create.content.trains.entity.Train.class, "ctd$");
-        } catch (Throwable t) {
-            return false;
-        }
-    }
-
-    private static boolean passiveSlowdown() {
-        try {
-            return hasInjectedMethod(
-                com.simibubi.create.content.trains.entity.Train.class, "ctd$");
-        } catch (Throwable t) {
-            return false;
-        }
-    }
-    private static boolean hasInjectedMethod(Class<?> target, String prefix) {
+    private static boolean injected(Class<?> target, String methodName) {
         for (var method : target.getDeclaredMethods()) {
-            if (method.getName().startsWith(prefix)) return true;
+            if (method.getName().equals(methodName)) return true;
         }
         return false;
     }
-    /**
-     * 寻路之后的注入：内核设的目标速度必须在这里落地。
-     *
-     * <p>它失效时的现象极难认：内核日志显示已下发，遥测里也能看到目标速度，
-     * 但车速永远是 0——因为 Create 在之后又把 {@code targetSpeed} 覆盖回去了。
-     */
-    private static boolean navigationTail() {
-        try {
-            return hasInjectedMethod(
-                com.simibubi.create.content.trains.entity.Navigation.class, "ctd$");
-        } catch (Throwable t) {
-            return false;
-        }
-    }
 
+    // 说明：NavigationMixin 仍然保留，但它**不是**必要注入。
+    // 实测表明 {@code Navigation.tick} 在本场景根本不跑（列车没有时刻表时
+    // 走的是另一条早退路径），所以它是否织入不影响「脚本能不能开车」。
+    // 把它列为必要注入只会让启动在无害的情况下失败。
 }

@@ -128,27 +128,45 @@ public final class DebugTrackCommand {
      * <p>从端点出发而不是从中间，是因为列车停在端点附近时最缺的就是「前面还有路」。
      */
     private static int extend(ServerLevel level, TrackGraph graph, TrackMaterial material) {
-        TrackNodeLocation leaf = null;
-        Vec3 direction = null;
+        // **两端都接长**。
+        //
+        // 只接一端时，如果接在了列车背后，车头照样顶着尽头——实测过一次，
+        // 接完 nodes 从 52 涨到 76，`blocked` 仍然是 true，看起来像「接长没用」。
+        // 车朝哪边是它自己的状态，命令不该去猜。
+        int total = 0;
+        for (TrackNodeLocation leaf : leaves(graph, 2)) {
+            total += extendFrom(level, graph, material, leaf);
+        }
+        return total;
+    }
 
+    /** 图上度数 1 的节点，最多取 {@code limit} 个。 */
+    private static List<TrackNodeLocation> leaves(TrackGraph graph, int limit) {
+        List<TrackNodeLocation> found = new ArrayList<>();
         for (var loc : graph.getNodes()) {
+            if (found.size() >= limit) break;
             TrackNode node = graph.locateNode(loc);
             if (node == null) continue;
             var conns = graph.getConnectionsFrom(node);
-            if (conns == null || conns.size() != 1) continue;
-
-            TrackNode neighbour = conns.keySet().iterator().next();
-            Vec3 here = node.getLocation().getLocation();
-            Vec3 there = neighbour.getLocation().getLocation();
-            Vec3 dir = here.subtract(there);
-            if (dir.lengthSqr() < 1e-9) continue;
-
-            leaf = node.getLocation();
-            direction = dir.normalize();
-            break;
+            if (conns != null && conns.size() == 1) found.add(node.getLocation());
         }
+        return found;
+    }
 
-        if (leaf == null || direction == null) return 0;
+    private static int extendFrom(ServerLevel level, TrackGraph graph, TrackMaterial material,
+                                  TrackNodeLocation leaf) {
+        TrackNode node = graph.locateNode(leaf);
+        if (node == null) return 0;
+        var conns = graph.getConnectionsFrom(node);
+        if (conns == null || conns.isEmpty()) return 0;
+
+        TrackNode neighbour = conns.keySet().iterator().next();
+        Vec3 here = node.getLocation().getLocation();
+        Vec3 there = neighbour.getLocation().getLocation();
+        Vec3 dir = here.subtract(there);
+        if (dir.lengthSqr() < 1e-9) return 0;
+
+        Vec3 direction = dir.normalize();
 
         Vec3 from = leaf.getLocation();
         TrackNodeLocation.DiscoveredLocation previous =
@@ -159,13 +177,13 @@ public final class DebugTrackCommand {
         int added = 0;
         for (int i = 1; i <= SEGMENTS; i++) {
             Vec3 p = from.add(direction.scale(i * SEGMENT_LENGTH));
-            var node = new TrackNodeLocation.DiscoveredLocation(level, p.x, p.y, p.z)
+            var next = new TrackNodeLocation.DiscoveredLocation(level, p.x, p.y, p.z)
                 .materialA(material).materialB(material);
-            node.withNormal(new Vec3(0, 1, 0));
+            next.withNormal(new Vec3(0, 1, 0));
 
-            graph.createNodeIfAbsent(node);
-            graph.connectNodes(level, previous, node, null);
-            previous = node;
+            graph.createNodeIfAbsent(next);
+            graph.connectNodes(level, previous, next, null);
+            previous = next;
             added++;
         }
         return added;
