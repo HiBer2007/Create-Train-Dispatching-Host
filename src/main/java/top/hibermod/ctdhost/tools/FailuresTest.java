@@ -1,6 +1,6 @@
 package top.hibermod.ctdhost.tools;
 
-import top.hibermod.ctdhost.Failures;
+import top.hibermod.ctdapi.diagnostics.Failures;
 
 /**
  * 「被兜住的失败」必须可见。
