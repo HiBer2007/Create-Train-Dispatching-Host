@@ -31,6 +31,9 @@ import net.minecraft.world.level.Level;
 @Mixin(Navigation.class)
 public abstract class NavigationMixin {
 
+    private static final org.slf4j.Logger LOG =
+        org.slf4j.LoggerFactory.getLogger("ctdhost-nav");
+
     private static long calls;
 
     @Shadow
@@ -41,7 +44,10 @@ public abstract class NavigationMixin {
         try {
             if (train == null) return;
 
-            if ((++calls % 200) == 0) {
+            if (++calls == 1) {
+                LOG.info("[nav] first Navigation.tick observed for {}", train.id);
+            }
+            if ((calls % 200) == 0) {
                 System.out.println("[nav] tail calls=" + calls + " train=" + train.id
                     + " pending=" + top.hibermod.ctdhost.execute.SpeedControl.size());
             }

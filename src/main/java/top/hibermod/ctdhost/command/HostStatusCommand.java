@@ -74,6 +74,9 @@ public final class HostStatusCommand {
                 + " graph=" + (train.graph == null ? "NULL" : "ok")
                 + " paused=" + (train.runtime != null && train.runtime.paused)
                 + " manual=" + train.manualTick
+                + " runtime=" + (train.runtime == null ? "NULL" : "ok")
+                + " ticked=" + top.hibermod.ctdhost.command.TrainTickProbe.ticked(train)
+                + " speedReq=" + top.hibermod.ctdhost.execute.SpeedControl.size()
                 + " schedule=" + top.hibermod.ctdhost.operation.AssignmentApplier.entriesOf(train);
             src.sendSuccess(() -> Component.literal(line), false);
         }

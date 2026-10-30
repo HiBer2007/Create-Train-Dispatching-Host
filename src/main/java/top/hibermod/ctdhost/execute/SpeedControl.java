@@ -27,6 +27,9 @@ public final class SpeedControl {
     private static final Map<UUID, Double> PENDING = new ConcurrentHashMap<>();
     private static long applied;
 
+    private static final org.slf4j.Logger LOG =
+        org.slf4j.LoggerFactory.getLogger("ctdhost-speed");
+
     private SpeedControl() {}
 
     /** 内核要求的本帧目标速度（已收敛）。 */
@@ -51,6 +54,11 @@ public final class SpeedControl {
             System.out.println("[speed] applied=" + applied + " pending=" + PENDING.size()
                 + " want=" + want + " target=" + train.targetSpeed + " speed=" + train.speed);
         }
+    }
+
+    /** 这个列车这一帧有没有内核要求的速度。 */
+    public static boolean hasRequest(java.util.UUID trainId) {
+        return trainId != null && PENDING.containsKey(trainId);
     }
 
     public static void clear() {

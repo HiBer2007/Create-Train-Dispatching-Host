@@ -67,6 +67,23 @@ final class MixinChecks {
         }
     }
 
+    private static boolean trainTickTail() {
+        try {
+            return hasInjectedMethod(
+                com.simibubi.create.content.trains.entity.Train.class, "ctd$");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private static boolean passiveSlowdown() {
+        try {
+            return hasInjectedMethod(
+                com.simibubi.create.content.trains.entity.Train.class, "ctd$");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
     private static boolean hasInjectedMethod(Class<?> target, String prefix) {
         for (var method : target.getDeclaredMethods()) {
             if (method.getName().startsWith(prefix)) return true;

@@ -6,7 +6,9 @@
   "mixins": [
     "GlobalRailwayManagerMixin",
     "SignalBoundaryMixin",
-    "NavigationMixin"
+    "NavigationMixin",
+    "TrainTickMixin",
+    "PassiveSlowdownMixin"
   ],
   "client": [
     "NixieTubeRendererMixin",
