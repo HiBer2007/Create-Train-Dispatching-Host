@@ -86,6 +86,10 @@ public final class SpeedApplier {
                 continue;
             }
 
+            // 方向：倒车是**负速度**，不是「另一条线」
+            boolean reverse = c.direction() == Command.Direction.REVERSE;
+            double sign = reverse ? -1.0 : 1.0;
+
             double kernelTarget = c.hold() ? 0.0 : Math.max(0.0, c.speedCap());
             double authority = Math.max(0.0, c.movementAuthority());
 
@@ -104,7 +108,7 @@ public final class SpeedApplier {
 
             frameTarget.put(c.trainId(), accepted);
             // 只登记，不直接写：Navigation.tick 之后再由 SpeedControl 落下去
-            SpeedControl.request(c.trainId(), accepted);
+            SpeedControl.request(c.trainId(), sign * accepted);
 
             // 内核要求前进时，必须把「暂停」解除。
             // Create 只 tick 运行中的列车；没有时刻表的车是 paused 的，

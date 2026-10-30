@@ -47,7 +47,9 @@ public final class SpeedControl {
 
         if (train.manualTick || train.derailed) return;   // 手动/脱轨时 Create 说了算
 
-        train.targetSpeed = Math.min(want, train.maxSpeed());
+        // 倒车的目标速度是负数：Create 用 speed 的符号决定推进方向
+        double magnitude = Math.min(Math.abs(want), train.maxSpeed());
+        train.targetSpeed = want < 0 ? -magnitude : magnitude;
         train.approachTargetSpeed(1);
 
         if ((++applied % 200) == 0) {
