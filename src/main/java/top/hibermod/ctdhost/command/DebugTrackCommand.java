@@ -154,6 +154,8 @@ public final class DebugTrackCommand {
     private static List<TrackNodeLocation> leaves(TrackGraph graph, int limit) {
         Vec3 focus = nearestTrainPosition();
 
+        forceAroundTrains();
+
         List<TrackNodeLocation> found = new ArrayList<>();
         Map<TrackNodeLocation, Double> distance = new HashMap<>();
 
@@ -178,6 +180,32 @@ public final class DebugTrackCommand {
     }
 
     /** 任意一列车的世界坐标，用作「离哪儿近」的参照；没有列车时返回 null。 */
+    /**
+     * 把每列车周围的区块拉起来。
+     *
+     * <p>`forceChunk` 只覆盖**新建**节点所在的区块。列车若停在旧段上，
+     * 它前方那一格可能还是一年前建的老节点，所在区块早就卸载了——
+     * 于是「接长了 96 格、`blocked` 还是 true」，看起来像接长没生效。
+     */
+    private static void forceAroundTrains() {
+        for (var train : Create.RAILWAYS.trains.values()) {
+            for (var carriage : train.carriages) {
+                var entity = carriage.anyAvailableEntity();
+                if (entity == null) continue;
+                var level = entity.level();
+                if (!(level instanceof ServerLevel serverLevel)) continue;
+                var p = entity.position();
+                int cx = ((int) Math.floor(p.x)) >> 4;
+                int cz = ((int) Math.floor(p.z)) >> 4;
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        serverLevel.setChunkForced(cx + dx, cz + dz, true);
+                    }
+                }
+            }
+        }
+    }
+
     private static Vec3 nearestTrainPosition() {
         for (var train : Create.RAILWAYS.trains.values()) {
             if (train.carriages.isEmpty()) continue;
