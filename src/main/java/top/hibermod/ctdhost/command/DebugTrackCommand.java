@@ -1,7 +1,9 @@
 package top.hibermod.ctdhost.command;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -140,17 +142,49 @@ public final class DebugTrackCommand {
         return total;
     }
 
-    /** 图上度数 1 的节点，最多取 {@code limit} 个。 */
+    /**
+     * 图上度数 1 的节点，按**离列车最近**排序后取前 {@code limit} 个。
+     *
+     * <p>早先是「取前两个叶子」。图被接长过几次之后叶子会越来越多，
+     * 于是命令接在了几条无关的支线上，而列车仍然卡在它那一端的尽头——
+     * 现象是「刚接长了 96 格，`blocked` 还是 true」。
+     *
+     * <p>列车卡住的时候一定就在某个叶子附近，所以从最近的叶子接长才是对的。
+     */
     private static List<TrackNodeLocation> leaves(TrackGraph graph, int limit) {
+        Vec3 focus = nearestTrainPosition();
+
         List<TrackNodeLocation> found = new ArrayList<>();
+        Map<TrackNodeLocation, Double> distance = new HashMap<>();
+
         for (var loc : graph.getNodes()) {
-            if (found.size() >= limit) break;
             TrackNode node = graph.locateNode(loc);
             if (node == null) continue;
             var conns = graph.getConnectionsFrom(node);
-            if (conns != null && conns.size() == 1) found.add(node.getLocation());
+            if (conns == null || conns.size() != 1) continue;
+
+            TrackNodeLocation leaf = node.getLocation();
+            found.add(leaf);
+            distance.put(leaf, focus == null ? 0.0
+                : leaf.getLocation().distanceToSqr(focus));
         }
-        return found;
+
+        if (focus != null) {
+            found.sort((a, b) -> Double.compare(
+                distance.getOrDefault(a, 0.0), distance.getOrDefault(b, 0.0)));
+        }
+
+        return found.size() <= limit ? found : new ArrayList<>(found.subList(0, limit));
+    }
+
+    /** 任意一列车的世界坐标，用作「离哪儿近」的参照；没有列车时返回 null。 */
+    private static Vec3 nearestTrainPosition() {
+        for (var train : Create.RAILWAYS.trains.values()) {
+            if (train.carriages.isEmpty()) continue;
+            var entity = train.carriages.get(0).anyAvailableEntity();
+            if (entity != null) return entity.position();
+        }
+        return null;
     }
 
     private static int extendFrom(ServerLevel level, TrackGraph graph, TrackMaterial material,
@@ -184,11 +218,29 @@ public final class DebugTrackCommand {
             graph.createNodeIfAbsent(next);
             graph.connectNodes(level, previous, next, null);
             previous = next;
+            forceChunk(level, next);
             added++;
         }
         return added;
     }
 
+    /**
+     * 把新节点所在区块强制加载。
+     *
+     * <p>没有玩家在附近时，列车前方那段轨道可能落在未加载的区块里，
+     * {@code TravellingPoint} 会判定 {@code blocked}——现象与「轨道到头了」完全一样，
+     * 但原因完全不同。调试轨道自己负责把自己的区块拉住。
+     */
+    private static void forceChunk(ServerLevel level, TrackNodeLocation.DiscoveredLocation node) {
+        try {
+            Vec3 v = node.getLocation();
+            int cx = ((int) Math.floor(v.x)) >> 4;
+            int cz = ((int) Math.floor(v.z)) >> 4;
+            level.setChunkForced(cx, cz, true);
+        } catch (Throwable ignored) {
+            // 加载不了不影响建图
+        }
+    }
     /** 保留给未来的「在哪里接长」提示用；目前无调用。 */
     @SuppressWarnings("unused")
     private static BlockPos posOf(TrackNodeLocation loc) {
