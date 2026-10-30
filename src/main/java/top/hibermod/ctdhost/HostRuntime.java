@@ -189,10 +189,21 @@ public final class HostRuntime {
             }
         };
 
+        List<FrameContext.SignalState> signalSnapshots = new java.util.ArrayList<>();
+        for (var site : view.signals()) {
+            String aspect = top.hibermod.ctdapi.status.SignalStates.get(site.id());
+            ResourceLocation aspectId = aspect.isEmpty() ? null
+                : ResourceLocation.tryParse(aspect);
+            for (var side : top.hibermod.ctdapi.Topology.SignalSide.values()) {
+                signalSnapshots.add(new FrameContext.SignalState(
+                    site.id(), side, aspectId, 0L));
+            }
+        }
+
         return new DispatchPass.Inputs(
             gameTime,
             view, telemetry,
-            List.<FrameContext.SignalState>of(),           // 信号快照：待 C6 完善
+            signalSnapshots,
             List.<FrameContext.SwitchState>of(),           // 岔口快照：待 C7
             List.<RailwayEvent>of());
     }

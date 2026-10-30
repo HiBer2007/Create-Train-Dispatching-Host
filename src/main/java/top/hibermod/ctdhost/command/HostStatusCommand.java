@@ -45,6 +45,7 @@ public final class HostStatusCommand {
         Topology view = host.mirror().current();
         final int nodes = view == null ? 0 : view.nodes().size();
         final int edges = view == null ? 0 : view.edges().size();
+        final int signals = view == null ? 0 : view.signals().size();
         final boolean someDisabled = view != null
             && view.edges().stream().anyMatch(e -> !e.enabled());
         final String switchStatus = host.switches() == null ? "n/a" : host.switches().status();
@@ -53,6 +54,8 @@ public final class HostStatusCommand {
         src.sendSuccess(() -> Component.literal("  ticks       : " + ticks), false);
         src.sendSuccess(() -> Component.literal("  kernels     : " + kernels), false);
         src.sendSuccess(() -> Component.literal("  topology    : nodes=" + nodes + " edges=" + edges
+            + " signals=" + signals + " aspects="
+            + top.hibermod.ctdapi.status.SignalStates.size()
             + (someDisabled ? "  (some edges disabled by switches)" : "")), false);
         src.sendSuccess(() -> Component.literal("  units       : " + units), false);
 

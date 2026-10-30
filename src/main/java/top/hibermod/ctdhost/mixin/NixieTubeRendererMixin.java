@@ -15,6 +15,7 @@ import com.simibubi.create.foundation.render.RenderTypes;
 import net.createmod.catnip.render.CachedBuffers;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -170,15 +171,28 @@ public abstract class NixieTubeRendererMixin {
      * <p>{@code cachedSignalTE} 是 Create 内部的弱引用，这里用反射读：
      * 为一个字段开 accessor mixin 不划算，而反射失败只会退回原版显示。
      */
+    /**
+     * 从管子反查它所显示的那架信号机。
+     *
+     * <p>用的是 Create 自己在 {@code NixieTubeBlockEntity#tick} 里的判定：
+     * 管子**背面那一格**若是信号机，它就是这个信号的显示件。
+     * 早先用反射读 {@code cachedSignalTE}，那条路一直拿到 null——
+     * 而「查询失败」与「还没绑定」返回的是同一个值，看不出差别。
+     */
     private static SignalBlockEntity ctd$signalOf(NixieTubeBlockEntity be) {
         try {
-            Object ref = NixieTubeBlockEntity.class
-                .getDeclaredField("cachedSignalTE").get(be);
-            if (ref instanceof java.lang.ref.WeakReference<?> weak) {
-                Object value = weak.get();
-                return value instanceof SignalBlockEntity signal ? signal : null;
-            }
-            return null;
+            var level = ((net.minecraft.world.level.block.entity.BlockEntity) be).getLevel();
+            if (level == null) return null;
+
+            var state = ((net.minecraft.world.level.block.entity.BlockEntity) be).getBlockState();
+            Direction facing = com.simibubi.create.content.redstone.nixieTube
+                .NixieTubeBlock.getFacing(state);
+
+            var behind = level.getBlockEntity(
+                ((net.minecraft.world.level.block.entity.BlockEntity) be)
+                    .getBlockPos().relative(facing.getOpposite()));
+
+            return behind instanceof SignalBlockEntity signal ? signal : null;
         } catch (Throwable t) {
             return null;
         }
