@@ -59,6 +59,9 @@ public final class HostRuntime {
     private final java.util.Map<ResourceLocation, DispatchPass> passes = new java.util.LinkedHashMap<>();
     private long kernelRevision = -1;
     private CommandApplier applier;
+    private final top.hibermod.ctdhost.execute.RouteApplier routeApplier =
+        new top.hibermod.ctdhost.execute.RouteApplier();
+
     private final top.hibermod.ctdhost.execute.AtoPass atoPass =
         new top.hibermod.ctdhost.execute.AtoPass();
 
@@ -135,6 +138,11 @@ public final class HostRuntime {
         // ② 控制通道：后台/玩家/自动化随时插话。
         //    刻意在内核之后执行——操作员的扣车不该被脚本下一帧放行。
         applyControlChannel();
+
+        // ③ 进路与 ATO：都要在授权之后落地。
+        //    进路决定「走哪股」，ATO 决定「怎么走」，都不能推翻授权上限。
+        routeApplier.apply(collectRouteRequests(), mirror.current());
+        atoPass.run(gameTime, lastStates);
     }
 
     private void applyControlChannel() {
@@ -155,9 +163,7 @@ public final class HostRuntime {
             applier.applyAspects(list);
         }
 
-        // ATO 在授权之后跑：内核说「能走多远」，ATO 说「怎么走」。
-        // 它的输出只能收紧，所以不会推翻上面刚施加的限速。
-        atoPass.run(gameTime, lastStates);
+
     }
 
 
@@ -190,7 +196,7 @@ public final class HostRuntime {
         for (Train t : scratch) alive.add(t.id);
         for (Train t : scratch) {
             states.add(top.hibermod.ctdhost.telemetry.TelemetrySampler.sample(
-                t, speed.authorityOf(t.id), null));
+                t, speed.authorityOf(t.id), null, routeApplier.stateOf(t.id)));
         }
 
         top.hibermod.ctdhost.telemetry.TelemetrySampler.prune(alive);
@@ -346,5 +352,18 @@ public final class HostRuntime {
         @Override public Settings settings() {
             return new Settings(64.0, true, 15.0, java.util.Map.of());
         }
+    }
+    /** 把各内核本帧申请的进路汇总；进路按列车归属，后写覆盖。 */
+    private java.util.Map<UUID, top.hibermod.ctdapi.Command.RouteRequest> collectRouteRequests() {
+        java.util.Map<UUID, top.hibermod.ctdapi.Command.RouteRequest> merged =
+            new java.util.LinkedHashMap<>();
+        for (DispatchPass p : passes.values()) {
+            p.routeRequests().forEach(merged::put);
+        }
+        return merged;
+    }
+    /** 当前持有进路的列车数（诊断用）。 */
+    public int routeCount() {
+        return routeApplier.size();
     }
 }

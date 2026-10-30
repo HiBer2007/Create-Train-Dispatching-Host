@@ -31,6 +31,10 @@ public final class DispatchFrameImpl implements DispatchFrame {
     private final List<RailwayEvent> events = new ArrayList<>();
     private final List<top.hibermod.ctdapi.operation.Assignment> assignments = new ArrayList<>();
 
+    /** 进路申请：列车 id → 申请内容（同一列车同帧多次申请以最后一次为准）。 */
+    private final java.util.Map<java.util.UUID, Command.RouteRequest> routes =
+        new java.util.LinkedHashMap<>();
+
     @Override
     public void assign(top.hibermod.ctdapi.operation.Assignment assignment) {
         if (assignment != null) assignments.add(assignment);
@@ -40,6 +44,24 @@ public final class DispatchFrameImpl implements DispatchFrame {
 
     @Override public void command(Command.TrainCommand command) { trains.add(command); }
     @Override public void aspect(Command.AspectCommand command) { aspects.add(command); }
+
+    @Override
+    public void route(java.util.UUID trainId, Command.RouteRequest request) {
+        if (trainId != null && request != null) routes.put(trainId, request);
+    }
+
+    public java.util.Map<java.util.UUID, Command.RouteRequest> routes() { return routes; }
+
+    /**
+     * 把这一帧的进路申请并入全局表。
+     *
+     * <p>调度帧是按内核划分的，而进路是**按列车**归属的：一列车只可能有一个进路。
+     * 所以多内核并存时，后写的申请覆盖先前同一列车的申请，这与
+     * 「同一列车同帧多次申请以最后一次为准」是同一条规则。
+     */
+    public void mergeRoutesInto(java.util.Map<java.util.UUID, Command.RouteRequest> target) {
+        target.putAll(routes);
+    }
     @Override public void switchLock(Command.SwitchCommand command) { switches.add(command); }
     @Override public void device(Command.DeviceCommand command) { devices.add(command); }
     @Override public void energy(Command.EnergyCommand command) { energies.add(command); }
@@ -65,7 +87,7 @@ public final class DispatchFrameImpl implements DispatchFrame {
         return trains.isEmpty() && aspects.isEmpty() && switches.isEmpty()
             && devices.isEmpty() && energies.isEmpty() && services.isEmpty()
             && huds.isEmpty() && boards.isEmpty() && events.isEmpty()
-            && assignments.isEmpty();
+            && assignments.isEmpty() && routes.isEmpty();
     }
 
     /**

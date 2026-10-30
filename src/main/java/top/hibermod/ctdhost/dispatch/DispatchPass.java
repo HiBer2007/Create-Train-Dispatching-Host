@@ -38,6 +38,14 @@ public final class DispatchPass {
     private final FrameContextImpl context = new FrameContextImpl();
     private final DispatchFrameImpl frame = new DispatchFrameImpl();
 
+    /** 本帧各内核申请的进路，交给宿主统一下发。 */
+    private final java.util.Map<java.util.UUID, top.hibermod.ctdapi.Command.RouteRequest> routeRequests =
+        new java.util.LinkedHashMap<>();
+
+    public java.util.Map<java.util.UUID, top.hibermod.ctdapi.Command.RouteRequest> routeRequests() {
+        return routeRequests;
+    }
+
     private DispatchKernel kernel;
 
     /** 本 pass 只处理这些列车；{@code null} 表示不过滤（全局唯一内核的情况）。 */
@@ -117,6 +125,7 @@ public final class DispatchPass {
             kernel.onFrame(context, fresh);
             if (fresh.isEmpty()) return false;
             fresh.applyTo(sink);
+            fresh.mergeRoutesInto(routeRequests);
             hadCommands = true;
             consecutiveFailures = 0;
         } catch (Throwable t) {

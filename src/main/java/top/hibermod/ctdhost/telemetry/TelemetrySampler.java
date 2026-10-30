@@ -48,6 +48,13 @@ public final class TelemetrySampler {
      */
     public static Telemetry.TrainState sample(Train train, double authority,
                                               EnergyProvider.EnergySample energy) {
+        return sample(train, authority, energy, null);
+    }
+
+    /** 带进路状态的采样。 */
+    public static Telemetry.TrainState sample(Train train, double authority,
+                                              EnergyProvider.EnergySample energy,
+                                              Telemetry.RouteState route) {
         Rail.EdgeId leadingEdge = null;
         double leadingDistance = 0;
         Rail.EdgeId trailingEdge = null;
@@ -86,7 +93,7 @@ public final class TelemetrySampler {
             train.manualTick,
             train.derailed,
             top.hibermod.ctdhost.telemetry.Odometers.advance(train.id, train.speed),
-            null,                              // route：待 C5
+            route,
             authority,
             energy == null ? EnergyProvider.EnergySample.unknown() : energy,
             signalSystemsOf(train));

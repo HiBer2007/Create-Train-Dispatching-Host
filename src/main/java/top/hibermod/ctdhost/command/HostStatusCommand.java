@@ -58,6 +58,7 @@ public final class HostStatusCommand {
             + top.hibermod.ctdapi.status.SignalStates.size()
             + (someDisabled ? "  (some edges disabled by switches)" : "")), false);
         src.sendSuccess(() -> Component.literal("  units       : " + units), false);
+        src.sendSuccess(() -> Component.literal("  routes      : " + host.routeCount()), false);
 
         // 每列车的速度/目标速度：验证「只能收紧」规则时要看这两个数
         for (var train : com.simibubi.create.Create.RAILWAYS.trains.values()) {
