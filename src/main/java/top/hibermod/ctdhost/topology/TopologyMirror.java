@@ -31,6 +31,14 @@ public final class TopologyMirror {
     /** 上次重建时的图规模，用于判断「有没有变」。 */
     private int lastNodeCount = -1;
     private int lastEdgeCount = -1;
+    private long lastSignature = Long.MIN_VALUE;
+    private int ticksSinceCheck;
+
+    /** 多少次 tick 检查一次变更（10 刻 = 0.5 秒）。 */
+    private static final int CHECK_INTERVAL = 10;
+
+    private int rebuildCount;
+    private long lastRebuildMillis;
 
     public TopologyView current() {
         return view;
@@ -44,23 +52,61 @@ public final class TopologyMirror {
      * 后续接入 H-4 的增量通知后，这里会换成版本号比较。
      */
     public synchronized TopologyView refreshIfChanged(Map<UUID, TrackGraph> graphs) {
-        int nodes = 0;
-        int edges = 0;
-        for (TrackGraph g : graphs.values()) {
-            nodes += g.getNodes().size();
-            // 连接数不好直接取，用节点集合算个上界估计即可——只用于「变没变」的判断
-            edges += g.getNodes().size();
-        }
-        if (nodes == lastNodeCount && edges == lastEdgeCount && view != null) {
+        // 每 CHECK_INTERVAL 刻查一次「变没变」，不是每帧。
+        //
+        // 拓扑变更（铺轨、拆轨、加装信号机）是**分钟级**的事件，而重建是 O(节点数)。
+        // 每帧重建在 100 节点时看不出代价，到上千节点就是每帧几毫秒——纯粹浪费。
+        if (view != null && ++ticksSinceCheck < CHECK_INTERVAL) {
             return view;
         }
-        lastNodeCount = nodes;
-        lastEdgeCount = edges;
+        ticksSinceCheck = 0;
+
+        long sig = signature(graphs);
+        if (view != null && sig == lastSignature) {
+            return view;                      // 规模与边点都没变：沿用
+        }
+        lastSignature = sig;
         return rebuild(graphs);
+    }
+
+    /**
+     * 「变没变」的廉价签名。
+     *
+     * <p>旧实现把 `edges` 直接写成节点数——那等于只比较节点数，
+     * 于是**只加一条边**（比如把两段轨接上）或**只加一架信号机**都不会触发重建，
+     * 内核看到的是过期拓扑，而且没有任何提示。
+     *
+     * <p>现在把连接数与信号机数一起算进去：同样是 O(节点数)，但不会漏。
+     */
+    private static long signature(Map<UUID, TrackGraph> graphs) {
+        long h = 1125899906842597L;
+        for (TrackGraph g : graphs.values()) {
+            h = h * 31 + g.id.hashCode();
+            h = h * 31 + g.getNodes().size();
+            int connections = 0;
+            for (TrackNodeLocation loc : g.getNodes()) {
+                TrackNode node = g.locateNode(loc);
+                if (node == null) continue;
+                try {
+                    var c = g.getConnectionsFrom(node);
+                    if (c != null) connections += c.size();
+                } catch (RuntimeException ignored) {
+                    // 单个节点读不出来不影响「整体有没有变」的判断
+                }
+            }
+            h = h * 31 + connections;
+            try {
+                h = h * 31 + g.getPoints(com.simibubi.create.content.trains.graph.EdgePointType.SIGNAL).size();
+            } catch (Throwable ignored) {
+                // 老版本没有 getPoints：退化到「节点+连接」
+            }
+        }
+        return h;
     }
 
     /** 无条件重建。 */
     public synchronized TopologyView rebuild(Map<UUID, TrackGraph> graphs) {
+        long started = System.nanoTime();
         TopologyView.Builder b = TopologyView.builder().version(++version);
 
         Set<Rail.EdgeId> seenEdges = new HashSet<>();
@@ -132,10 +178,18 @@ public final class TopologyMirror {
         lastNodeCount = nodeCount;
         lastEdgeCount = edgeCount;
         this.view = b.build();
+        rebuildCount++;
+        lastRebuildMillis = (System.nanoTime() - started) / 1_000_000L;
         return this.view;
     }
 
     /** 上一次构建的节点/边数量，用于日志与校验。 */
+    /** 自启动以来的重建次数。稳态下应当很少——每帧都涨说明签名没起作用。 */
+    public int rebuildCount() { return rebuildCount; }
+
+    /** 上一次重建耗时（毫秒）。 */
+    public long lastRebuildMillis() { return lastRebuildMillis; }
+
     public int lastNodeCount() { return lastNodeCount; }
 
     public int lastEdgeCount() { return lastEdgeCount; }

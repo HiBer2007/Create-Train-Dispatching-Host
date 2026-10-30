@@ -55,6 +55,8 @@ public final class HostStatusCommand {
         src.sendSuccess(() -> Component.literal("  topology    : nodes=" + nodes + " edges=" + edges
             + " signals=" + signals + " aspects="
             + top.hibermod.ctdapi.status.SignalStates.size()
+            + " rebuilds=" + host.mirror().rebuildCount()
+            + " lastMs=" + host.mirror().lastRebuildMillis()
             + (someDisabled ? "  (some edges disabled by switches)" : "")), false);
         src.sendSuccess(() -> Component.literal("  units       : " + units), false);
         src.sendSuccess(() -> Component.literal("  routes      : " + host.routeCount()), false);
