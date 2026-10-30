@@ -97,6 +97,12 @@ jar {
     }
 }
 
+tasks.register('failuresTest', JavaExec) {
+    group = 'verification'
+    description = '被兜住的失败必须可见（首次即记、持续累加、分点统计）'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'top.hibermod.ctdhost.tools.FailuresTest'
+}
 tasks.register('deviceCommandsTest', JavaExec) {
     group = 'verification'
     description = '设备指令落点：记录/覆盖/多设备/拒绝/空负载'

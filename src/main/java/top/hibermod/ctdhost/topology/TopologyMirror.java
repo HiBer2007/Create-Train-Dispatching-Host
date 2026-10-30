@@ -90,14 +90,16 @@ public final class TopologyMirror {
                 try {
                     var c = g.getConnectionsFrom(node);
                     if (c != null) connections += c.size();
-                } catch (RuntimeException ignored) {
+                } catch (RuntimeException t) {
+                top.hibermod.ctdhost.Failures.caught("拓扑签名（单节点）", t);
                     // 单个节点读不出来不影响「整体有没有变」的判断
                 }
             }
             h = h * 31 + connections;
             try {
                 h = h * 31 + g.getPoints(com.simibubi.create.content.trains.graph.EdgePointType.SIGNAL).size();
-            } catch (Throwable ignored) {
+            } catch (Throwable t) {
+            top.hibermod.ctdhost.Failures.caught("拓扑重建（单点）", t);
                 // 老版本没有 getPoints：退化到「节点+连接」
             }
         }
@@ -171,7 +173,8 @@ public final class TopologyMirror {
                         null,
                         ""));
                 }
-            } catch (Throwable ignored) {
+            } catch (Throwable t) {
+            top.hibermod.ctdhost.Failures.caught("拓扑重建（单点）", t);
                 // 某个图读不出来不该让整张拓扑失败
             }
         }

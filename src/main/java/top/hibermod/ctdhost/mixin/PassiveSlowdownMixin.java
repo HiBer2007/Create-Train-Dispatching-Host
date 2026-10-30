@@ -46,8 +46,9 @@ public abstract class PassiveSlowdownMixin {
                         cancels, self.speed, self.targetSpeed);
                 }
             }
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
             // 判断失败就按原版走：被动减速本来就安全
+            top.hibermod.ctdhost.Failures.caught("Train#tickPassiveSlowdown 拦截", t);
         }
     }
 }

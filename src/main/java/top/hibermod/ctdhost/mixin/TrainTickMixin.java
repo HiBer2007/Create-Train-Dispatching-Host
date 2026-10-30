@@ -56,8 +56,9 @@ public abstract class TrainTickMixin {
             }
 
             top.hibermod.ctdhost.execute.SpeedControl.applyTo(self);
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
             // 施加失败不能让 Create 的物理结果作废
+            top.hibermod.ctdhost.Failures.caught("Train#tick TAIL 施加速度", t);
         }
     }
 }

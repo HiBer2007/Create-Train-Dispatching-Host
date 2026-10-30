@@ -89,6 +89,12 @@ public final class HostStatusCommand {
         final String forwarded = host.applier() == null ? "n/a" : host.applier().forwardedSummary();
         src.sendSuccess(() -> Component.literal("  forwarded   : " + forwarded), false);
 
+        // 被兜住的失败：以前这些是全静默的，现在至少能看到「有没有、哪些点、多少次」
+        final String swallowed = top.hibermod.ctdhost.Failures.any()
+            ? top.hibermod.ctdhost.Failures.snapshot().toString()
+            : "none";
+        src.sendSuccess(() -> Component.literal("  swallowed   : " + swallowed), false);
+
         if (ticks == 0) {
             src.sendFailure(Component.literal(
                 "  ! no tick dispatched — the host is not hooked up"));

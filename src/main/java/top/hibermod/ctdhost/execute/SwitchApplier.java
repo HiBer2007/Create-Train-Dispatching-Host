@@ -178,7 +178,8 @@ public final class SwitchApplier {
             if (raw instanceof Map<?, ?> map) {
                 return map.get(ResourceLocation.fromNamespaceAndPath("railways", "switch"));
             }
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            top.hibermod.ctdhost.Failures.caught("汽鸣铁道道岔反射", t);
             // 没装或结构变了：退回逻辑锁
         }
         return null;

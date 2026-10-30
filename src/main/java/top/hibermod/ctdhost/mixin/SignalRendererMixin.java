@@ -58,7 +58,8 @@ public abstract class SignalRendererMixin {
                 .renderInto(ms, buffer.getBuffer(RenderTypes.additive()));
 
             ci.cancel();
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            top.hibermod.ctdhost.Failures.caught("信号机渲染", t);
             // 出错就交回原版：客户端不能因为一盏灯崩掉
         }
     }

@@ -52,8 +52,9 @@ public abstract class NavigationMixin {
                     + " pending=" + top.hibermod.ctdhost.execute.SpeedControl.size());
             }
             top.hibermod.ctdhost.execute.SpeedControl.applyTo(train);
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
             // 施加失败不能让 Create 的寻路结果作废：本帧退回原生
+            top.hibermod.ctdhost.Failures.caught("Navigation#tick TAIL 施加速度", t);
         }
     }
 }

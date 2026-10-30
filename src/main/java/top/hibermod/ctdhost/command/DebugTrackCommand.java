@@ -237,7 +237,8 @@ public final class DebugTrackCommand {
             int cx = ((int) Math.floor(v.x)) >> 4;
             int cz = ((int) Math.floor(v.z)) >> 4;
             level.setChunkForced(cx, cz, true);
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            top.hibermod.ctdhost.Failures.caught("调试轨道强制加载区块", t);
             // 加载不了不影响建图
         }
     }

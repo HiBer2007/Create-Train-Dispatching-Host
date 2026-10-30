@@ -84,7 +84,8 @@ public abstract class NixieTubeRendererMixin {
 
             ctd$render(be, ms, buffer, colors);
             ci.cancel();
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            top.hibermod.ctdhost.Failures.caught("辉光管渲染", t);
             // 渲染异常不能拖垮客户端：出错就交回原版
         }
     }
