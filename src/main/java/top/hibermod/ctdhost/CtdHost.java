@@ -81,7 +81,8 @@ public final class CtdHost {
                 net.minecraft.commands.Commands.literal("ctd")
                     .requires(src -> src.hasPermission(2))
                     .then(top.hibermod.ctdhost.command.HostStatusCommand.build())
-                    .then(top.hibermod.ctdhost.command.HostStateCommand.build())));
+                    .then(top.hibermod.ctdhost.command.HostStateCommand.build())
+                    .then(top.hibermod.ctdhost.command.HostSelfTestCommand.build())));
 
         // 兜底入口：Mixin 不可用（开发环境常见）时仍能每帧调度。
         // 与 Mixin 同时存在时由 HostRuntime 按 (维度, 刻) 去重。

@@ -393,6 +393,9 @@ public final class HostRuntime {
         return merged;
     }
     /** 当前持有进路的列车数（诊断用）。 */
+    /** 当前活着的调度 pass 数（每个内核一个）。 */
+    public int kernelCount() { return passes.size(); }
+
     public int routeCount() {
         return routeApplier.size();
     }
