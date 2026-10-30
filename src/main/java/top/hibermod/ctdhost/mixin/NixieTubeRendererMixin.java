@@ -38,22 +38,42 @@ public abstract class NixieTubeRendererMixin {
 
     private static final float GLOW_VIEW_DISTANCE = 24.0f;
 
-    @Inject(method = "renderSafe", at = @At("HEAD"), cancellable = true)
+    /** 诊断计数：每条通往「放弃」的路各记一次，用来判断是哪一道闸门关着。 */
+    private static final java.util.Map<String, Integer> DIAG = new java.util.HashMap<>();
+
+    private static void diag(String key) {
+        int n = DIAG.merge(key, 1, Integer::sum);
+        if (n <= 3) System.out.println("[ctdhost] tube render: " + key);
+    }
+
+    @Inject(method = "renderSafe", at = @At("HEAD"), cancellable = true, require = 1)
     private void ctd$driveTubes(NixieTubeBlockEntity be, float partialTicks, PoseStack ms,
                                 MultiBufferSource buffer, int light, int overlay,
                                 CallbackInfo ci) {
         try {
-            if (be.signalState == null) return;               // 不是信号显示用的管子
+            if (be.signalState == null) {
+                diag("not a signal display (signalState == null)");
+                return;
+            }
 
             SignalBlockEntity signal = ctd$signalOf(be);
-            if (signal == null || signal.edgePoint == null
-                || signal.edgePoint.getEdgePoint() == null) {
+            if (signal == null) {
+                diag("cachedSignalTE reflection returned null");
+                return;
+            }
+            if (signal.edgePoint == null || signal.edgePoint.getEdgePoint() == null) {
+                diag("signal has no edge point");
                 return;
             }
 
             java.util.UUID id = signal.edgePoint.getEdgePoint().id;
             String aspect = top.hibermod.ctdapi.status.SignalStates.get(id);
-            if (aspect.isEmpty()) return;                     // 我们没管这架：交回 Create
+            if (aspect.isEmpty()) {
+                diag("no aspect for " + id + " (SignalStates size="
+                    + top.hibermod.ctdapi.status.SignalStates.size() + ")");
+                return;
+            }
+            diag("driving tube with " + aspect);
 
             int[] colors = ctd$colorsOf(aspect);
             if (colors == null) {

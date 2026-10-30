@@ -50,7 +50,7 @@ public abstract class SignalBoundaryMixin implements SignalSystemHolder {
     }
 
     @Inject(method = "write(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/core/HolderLookup$Provider;Lcom/simibubi/create/content/trains/graph/DimensionPalette;)V",
-            at = @At("TAIL"))
+            at = @At("TAIL"), require = 1)
     private void ctd$writeNbt(CompoundTag nbt, HolderLookup.Provider registries,
                               DimensionPalette dimensions, CallbackInfo ci) {
         if (ctd$system != null) {
@@ -59,7 +59,7 @@ public abstract class SignalBoundaryMixin implements SignalSystemHolder {
     }
 
     @Inject(method = "read(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/core/HolderLookup$Provider;ZLcom/simibubi/create/content/trains/graph/DimensionPalette;)V",
-            at = @At("TAIL"))
+            at = @At("TAIL"), require = 1)
     private void ctd$readNbt(CompoundTag nbt, HolderLookup.Provider registries, boolean migration,
                              DimensionPalette dimensions, CallbackInfo ci) {
         ctd$system = nbt.contains("CtdSignalSystem")
@@ -68,7 +68,7 @@ public abstract class SignalBoundaryMixin implements SignalSystemHolder {
     }
 
     @Inject(method = "write(Lnet/minecraft/network/FriendlyByteBuf;Lcom/simibubi/create/content/trains/graph/DimensionPalette;)V",
-            at = @At("TAIL"))
+            at = @At("TAIL"), require = 1)
     private void ctd$writeBuf(FriendlyByteBuf buffer, DimensionPalette dimensions, CallbackInfo ci) {
         buffer.writeBoolean(ctd$system != null);
         if (ctd$system != null) {
@@ -77,7 +77,7 @@ public abstract class SignalBoundaryMixin implements SignalSystemHolder {
     }
 
     @Inject(method = "read(Lnet/minecraft/network/FriendlyByteBuf;Lcom/simibubi/create/content/trains/graph/DimensionPalette;)V",
-            at = @At("TAIL"))
+            at = @At("TAIL"), require = 1)
     private void ctd$readBuf(FriendlyByteBuf buffer, DimensionPalette dimensions, CallbackInfo ci) {
         ctd$system = buffer.readBoolean() ? buffer.readResourceLocation() : null;
     }

@@ -65,7 +65,10 @@ public final class CtdHost {
     public CtdHost(IEventBus modBus) {
         LOG.info("ctdhost: constructing (mod bus present: {})", modBus != null);
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
-        checkSignalMixin();
+        // 自检不能在构造期跑：那时 Create 的静态状态还没初始化，
+        // 查出来的「没注入」可能是「还没加载」。放到 common setup 才可靠。
+        modBus.addListener((net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent e) ->
+            e.enqueueWork(MixinChecks::run));
         DiagnosticKernel.registerIfEnabled();
         NeoForge.EVENT_BUS.addListener(this::onServerStarting);
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.RegisterCommandsEvent e) ->
