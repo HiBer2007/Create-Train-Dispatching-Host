@@ -48,6 +48,9 @@ public final class SwitchApplier {
     /** 逻辑锁：岔口 → 锁定的股道。 */
     private final Map<Rail.NodeId, Rail.EdgeId> logicalLocks = new HashMap<>();
 
+    /** 谁锁的（进路 id）。内核要靠它知道「这条锁是不是我自己下的」。 */
+    private final Map<Rail.NodeId, Long> holders = new HashMap<>();
+
     /** 汽鸣铁道是否可用（只用于日志与命令输出）。 */
     public static boolean isRailwaysPresent() {
         if (railwaysPresent == null) {
@@ -71,8 +74,10 @@ public final class SwitchApplier {
         for (Command.SwitchCommand c : commands) {
             if (c.branch() == null) {
                 logicalLocks.remove(c.node());
+                holders.remove(c.node());
             } else {
                 logicalLocks.put(c.node(), c.branch());
+                holders.put(c.node(), c.holder());
             }
             applied++;
         }
@@ -86,6 +91,12 @@ public final class SwitchApplier {
 
     public Map<Rail.NodeId, Rail.EdgeId> locks() {
         return Map.copyOf(logicalLocks);
+    }
+
+    /** 这把锁是谁下的；没有记录返回 0。 */
+    public long holderOf(Rail.NodeId node) {
+        Long v = holders.get(node);
+        return v == null ? 0L : v;
     }
 
     /** 闸口是否与某条边冲突（进路检查用）。 */

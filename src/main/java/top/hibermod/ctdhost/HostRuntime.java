@@ -59,6 +59,12 @@ public final class HostRuntime {
     private final java.util.Map<ResourceLocation, DispatchPass> passes = new java.util.LinkedHashMap<>();
     private long kernelRevision = -1;
     private CommandApplier applier;
+    private final top.hibermod.ctdhost.execute.AtoPass atoPass =
+        new top.hibermod.ctdhost.execute.AtoPass();
+
+    /** 最近一帧采样的列车状态：ATO 需要它，而采样发生在采集阶段。 */
+    private java.util.List<top.hibermod.ctdapi.Telemetry.TrainState> lastStates =
+        java.util.List.of();
 
     private HostRuntime() {
         this.applier = new CommandApplier(
@@ -148,6 +154,10 @@ public final class HostRuntime {
             for (var c : d.aspects()) list.add(c.command());
             applier.applyAspects(list);
         }
+
+        // ATO 在授权之后跑：内核说「能走多远」，ATO 说「怎么走」。
+        // 它的输出只能收紧，所以不会推翻上面刚施加的限速。
+        atoPass.run(gameTime, lastStates);
     }
 
 
@@ -176,10 +186,16 @@ public final class HostRuntime {
         assignmentApplier.apply(assignments, Create.RAILWAYS.trains);
 
         List<Telemetry.TrainState> states = new ArrayList<>(scratch.size());
+        java.util.Set<java.util.UUID> alive = new java.util.HashSet<>();
+        for (Train t : scratch) alive.add(t.id);
         for (Train t : scratch) {
             states.add(top.hibermod.ctdhost.telemetry.TelemetrySampler.sample(
                 t, speed.authorityOf(t.id), null));
         }
+
+        top.hibermod.ctdhost.telemetry.TelemetrySampler.prune(alive);
+
+        lastStates = states;
 
         Telemetry telemetry = new Telemetry() {
             @Override public Collection<TrainState> trains() { return states; }
@@ -200,11 +216,21 @@ public final class HostRuntime {
             }
         }
 
+        // 岔口快照：内核要看见「这条岔口现在锁向哪、谁锁的」，
+        // 否则锁闭指令只能盲目下发，无法判断锁是否被抢。
+        List<FrameContext.SwitchState> switchSnapshots = new java.util.ArrayList<>();
+        for (var lockEntry : applier.switches().locks().entrySet()) {
+            switchSnapshots.add(new FrameContext.SwitchState(
+                lockEntry.getKey(),
+                lockEntry.getValue(),
+                applier.switches().holderOf(lockEntry.getKey()),
+                false));
+        }
         return new DispatchPass.Inputs(
             gameTime,
             view, telemetry,
             signalSnapshots,
-            List.<FrameContext.SwitchState>of(),           // 岔口快照：待 C7
+            switchSnapshots,
             List.<RailwayEvent>of());
     }
 

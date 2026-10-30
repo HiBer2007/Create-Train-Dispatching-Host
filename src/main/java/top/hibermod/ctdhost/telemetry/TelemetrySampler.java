@@ -85,11 +85,11 @@ public final class TelemetrySampler {
             train.doubleEnded,
             train.manualTick,
             train.derailed,
-            0.0,                               // odometer：见类注释
+            top.hibermod.ctdhost.telemetry.Odometers.advance(train.id, train.speed),
             null,                              // route：待 C5
             authority,
             energy == null ? EnergyProvider.EnergySample.unknown() : energy,
-            java.util.Set.of());
+            signalSystemsOf(train));
     }
 
     @Nullable
@@ -118,5 +118,36 @@ public final class TelemetrySampler {
     /** 一列车的稳定 id。 */
     public static UUID idOf(Train train) {
         return train.id;
+    }
+    /**
+     * 这列车装了哪些信号系统的车载设备。
+     *
+     * <p>判据是**构造物里实际存在的方块**，与 ctdscript 侧同一份事实。
+     * 这里按方块 id 判断而不是引用那边的类：宿主不该编译期依赖脚本运行时，
+     * 否则两个模组无法单独安装。
+     */
+    private static java.util.Set<net.minecraft.resources.ResourceLocation> signalSystemsOf(
+            Train train) {
+        java.util.Set<net.minecraft.resources.ResourceLocation> out = new java.util.HashSet<>();
+        if (train.carriages == null) return out;
+
+        for (Carriage carriage : train.carriages) {
+            var entity = carriage.anyAvailableEntity();
+            if (entity == null || entity.getContraption() == null) continue;
+
+            for (var info : entity.getContraption().getBlocks().values()) {
+                var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                    .getKey(info.state().getBlock());
+                if ("ctdscript:onboard_cbtc_atp".equals(id.toString())) {
+                    out.add(net.minecraft.resources.ResourceLocation
+                        .fromNamespaceAndPath("ctd", "cbtc"));
+                }
+            }
+        }
+        return out;
+    }
+    /** 清掉已经不存在的列车的里程记录。 */
+    public static void prune(java.util.Set<java.util.UUID> aliveTrainIds) {
+        top.hibermod.ctdhost.telemetry.Odometers.prune(aliveTrainIds);
     }
 }
