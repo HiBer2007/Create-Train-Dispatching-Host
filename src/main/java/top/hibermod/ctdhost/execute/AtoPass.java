@@ -39,7 +39,18 @@ public final class AtoPass {
      *
      * @return 实际被 ATO 干预的列车数
      */
+    /** 生产入口：直接改 Create 的列车。 */
     public int run(long gameTime, List<Telemetry.TrainState> states) {
+        return run(gameTime, states, TrainAccess.createBacked());
+    }
+
+    /**
+     * 可测试入口。
+     *
+     * <p>把「拿列车 / 改目标速度」换成 {@link TrainAccess}，
+     * 这样「与内核取 min」「失败 10 次禁用」「手动不接管」都能在没有世界的情况下验。
+     */
+    public int run(long gameTime, List<Telemetry.TrainState> states, TrainAccess access) {
         if (states == null || states.isEmpty()) return 0;
         if (!AtoEngines.frozen()) return 0;            // 还没冻结说明注册阶段没结束
 
@@ -48,11 +59,8 @@ public final class AtoPass {
         for (Telemetry.TrainState state : states) {
             if (state.signalSystems() == null || state.signalSystems().isEmpty()) continue;
 
-            Train train = Create.RAILWAYS.trains.get(state.id());
-            if (train == null) continue;
-
             // 手动驾驶与脱轨时一律不接管：这两种状态下 Create 自己的逻辑才是对的
-            if (train.manualTick || train.derailed) continue;
+            if (!access.controllable(state.id())) continue;
 
             double best = Double.MAX_VALUE;
 
@@ -90,7 +98,7 @@ public final class AtoPass {
             if (best == Double.MAX_VALUE) continue;
 
             // 只能收紧：与内核限速取 min
-            train.targetSpeed = Math.min(train.targetSpeed, best);
+            access.setTargetSpeed(state.id(), Math.min(access.targetSpeed(state.id()), best));
             applied++;
         }
 
