@@ -25,25 +25,25 @@ import java.util.UUID;
  * 真正的位置化里程需要「从线路原点沿进路累计」，那要等进路模型落地。
  * 在那之前，宁可给一个边界清楚的近似量，也不要给一个看起来精确的错数。
  */
-final class Odometers {
+public final class Odometers {
 
     private static final Map<UUID, Double> VALUE = new HashMap<>();
 
     private Odometers() {}
 
     /** 累加一帧位移，返回该车的新里程。 */
-    static double advance(UUID trainId, double speedThisTick) {
+    public static double advance(UUID trainId, double speedThisTick) {
         double next = VALUE.getOrDefault(trainId, 0.0) + speedThisTick;
         VALUE.put(trainId, next);
         return next;
     }
 
     /** 清掉已经消失的列车，避免长时间运行后无限增长。 */
-    static void prune(Set<UUID> alive) {
+    public static void prune(Set<UUID> alive) {
         VALUE.keySet().retainAll(alive);
     }
 
-    static int size() {
+    public static int size() {
         return VALUE.size();
     }
 }

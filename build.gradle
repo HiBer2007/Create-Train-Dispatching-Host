@@ -97,6 +97,12 @@ jar {
     }
 }
 
+tasks.register('routeOdometerTest', JavaExec) {
+    group = 'verification'
+    description = 'C4b/C4 验收：进路分配与里程累加'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'top.hibermod.ctdhost.tools.RouteOdometerTest'
+}
 tasks.register('switchApplierTest', JavaExec) {
     group = 'verification'
     description = 'C7 验收：道岔逻辑锁（上锁/解锁/冲突/多岔口）'
