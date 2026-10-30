@@ -26,6 +26,18 @@ import top.hibermod.ctdapi.Command;
  */
 public final class SpeedApplier {
 
+    /**
+     * 本帧开始时 Create 自己的 {@code targetSpeed}——「我们动手之前它想去多快」。
+     *
+     * <p>没有这份基线，「只能收紧」会变成「永远无法放宽」：每帧都拿上一帧
+     * 我们自己写下的值去取 min，一旦被扣到 0 就再也起不来。
+     * 现象是「扣车指令撤销了，车还是不动」。
+     */
+    private final Map<UUID, Double> baseline = new ConcurrentHashMap<>();
+
+    /** 本帧已被内核接受的最小目标速度；用于多内核之间「只能收紧」。 */
+    private final Map<UUID, Double> frameTarget = new ConcurrentHashMap<>();
+
     private final Map<UUID, Double> appliedAuthority = new ConcurrentHashMap<>();
     private final Map<UUID, Integer> lastAppliedTick = new ConcurrentHashMap<>();
 
@@ -44,6 +56,15 @@ public final class SpeedApplier {
     public void clear(UUID trainId) {
         appliedAuthority.remove(trainId);
         lastAppliedTick.remove(trainId);
+    }
+
+    /** 每帧在**任何内核写入之前**调用，记下 Create 自己的目标速度。 */
+    public void captureBaseline(Map<UUID, Train> trains) {
+        for (var entry : trains.entrySet()) {
+            Train train = entry.getValue();
+            if (train == null) continue;
+            baseline.put(entry.getKey(), train.targetSpeed);
+        }
     }
 
     /**
@@ -73,11 +94,24 @@ public final class SpeedApplier {
                 ? 0.0
                 : Math.sqrt(2.0 * train.acceleration() * authority);
 
-            // ① 取 min：只能收紧
-            double target = Math.min(train.targetSpeed, Math.min(kernelTarget, byAuthority));
-            target = Math.max(0.0, Math.min(target, train.maxSpeed()));
+            // ① 同一帧内多个内核之间只能相互收紧：
+            //    frameTarget 记录本帧已接受的最小目标，后写的不放宽。
+            double wish = Math.min(kernelTarget, byAuthority);
+            double accepted = Math.min(frameTarget.getOrDefault(c.trainId(), Double.MAX_VALUE), wish);
 
-            train.targetSpeed = target;
+            // ② 终值仍受车辆自身最高速约束
+            accepted = Math.max(0.0, Math.min(accepted, train.maxSpeed()));
+
+            frameTarget.put(c.trainId(), accepted);
+            // 只登记，不直接写：Navigation.tick 之后再由 SpeedControl 落下去
+            SpeedControl.request(c.trainId(), accepted);
+
+            // 内核要求前进时，必须把「暂停」解除。
+            // Create 只 tick 运行中的列车；没有时刻表的车是 paused 的，
+            // 于是它既不寻路也不移动——脚本写得再对也开不动。
+            if (accepted > 0 && train.runtime != null && train.runtime.paused) {
+                train.runtime.paused = false;
+            }
 
             appliedAuthority.put(c.trainId(), authority);
             lastAppliedTick.put(c.trainId(), (int) gameTime);

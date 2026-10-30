@@ -5,7 +5,8 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "GlobalRailwayManagerMixin",
-    "SignalBoundaryMixin"
+    "SignalBoundaryMixin",
+    "NavigationMixin"
   ],
   "client": [
     "NixieTubeRendererMixin",

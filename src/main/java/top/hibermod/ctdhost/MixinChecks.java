@@ -73,4 +73,19 @@ final class MixinChecks {
         }
         return false;
     }
+    /**
+     * 寻路之后的注入：内核设的目标速度必须在这里落地。
+     *
+     * <p>它失效时的现象极难认：内核日志显示已下发，遥测里也能看到目标速度，
+     * 但车速永远是 0——因为 Create 在之后又把 {@code targetSpeed} 覆盖回去了。
+     */
+    private static boolean navigationTail() {
+        try {
+            return hasInjectedMethod(
+                com.simibubi.create.content.trains.entity.Navigation.class, "ctd$");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
 }

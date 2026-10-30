@@ -71,6 +71,9 @@ public final class HostStatusCommand {
                 + (train.name == null ? "?" : train.name.getString())
                 + " speed=" + String.format("%.3f", train.speed)
                 + " target=" + String.format("%.3f", train.targetSpeed)
+                + " graph=" + (train.graph == null ? "NULL" : "ok")
+                + " paused=" + (train.runtime != null && train.runtime.paused)
+                + " manual=" + train.manualTick
                 + " schedule=" + top.hibermod.ctdhost.operation.AssignmentApplier.entriesOf(train);
             src.sendSuccess(() -> Component.literal(line), false);
         }
