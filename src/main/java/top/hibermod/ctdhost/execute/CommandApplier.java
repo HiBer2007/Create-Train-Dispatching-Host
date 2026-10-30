@@ -78,6 +78,14 @@ public final class CommandApplier implements DispatchFrameImpl.CommandSink {
     // 现在统一走 OperationFeed 转交并计数，至少可观测。
 
     private long forwardedDevices;
+
+    /** 设备指令的落点（可查询、可追溯）。 */
+    private final top.hibermod.ctdhost.execute.DeviceCommands deviceCommands =
+        new top.hibermod.ctdhost.execute.DeviceCommands();
+
+    public top.hibermod.ctdhost.execute.DeviceCommands deviceCommands() {
+        return deviceCommands;
+    }
     private long forwardedEnergies;
     private long forwardedServices;
     private long forwardedHud;
@@ -85,7 +93,10 @@ public final class CommandApplier implements DispatchFrameImpl.CommandSink {
     private long forwardedEvents;
 
     @Override
+
     public void applyDevices(List<Command.DeviceCommand> commands) {
+        // 真正记住每台设备的最后指令，而不只是计数
+        deviceCommands.apply(commands, gameTime);
         for (Command.DeviceCommand c : commands) {
             top.hibermod.ctdapi.operation.OperationFeed.deviceCommand(c);
             forwardedDevices++;
@@ -139,6 +150,7 @@ public final class CommandApplier implements DispatchFrameImpl.CommandSink {
             + " service=" + forwardedServices
             + " hud=" + forwardedHud
             + " boards=" + forwardedBoards
-            + " events=" + forwardedEvents;
+            + " events=" + forwardedEvents
+            + " deviceCmds=" + deviceCommands.size() + "/" + deviceCommands.accepted();
     }
 }

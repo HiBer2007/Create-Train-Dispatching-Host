@@ -97,6 +97,12 @@ jar {
     }
 }
 
+tasks.register('deviceCommandsTest', JavaExec) {
+    group = 'verification'
+    description = '设备指令落点：记录/覆盖/多设备/拒绝/空负载'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'top.hibermod.ctdhost.tools.DeviceCommandsTest'
+}
 tasks.register('atoPassTest', JavaExec) {
     group = 'verification'
     description = 'C10 验收：ATO 主循环（只收紧/手动不接管/失败禁用）'
