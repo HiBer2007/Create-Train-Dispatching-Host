@@ -58,6 +58,10 @@ public final class HostStatusCommand {
             + (someDisabled ? "  (some edges disabled by switches)" : "")), false);
         src.sendSuccess(() -> Component.literal("  units       : " + units), false);
         src.sendSuccess(() -> Component.literal("  routes      : " + host.routeCount()), false);
+        src.sendSuccess(() -> Component.literal("  interop     : energy providers="
+            + top.hibermod.ctdapi.interop.Interop.energyProviders().size()
+            + (top.hibermod.ctdapi.interop.Interop.energyProviders().isEmpty()
+                ? "  (none -> energy UNKNOWN, trains still run)" : "")), false);
         src.sendSuccess(() -> Component.literal("  switches    : logical=" + host.switchLocks()
             + " physical=" + (host.physicalSwitchesAvailable() ? "yes" : "no (no Railways)")), false);
 
