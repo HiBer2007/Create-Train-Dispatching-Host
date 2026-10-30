@@ -51,6 +51,9 @@ public final class SwitchApplier {
     /** 谁锁的（进路 id）。内核要靠它知道「这条锁是不是我自己下的」。 */
     private final Map<Rail.NodeId, Long> holders = new HashMap<>();
 
+    /** 上一帧真正扳动的物理道岔数（诊断用）。 */
+    private int lastPhysical;
+
     /** 汽鸣铁道是否可用（只用于日志与命令输出）。 */
     public static boolean isRailwaysPresent() {
         if (railwaysPresent == null) {
@@ -94,6 +97,15 @@ public final class SwitchApplier {
     }
 
     /** 这把锁是谁下的；没有记录返回 0。 */
+    public int lastPhysical() {
+        return lastPhysical;
+    }
+
+    /** 这一侧有没有物理道岔可扳（装了汽鸣铁道才有）。 */
+    public boolean physicalAvailable() {
+        return top.hibermod.ctdhost.execute.PhysicalSwitches.available();
+    }
+
     public long holderOf(Rail.NodeId node) {
         Long v = holders.get(node);
         return v == null ? 0L : v;

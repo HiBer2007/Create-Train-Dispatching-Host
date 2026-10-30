@@ -366,4 +366,13 @@ public final class HostRuntime {
     public int routeCount() {
         return routeApplier.size();
     }
+    /** 当前逻辑锁的数量（诊断用）。 */
+    public int switchLocks() {
+        return applier.switches().locks().size();
+    }
+
+    /** 这一侧有没有物理道岔可扳。 */
+    public boolean physicalSwitchesAvailable() {
+        return applier.switches().physicalAvailable();
+    }
 }

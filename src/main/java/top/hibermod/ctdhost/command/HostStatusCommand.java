@@ -48,7 +48,6 @@ public final class HostStatusCommand {
         final int signals = view == null ? 0 : view.signals().size();
         final boolean someDisabled = view != null
             && view.edges().stream().anyMatch(e -> !e.enabled());
-        final String switchStatus = host.switches() == null ? "n/a" : host.switches().status();
 
         src.sendSuccess(() -> Component.literal("CTD host status"), false);
         src.sendSuccess(() -> Component.literal("  ticks       : " + ticks), false);
@@ -59,6 +58,8 @@ public final class HostStatusCommand {
             + (someDisabled ? "  (some edges disabled by switches)" : "")), false);
         src.sendSuccess(() -> Component.literal("  units       : " + units), false);
         src.sendSuccess(() -> Component.literal("  routes      : " + host.routeCount()), false);
+        src.sendSuccess(() -> Component.literal("  switches    : logical=" + host.switchLocks()
+            + " physical=" + (host.physicalSwitchesAvailable() ? "yes" : "no (no Railways)")), false);
 
         // 每列车的速度/目标速度：验证「只能收紧」规则时要看这两个数
         for (var train : com.simibubi.create.Create.RAILWAYS.trains.values()) {
@@ -72,7 +73,6 @@ public final class HostStatusCommand {
         src.sendSuccess(() -> Component.literal("  assignments : " + assignments), false);
         src.sendSuccess(() -> Component.literal("  resolved    : " + host.assignments().summary()), false);
         src.sendSuccess(() -> Component.literal("  schedule    : " + host.assignmentApplier().summary()), false);
-        src.sendSuccess(() -> Component.literal("  switches    : " + switchStatus), false);
         final String forwarded = host.applier() == null ? "n/a" : host.applier().forwardedSummary();
         src.sendSuccess(() -> Component.literal("  forwarded   : " + forwarded), false);
 
