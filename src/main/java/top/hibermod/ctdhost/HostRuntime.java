@@ -195,8 +195,13 @@ public final class HostRuntime {
         java.util.Set<java.util.UUID> alive = new java.util.HashSet<>();
         for (Train t : scratch) alive.add(t.id);
         for (Train t : scratch) {
-            states.add(top.hibermod.ctdhost.telemetry.TelemetrySampler.sample(
-                t, speed.authorityOf(t.id), null, routeApplier.stateOf(t.id)));
+            var sampled = top.hibermod.ctdhost.telemetry.TelemetrySampler.sample(
+                t, speed.authorityOf(t.id), null, routeApplier.stateOf(t.id));
+
+            // 能源：先构造一份「未知」的状态，拿去问联动方，再换进结果里。
+            // 没有联动方时原样返回 UNKNOWN——「不知道」不等于「没电」。
+            states.add(sampled.withEnergy(
+                top.hibermod.ctdapi.interop.Interop.sampleEnergy(sampled)));
         }
 
         top.hibermod.ctdhost.telemetry.TelemetrySampler.prune(alive);
