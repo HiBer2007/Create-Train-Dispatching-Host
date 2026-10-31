@@ -32,6 +32,7 @@ public final class HostStatusCommand {
             .then(top.hibermod.ctdhost.command.ScheduleCommand.build())
             .then(top.hibermod.ctdhost.command.AspectsCommand.build())
             .then(top.hibermod.ctdhost.command.DevicesCommand.build())
+            .then(top.hibermod.ctdhost.command.SwitchesCommand.build())
             .then(top.hibermod.ctdhost.command.RestrictCommand.build())
             .then(DebugTrackCommand.build())
             .then(DebugTrainCommand.build());
