@@ -38,11 +38,32 @@ public final class DoorPermissions {
         UPDATED.put(station.immutable(), gameTime);
     }
 
+    /** 存档句柄：由宿主在服务端启动时接上；为空表示不持久化（单机测试）。 */
+    private static java.util.function.Consumer<java.util.Map<BlockPos, Boolean>> persister;
+
+    public static void setPersister(java.util.function.Consumer<java.util.Map<BlockPos, Boolean>> fn) {
+        persister = fn;
+    }
+
+    /** 存档是否已接上。没接上 = 重启后显式许可会丢。 */
+    public static boolean hasPersister() {
+        return persister != null;
+    }
+
+    private static void persist() {
+        if (persister != null) {
+            try { persister.accept(Map.copyOf(EXPLICIT)); }
+            catch (Throwable ignored) { /* 存档失败不该让调度停摆 */ }
+        }
+    }
+
     public static void setExplicit(BlockPos station, Boolean allowed) {
         if (allowed == null) {
             EXPLICIT.remove(station.immutable());
+            persist();
         } else {
             EXPLICIT.put(station.immutable(), allowed);
+            persist();
         }
     }
 
@@ -76,7 +97,28 @@ public final class DoorPermissions {
         return Map.copyOf(AUTO);
     }
 
+    /** 从存档读回显式许可（服务端启动时调用）。 */
+    public static void loadFrom(net.minecraft.nbt.CompoundTag tag) {
+        EXPLICIT.clear();
+        if (tag == null) return;
+
+        for (String key : tag.getAllKeys()) {
+            String[] parts = key.split(",");
+            if (parts.length != 3) continue;
+            try {
+                BlockPos pos = new BlockPos(
+                    Integer.parseInt(parts[0].trim()),
+                    Integer.parseInt(parts[1].trim()),
+                    Integer.parseInt(parts[2].trim()));
+                EXPLICIT.put(pos, tag.getBoolean(key));
+            } catch (NumberFormatException ignored) {
+                // 单个坐标坏了不该让整张表读不出来
+            }
+        }
+    }
+
     public static void clear() {
+        // clear() 是「测试用」的：不写存档，免得把测试状态带进正式存档。
         AUTO.clear();
         EXPLICIT.clear();
         UPDATED.clear();

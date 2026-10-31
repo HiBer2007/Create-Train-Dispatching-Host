@@ -107,6 +107,11 @@ public final class HostSelfTestCommand {
         // 口径写在这里，是为了将来真按信号机切分时，这一条会被显式改掉，
         // 而不是悄悄失效。
         int sectionSites = mirror.current() == null ? 0 : mirror.current().sections().size();
+        // 门许可必须能进存档：只存在内存里的话，一次重启就悄悄回到自动判定。
+        fails += add(lines, "门许可可持久化",
+            top.hibermod.ctdhost.door.DoorPermissions.hasPersister(),
+            "DoorPermissions 没有接上存档：重启后显式开关门会丢");
+
         fails += add(lines, "区段已收录", sectionSites == edges,
             "边 " + edges + " 条，区段 " + sectionSites + " 个（口径：一条边一个区段）");
 

@@ -94,6 +94,23 @@ public final class CtdHost {
 
     private void onServerStarting(ServerStartingEvent event) {
         LOG.info("[ctdhost] attached; " + ApiCatalog.entries().size() + " registry entries");
+
+        // 车门许可的持久化：调度说「这个站台别开门」，重启之后仍然别开。
+        // 只在内存里的话，一次重启就悄悄回到自动判定——这是安全相关的行为，
+        // 不能靠「应该不会重启」来保证。
+        var server = event.getServer();
+        var saved = top.hibermod.ctdhost.save.HostSavedData.get(server);
+        var tag = saved.doorPermissions();
+        top.hibermod.ctdhost.door.DoorPermissions.loadFrom(tag);
+
+        top.hibermod.ctdhost.door.DoorPermissions.setPersister(current -> {
+            var t = saved.doorPermissions();
+            t.getAllKeys().forEach(t::remove);
+            current.forEach((pos, allowed) ->
+                t.putBoolean(pos.getX() + "," + pos.getY() + "," + pos.getZ(), allowed));
+            saved.setDirty();
+        });
+
         // 注入自检：require=0 的注入失败不会报错，只能靠「有没有被调过」发现
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
             (net.neoforged.neoforge.event.tick.ServerTickEvent.Post e) ->

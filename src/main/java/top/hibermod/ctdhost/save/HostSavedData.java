@@ -43,6 +43,9 @@ public final class HostSavedData extends SavedData {
     private final List<Emergency.Order> emergencies = new ArrayList<>();
     private final CompoundTag switchLocks = new CompoundTag();
 
+    /** 显式门许可：站台坐标 → 允许/禁止。 */
+    private final CompoundTag doorPermissions = new CompoundTag();
+
     public HostSavedData() {}
 
     // ── 内核状态 ──────────────────────────────────────────────────────────
@@ -83,6 +86,11 @@ public final class HostSavedData extends SavedData {
     }
 
     // ── 逻辑道岔锁 ────────────────────────────────────────────────────────
+
+    /** 显式门许可（坐标字符串 → boolean）。 */
+    public CompoundTag doorPermissions() {
+        return doorPermissions;
+    }
 
     public CompoundTag switchLocks() {
         return switchLocks;
@@ -128,6 +136,7 @@ public final class HostSavedData extends SavedData {
         tag.put("Emergencies", el);
 
         tag.put("SwitchLocks", switchLocks.copy());
+        tag.put("DoorPermissions", doorPermissions.copy());
         return tag;
     }
 
@@ -185,8 +194,13 @@ public final class HostSavedData extends SavedData {
         if (tag.contains("SwitchLocks", Tag.TAG_COMPOUND)) {
             d.switchLocks.merge(tag.getCompound("SwitchLocks"));
         }
+        if (tag.contains("DoorPermissions", Tag.TAG_COMPOUND)) {
+            d.doorPermissions.merge(tag.getCompound("DoorPermissions"));
+        }
+
         return d;
     }
+
     // ── 读取入口 ──────────────────────────────────────────────────────────
 
     /**
