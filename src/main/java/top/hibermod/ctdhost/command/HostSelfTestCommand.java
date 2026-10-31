@@ -57,8 +57,18 @@ public final class HostSelfTestCommand {
         int edges = view == null ? 0 : view.edges().size();
         fails += add(lines, "拓扑非空", nodes > 0,
             "没有轨道：铺轨或跑 /ctd host debugtrack");
-        fails += add(lines, "拓扑缓存生效", mirror.rebuildCount() <= 3,
-            "重建次数过多，说明「变没变」的判断有误");
+        // 早先这里写的是「rebuildCount() <= 3」，那是**错的**：
+        // 它把「缓存是否生效」和「这个世界被改过几次」混成了一件事。
+        // 连续跑几次 /ctd host debugtrack（每次都是真实的结构变化）之后，
+        // 重建次数自然 > 3，自检就开始报假失败——而假失败会让人不再看它。
+        //
+        // 自检在这里能证明的只有「缓存路径在工作」：至少重建过一次，且耗时是个正常数。
+        // 「没变化时不重建」由 PLAN 里那次 1200 tick 稳态实验证明（rebuilds 恒为 1），
+        // 那需要观察一段时间，不是一条即时命令能判的。
+        fails += add(lines, "拓扑缓存可观测",
+            mirror.rebuildCount() >= 1 && mirror.lastRebuildMillis() >= 0
+                && mirror.lastRebuildMillis() < 2000,
+            "重建次数=" + mirror.rebuildCount() + " 耗时=" + mirror.lastRebuildMillis() + "ms");
 
         // ②b 时刻表健康
         //
