@@ -43,6 +43,27 @@ public final class DevicesCommand {
         var store = host.applier().deviceCommands();
         List<top.hibermod.ctdhost.execute.DeviceCommands.Received> snapshot = store.snapshot();
 
+        // 先列「世界里的设备」：没有它们，指令列表只是些孤立 UUID。
+        var topo = host.mirror() == null ? null : host.mirror().current();
+        int siteCount = topo == null ? 0 : topo.devices().size();
+
+        if (siteCount > 0) {
+            src.sendSuccess(() -> Component.literal("世界里的设备：" + siteCount + " 台"), false);
+
+            for (var site : topo.devices()) {
+                var last = store.lastOf(site.id());
+                final String line = "  " + site.typeId()
+                    + "  " + site.id()
+                    + (last == null ? "  (还没收到过指令)" : "  <- " + last.payload().summary());
+                src.sendSuccess(() -> Component.literal(line), false);
+            }
+
+            src.sendSuccess(() -> Component.literal(""), false);
+        } else {
+            src.sendSuccess(() -> Component.literal(
+                "拓扑里还没有设备（K4 的设备方块尚未实现；当前只有车站派生的站台设备）"), false);
+        }
+
         if (snapshot.isEmpty()) {
             src.sendSuccess(() -> Component.literal(
                 "还没有设备收到过指令（deviceCmds=0）；内核发 out.device(...) 之后这里会有条目"), false);
