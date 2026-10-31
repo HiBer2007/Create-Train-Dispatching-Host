@@ -98,16 +98,15 @@ public final class DoorService {
     public static boolean isTrainStoppedAt(ServerLevel level, BlockPos stationPos) {
         for (var train : Create.RAILWAYS.trains.values()) {
             if (train.carriages.isEmpty()) continue;
-            if (train.derailed) continue;
-            if (train.speed > STOPPED_SPEED) continue;
 
             for (var carriage : train.carriages) {
                 var entity = carriage.anyAvailableEntity();
                 if (entity == null) continue;
                 if (entity.level() != level) continue;
-                if (entity.position().distanceToSqr(
-                        stationPos.getX() + 0.5, stationPos.getY() + 0.5, stationPos.getZ() + 0.5)
-                        <= TRAIN_RADIUS * TRAIN_RADIUS) {
+                // 判定交给纯规则：这里只负责取数。
+                double distanceSq = entity.position().distanceToSqr(
+                    stationPos.getX() + 0.5, stationPos.getY() + 0.5, stationPos.getZ() + 0.5);
+                if (DoorRules.canOpenAt(distanceSq, train.speed, train.derailed)) {
                     return true;
                 }
             }

@@ -56,6 +56,27 @@ public final class K4DoorAndIndicatorTest {
         DoorPermissions.clear();
         failures += check("清空后回到兜底", DoorPermissions.allowed(station, true));
 
+        // ── 自动开门规则（纯函数）────────────────────────────────────
+        double radius = top.hibermod.ctdhost.door.DoorService.TRAIN_RADIUS;
+        double stopped = top.hibermod.ctdhost.door.DoorService.STOPPED_SPEED;
+
+        failures += check("停稳且在范围内 → 开门",
+            top.hibermod.ctdhost.door.DoorRules.canOpenAt(4.0, 0.0, false));
+        failures += check("正好在半径上 → 开门",
+            top.hibermod.ctdhost.door.DoorRules.canOpenAt(radius * radius, 0.0, false));
+        failures += check("超出半径 → 不开",
+            !top.hibermod.ctdhost.door.DoorRules.canOpenAt(radius * radius + 0.01, 0.0, false));
+        failures += check("还在动 → 不开",
+            !top.hibermod.ctdhost.door.DoorRules.canOpenAt(1.0, stopped + 0.001, false));
+        failures += check("刚好等于阈值 → 开门",
+            top.hibermod.ctdhost.door.DoorRules.canOpenAt(1.0, stopped, false));
+        failures += check("脱轨 → 不开",
+            !top.hibermod.ctdhost.door.DoorRules.canOpenAt(1.0, 0.0, true));
+        failures += check("脱轨优先于停稳",
+            !top.hibermod.ctdhost.door.DoorRules.canOpenAt(0.0, 0.0, true));
+        failures += check("距离平方计算",
+            Math.abs(top.hibermod.ctdhost.door.DoorRules.distanceSq(0.5, 64.5, 0.5, 0, 64, 0)) < 1e-9);
+
         // ── 偏差与颜色 ────────────────────────────────────────────────
         failures += check("晚点 → LATE", DeparturesCommand.lampFor(600, 720) == DeparturesCommand.Lamp.LATE);
         failures += check("早点 → EARLY", DeparturesCommand.lampFor(600, 480) == DeparturesCommand.Lamp.EARLY);
