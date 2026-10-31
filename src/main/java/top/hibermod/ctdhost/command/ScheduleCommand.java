@@ -52,10 +52,47 @@ public final class ScheduleCommand {
             //
             // 教训：**写世界的命令，必须同时提供撤销它的命令，并且撤销要先于写被验证。**
             .then(Commands.literal("clear").executes(ctx -> clear(ctx.getSource())))
-            .then(Commands.literal("fake").executes(ctx -> fake(ctx.getSource())));
+            .then(Commands.literal("fake").executes(ctx -> fake(ctx.getSource())))
+            .then(Commands.literal("corrupt").executes(ctx -> corrupt(ctx.getSource())));
     }
 
     /** 把所有列车的时刻表清空——从「已损坏的存档」里恢复用。 */
+    /**
+     * 把**损坏时刻表**真的写进列车：{@code cyclic=true} 且 {@code entries} 为空。
+     *
+     * <h2>为什么要有一条"故意搞坏"的命令</h2>
+     * 兜底（{@code ScheduleRuntimeGuardMixin}）是防止服务器崩溃的最后一道网。
+     * 但它原来**验不了**：`fake` 只在内存里造一份，从不赋给列车，
+     * 所以那条注入路径一次都没真跑过——一个永远不触发的安全网，
+     * 和没有安全网是同一回事，只是更让人放心。
+     *
+     * <p>这条命令负责「按需制造事故」，配 {@code schedule clear} 作撤销。
+     * 名字直白到无法误用：它就叫 corrupt。
+     *
+     * <p><b>只在开发世界用。</b>写坏之后如果兜底失效，服务端会崩在
+     * {@code ScheduleRuntime.estimateStayDuration} 的 {@code entries.get(0)} 上。
+     */
+    private static int corrupt(CommandSourceStack src) {
+        int written = 0;
+
+        for (Train train : Create.RAILWAYS.trains.values()) {
+            if (train.runtime == null) continue;
+
+            // 正是「损坏状态」本身：cyclic=true + 空 entries
+            Schedule broken = new Schedule(new java.util.ArrayList<>(), true, 0);
+            train.runtime.setSchedule(broken, false);
+            written++;
+        }
+
+        final int count = written;
+        src.sendSuccess(() -> Component.literal(
+            "注入损坏时刻表（cyclic=true, entries=0）到 " + count + " 列车"), false);
+        src.sendSuccess(() -> Component.literal(
+            "期望：服务端**不崩**，swallowed 出现「时刻表兜底」；随后 /ctd host schedule clear 恢复"), false);
+
+        return written;
+    }
+
     private static int clear(CommandSourceStack src) {
         int cleared = 0;
 
@@ -76,8 +113,9 @@ public final class ScheduleCommand {
             // 也就是**我们要修的那个损坏状态本身**。早先这里写的就是 `new Schedule()`，
             // 于是「修复」命令把一份损坏时刻表换成了另一份一模一样的损坏时刻表，
             // 还回了一句 `cleared 1 train(s)`。
-            Schedule empty = new Schedule(new java.util.ArrayList<>(), false, 0);
-            train.runtime.setSchedule(empty, false);
+            // 必须置 null，不能写「空时刻表」：entries 为空的时刻表同样会在
+            // startCurrentInstruction 里 ntries.get(-1) 崩掉。没有时刻表才是真的没有。
+            train.runtime.setSchedule(null, false);
             cleared++;
         }
 

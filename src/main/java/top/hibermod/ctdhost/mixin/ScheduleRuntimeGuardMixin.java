@@ -53,7 +53,7 @@ public abstract class ScheduleRuntimeGuardMixin {
         ScheduleRuntime self = (ScheduleRuntime) (Object) this;
         Schedule schedule = self.schedule;
 
-        if (schedule == null || !schedule.cyclic || !schedule.entries.isEmpty()) {
+        if (schedule == null || !schedule.entries.isEmpty()) {   // 空条目即损坏，与 cyclic 无关
             return;
         }
 

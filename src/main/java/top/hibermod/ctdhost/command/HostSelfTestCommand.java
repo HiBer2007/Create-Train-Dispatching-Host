@@ -94,11 +94,23 @@ public final class HostSelfTestCommand {
         fails += add(lines, "灯色接管注入", aspectGuard,
             "信号灯色会在下一帧被 Create 覆盖，内核写的灯等于没写");
 
+        boolean tickGuard = injected(
+            com.simibubi.create.content.trains.schedule.ScheduleRuntime.class,
+            "ctd$scheduleRuntimeTickGuardMarker");
+        boolean stashGuard = injected(
+            com.simibubi.create.content.trains.GlobalRailwayManager.class,
+            "ctd$corruptScheduleStashMarker");
+        fails += add(lines, "时刻表源头摘除", stashGuard,
+            "Create 有四处会因坏时刻表越界；逐点补漏挡不住，必须在入口整帧摘除");
+
+        fails += add(lines, "时刻表停摆注入", tickGuard,
+            "循环但无条目的时刻表会让 runtime.tick 越界崩服（比 estimateStayDuration 更早）");
+
         fails += add(lines, "时刻表兜底注入", guard,
             "损坏的循环时刻表会再次把服务端打崩");
 
         fails += add(lines, "时刻表健康", corrupt == 0,
-            corrupt + " 列车持有 cyclic 且无条目的时刻表，服务端会崩；跑 /ctd host schedule clear");
+            corrupt + " 列车持有无条目的时刻表（cyclic 与否都会崩）；跑 /ctd host schedule clear");
 
         // ③ 内核
         int kernels = Create.RAILWAYS.trains.isEmpty() ? 0 : 1;

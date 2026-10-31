@@ -10,6 +10,8 @@
     "NavigationMixin",
     "TrainTickMixin",
     "ScheduleRuntimeGuardMixin",
+    "ScheduleRuntimeTickGuardMixin",
+    "CorruptScheduleTickMixin",
     "PassiveSlowdownMixin"
   ],
   "client": [

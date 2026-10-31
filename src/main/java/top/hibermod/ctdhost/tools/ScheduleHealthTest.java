@@ -30,9 +30,14 @@ public final class ScheduleHealthTest {
         // ── 不会崩的那几种 ──────────────────────────────────────────────
         failures += check("cyclic 且有 1 条 → 健康", !ScheduleHealth.isCorrupt(true, 1));
         failures += check("cyclic 且有 2 条 → 健康", !ScheduleHealth.isCorrupt(true, 2));
-        failures += check("非 cyclic 且 0 条 → 健康（Create 返回 INVALID）",
-            !ScheduleHealth.isCorrupt(false, 0),
-            "Create 对非循环空表是安全的，误报会让人忽略这个检查");
+        // 反例：非循环的空时刻表**同样会崩**。
+        //
+        // 早先这里断言的是「健康（Create 返回 INVALID）」——那是我按一次崩溃日志
+        // 归纳出的错误结论。实际 startCurrentInstruction 无条件 entries.get(-1)，
+        // 与 cyclic 无关；这条错判据让 clear 写出了另一份会崩的时刻表。
+        failures += check("非 cyclic 且 0 条 → 同样判定为损坏",
+            ScheduleHealth.isCorrupt(false, 0),
+            "空条目与 cyclic 无关");
         failures += check("非 cyclic 且有 1 条 → 健康", !ScheduleHealth.isCorrupt(false, 1));
 
         // ── 说明文本要能直接贴进日志 ───────────────────────────────────

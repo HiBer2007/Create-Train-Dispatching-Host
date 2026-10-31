@@ -34,7 +34,14 @@ public final class ScheduleHealth {
      * @param entryCount {@code Schedule.entries.size()}
      */
     public static boolean isCorrupt(boolean cyclic, int entryCount) {
-        return cyclic && entryCount <= 0;
+        // 判据是 **entries 为空**，与 cyclic 无关。
+        //
+        // 早先写的是 `cyclic && entryCount == 0`，因为第一份坏数据恰好是那样。
+        // 但 `ScheduleRuntime.startCurrentInstruction` 里是无条件的
+        // `schedule.entries.get(currentEntry)`，`currentEntry` 初值 -1——
+        // 所以**任何空 entries 的时刻表都会崩**，非循环的也一样。
+        // 这条错误判据直接导致「用 clear 修好之后又崩」（clear 写的正是空 + 非循环）。
+        return entryCount <= 0;
     }
 
     /** 一句能直接贴进日志的解释。 */
