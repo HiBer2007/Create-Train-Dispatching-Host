@@ -35,7 +35,16 @@ public final class SwitchesCommand {
     private SwitchesCommand() {}
 
     public static LiteralArgumentBuilder<CommandSourceStack> build() {
-        return Commands.literal("switches").executes(ctx -> run(ctx.getSource()));
+        return Commands.literal("switches")
+            .executes(ctx -> run(ctx.getSource()))
+            // 撤销：清掉全部逻辑锁。
+            //
+            // 为什么必须有它：锁是内核写的，而内核会崩、会被禁用、会被改逻辑。
+            // 没有撤销手段的话，一个崩掉的内核会在岔口上留下**永久锁**，
+            // 别的内核再也拿不到这个岔口——现象是「这条进路永远排不出来」。
+            //
+            // 只清逻辑锁，不碰物理岔位：物理位置由汽鸣铁道自己管。
+            .then(Commands.literal("clear").executes(ctx -> clear(ctx.getSource())));
     }
 
     private static int run(CommandSourceStack src) {
@@ -70,14 +79,48 @@ public final class SwitchesCommand {
             Rail.EdgeId branch = entry.getValue();
             long holder = applier.holderOf(node);
 
-            final String line = "  node=" + node
-                + "  ->  " + branch
+            // 用 encode() 而不是 record 的默认 toString：
+            // 后者会打出 ResourceKey[...]/NodeId[...] 一大串，实际没人读得下去。
+            final String line = "  node=" + node.encode()
+                + "  ->  " + branch.encode()
                 + "  holder=" + describeHolder(holder);
 
             src.sendSuccess(() -> Component.literal(line), false);
         }
 
         return locks.size();
+    }
+
+    /**
+     * 清掉全部逻辑锁；返回清掉的条数。
+     *
+     * <p>锁是内核写的，而内核会崩、会被禁用、会被改逻辑。没有撤销手段的话，
+     * 一个崩掉的内核会在岔口上留下<b>永久锁</b>，别的内核再也拿不到这个岔口——
+     * 现象是「这条进路永远排不出来」。这也是「写世界的动作必须自带撤销」的第二例
+     * （第一例是时刻表）。
+     *
+     * <p>只清逻辑锁，不碰物理岔位：物理位置由汽鸣铁道自己管。
+     */
+    private static int clear(CommandSourceStack src) {
+        var host = top.hibermod.ctdhost.HostRuntime.get();
+        if (host.applier() == null) {
+            src.sendFailure(Component.literal("applier 未初始化"));
+            return 0;
+        }
+
+        var applier = host.applier().switches();
+        int before = applier.locks().size();
+
+        for (var node : List.copyOf(applier.locks().keySet())) {
+            // branch = null 表示解锁（见 SwitchApplier.apply）
+            applier.apply(List.of(new top.hibermod.ctdapi.Command.SwitchCommand(
+                node, top.hibermod.ctdapi.Topology.SwitchPosition.UNKNOWN, null, 0)),
+                java.util.Map.of());
+        }
+
+        final int cleared = before;
+        src.sendSuccess(() -> Component.literal("已清除 " + cleared + " 个逻辑锁"), false);
+        return cleared;
     }
 
     /** holder 是「谁锁的」：0 表示调度内核（脚本），其它值原样显示。 */
