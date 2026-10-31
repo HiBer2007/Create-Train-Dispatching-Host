@@ -53,6 +53,8 @@ public final class HostStatusCommand {
         Topology view = host.mirror().current();
         final int nodes = view == null ? 0 : view.nodes().size();
         final int edges = view == null ? 0 : view.edges().size();
+        final int stations = view == null ? 0 : view.stations().size();
+        final int deviceSites = view == null ? 0 : view.devices().size();
         final int signals = view == null ? 0 : view.signals().size();
         final boolean someDisabled = view != null
             && view.edges().stream().anyMatch(e -> !e.enabled());
@@ -60,6 +62,8 @@ public final class HostStatusCommand {
         src.sendSuccess(() -> Component.literal("CTD host status"), false);
         src.sendSuccess(() -> Component.literal("  ticks       : " + ticks), false);
         src.sendSuccess(() -> Component.literal("  kernels     : " + kernels), false);
+        src.sendSuccess(() -> Component.literal("  sites       : stations=" + stations
+            + " (seen " + host.mirror().lastStationSeen() + ") devices=" + deviceSites), false);
         src.sendSuccess(() -> Component.literal("  topology    : nodes=" + nodes + " edges=" + edges
             + " signals=" + signals + " aspects="
             + top.hibermod.ctdapi.status.SignalStates.size()

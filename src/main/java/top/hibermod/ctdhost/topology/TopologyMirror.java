@@ -178,6 +178,53 @@ public final class TopologyMirror {
                 // 某个图读不出来不该让整张拓扑失败
             }
         }
+        // 车站：GlobalStation 是 Create 的边点（SingleBlockEntityEdgePoint），
+        // 自带 edgeLocation 与 position，能直接转成 StationSite。
+        //
+        // 之前 ctx.topology().stations() 恒为空——契约在、数据没接，
+        // 内核想按站排进路只能自己再扫一遍 Create 的表。
+        int stationCount = 0;
+        int stationSeen = 0;
+
+        for (var graph : graphs.values()) {
+            try {
+                for (com.simibubi.create.content.trains.station.GlobalStation station
+                        : graph.getPoints(com.simibubi.create.content.trains.graph.EdgePointType.STATION)) {
+                    stationSeen++;
+
+                    Rail.EdgeId edgeId = edgeIdOf(station);
+                    if (edgeId == null) continue;
+
+                    b.station(new top.hibermod.ctdapi.Topology.StationSite(
+                        station.id,
+                        net.minecraft.network.chat.Component.literal(
+                            station.name == null ? "" : station.name),
+                        edgeId,
+                        station.position,
+                        station.assembling,
+                        java.util.List.of()));
+
+                    // 车站同时也是「地面设备」：站台门 / 发车指示器将来都挂在它上面。
+                    // 先给一个通用类型，K4 的细分以后再加。
+                    b.device(new top.hibermod.ctdapi.device.Devices.DeviceSite(
+                        station.id,
+                        net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("ctd", "station_platform"),
+                        null,
+                        edgeId,
+                        station.position,
+                        true,
+                        new net.minecraft.nbt.CompoundTag()));
+
+                    stationCount++;
+                }
+            } catch (Throwable t) {
+                top.hibermod.ctdhost.Failures.caught("拓扑重建（车站）", t);
+            }
+        }
+
+        lastStationCount = stationCount;
+        lastStationSeen = stationSeen;
+
         lastNodeCount = nodeCount;
         lastEdgeCount = edgeCount;
         this.view = b.build();
@@ -189,6 +236,16 @@ public final class TopologyMirror {
     /** 上一次构建的节点/边数量，用于日志与校验。 */
     /** 自启动以来的重建次数。稳态下应当很少——每帧都涨说明签名没起作用。 */
     public int rebuildCount() { return rebuildCount; }
+
+    /** 上一次重建收录的车站数。 */
+    public int lastStationCount() { return lastStationCount; }
+
+    private int lastStationCount;
+
+    /** 上一次重建看到的车站总数（含未能映射到边的）。 */
+    public int lastStationSeen() { return lastStationSeen; }
+
+    private int lastStationSeen;
 
     /** 上一次重建耗时（毫秒）。 */
     public long lastRebuildMillis() { return lastRebuildMillis; }
