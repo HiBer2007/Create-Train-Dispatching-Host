@@ -60,7 +60,23 @@ public final class HostSelfTestCommand {
         fails += add(lines, "拓扑缓存生效", mirror.rebuildCount() <= 3,
             "重建次数过多，说明「变没变」的判断有误");
 
-        // ③ 内核
+        // ②b 时刻表健康
+        //
+        // Create 的 ScheduleRuntime.estimateStayDuration 对「cyclic 但有 0 条目」的时刻表
+        // 会 entries.get(0) 越界，每个 tick 抛一次——服务端起不来，而且状态在存档里。
+        // 这一项就是提前把它说出来，而不是等人翻 crash report。
+        int corrupt = 0;
+        for (var train : Create.RAILWAYS.trains.values()) {
+            if (train.runtime == null || train.runtime.schedule == null) continue;
+            var s = train.runtime.schedule;
+            if (top.hibermod.ctdhost.execute.ScheduleHealth.isCorrupt(s.cyclic, s.entries.size())) {
+                corrupt++;
+            }
+        }
+        fails += add(lines, "时刻表健康", corrupt == 0,
+            corrupt + " 列车持有 cyclic 且无条目的时刻表，服务端会崩；跑 /ctd host schedule clear");
+
+        // ③ 内核'
         int kernels = Create.RAILWAYS.trains.isEmpty() ? 0 : 1;
         boolean kernelRegistered = top.hibermod.ctdhost.HostRuntime.get().kernelCount() > 0;
         fails += add(lines, "已注册内核", kernelRegistered,
@@ -77,12 +93,19 @@ public final class HostSelfTestCommand {
             "HostSavedData 没接上：重启后会丢");
 
         // ⑥ 列车侧的诊断字段是否可读
-        boolean trainReadable = !Create.RAILWAYS.trains.isEmpty();
-        if (!Create.RAILWAYS.trains.isEmpty()) {
+        //
+        // 空车队不算失败：全新世界本来就没有车，把「还没有车」判成 FAIL 会让整套
+        // 自检在新世界里永远是红的，人就会开始忽略它。所以这一项问的是
+        // **「有车的话，它的状态读得出来吗」**，没车时明确说「跳过」。
+        int fleet = Create.RAILWAYS.trains.size();
+        boolean trainReadable = true;
+        if (fleet > 0) {
             var train = Create.RAILWAYS.trains.values().iterator().next();
             trainReadable = train.graph != null && train.runtime != null;
         }
-        fails += add(lines, "列车状态可读", trainReadable, "没有列车或列车缺 graph/runtime");
+        fails += add(lines, fleet == 0 ? "列车状态可读（无车，跳过）" : "列车状态可读",
+            trainReadable,
+            fleet == 0 ? "" : "列车缺 graph/runtime");
 
         final int failed = fails;
         final String header = "CTD selftest — " + (failed == 0 ? "全部通过" : failed + " 项失败");
