@@ -10,6 +10,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import com.simibubi.create.content.trains.schedule.Schedule;
+import com.simibubi.create.content.trains.schedule.ScheduleRuntime;
 
 /**
  * 一条命令跑完整条链路，逐项报 PASS / FAIL。
@@ -109,6 +111,9 @@ public final class HostSelfTestCommand {
         fails += add(lines, "时刻表兜底注入", guard,
             "损坏的循环时刻表会再次把服务端打崩");
 
+        fails += add(lines, "兜底真的会开火", ctd$proveGuardsFire(lines),
+            "第二防线的守卫注册了但要能真的挡住一次（否则它只是装饰）");
+
         fails += add(lines, "时刻表健康", corrupt == 0,
             corrupt + " 列车持有无条目的时刻表（cyclic 与否都会崩）；跑 /ctd host schedule clear");
 
@@ -196,6 +201,73 @@ public final class HostSelfTestCommand {
             return "ok".equals(data.kernelState(id).getString("probe"));
         } catch (Throwable t) {
             return false;
+        }
+    }
+
+    /**
+     * 证明两道「第二防线」真的会开火——**在游戏里当场调用它们守的方法**。
+     *
+     * <h2>为什么不能只看「注入已注册」</h2>
+     * {@code @Unique} 标记只能证明 mixin 挂上去了，证明不了那个 {@code @Inject}
+     * 分支真的会被走到、返回的值真的是我们想的那个。这一轮已经吃过一次亏：
+     * 「时刻表兜底」写了三轮没触发过，最后发现它压根没跑过。
+     *
+     * <h2>做法</h2>
+     * 借一列真车的 runtime，把一份损坏时刻表**直接赋给字段**（绕开 setSchedule 的副作用），
+     * 然后当场调用：
+     * <ol>
+     *   <li>{@code estimateStayDuration(0)}（私有，反射）→ 期望 {@code -2}；</li>
+     *   <li>{@code tick(level)} → 期望**不抛**。</li>
+     * </ol>
+     * 两步都在同一个命令调用里完成、立即还原，所以不会泄漏到下个 tick。
+     *
+     * <p>如果守卫是坏的，这里会直接崩——那正是它该暴露的。
+     */
+    private static boolean ctd$proveGuardsFire(List<String> lines) {
+        ScheduleRuntime runtime = null;
+        Schedule saved = null;
+
+        try {
+            for (var train : Create.RAILWAYS.trains.values()) {
+                if (train.runtime != null) {
+                    runtime = train.runtime;
+                    saved = runtime.schedule;
+                    break;
+                }
+            }
+
+            if (runtime == null) return true;   // 没有列车就不判失败
+
+            // 自检要故意触发守卫，而守卫会往 swallowed 里记一条。
+            // 自检不该污染它正在检查的通道，所以在验证窗口内静音。
+            top.hibermod.ctdapi.diagnostics.Failures.beginSuppression();
+
+            Schedule broken = new Schedule(new java.util.ArrayList<>(), true, 0);
+            runtime.schedule = broken;          // 直接赋值：不触发 reset()
+
+            var method = ScheduleRuntime.class.getDeclaredMethod("estimateStayDuration", int.class);
+            method.setAccessible(true);
+            Object result = method.invoke(runtime, 0);
+
+            boolean returnedInvalid = result instanceof Integer i && i == -2;
+
+            // 第二道：tick 守卫应当取消这一帧而不是抛出去
+            boolean tickSafe;
+            try {
+                runtime.tick(null);
+                tickSafe = true;
+            } catch (Throwable t) {
+                tickSafe = false;
+                lines.add("      tick 守卫没挡住: " + t.getClass().getSimpleName());
+            }
+
+            return returnedInvalid && tickSafe;
+        } catch (Throwable t) {
+            lines.add("      现场验证抛了: " + t.getClass().getSimpleName() + " / " + t.getMessage());
+            return false;
+        } finally {
+            top.hibermod.ctdapi.diagnostics.Failures.endSuppression();
+            if (runtime != null) runtime.schedule = saved;
         }
     }
 
