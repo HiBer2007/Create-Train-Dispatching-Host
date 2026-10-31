@@ -78,6 +78,18 @@ public final class SignalOverrides {
         return entry != null && entry.complete() && entry.fresh(now);
     }
 
+    /**
+     * 我方意图与原版结果合并：**红灯永远不放宽**。
+     *
+     * <p>占用、强制红、链式解析都由 Create 在 {@code tickState} 里算完；
+     * 我们只能在 TAIL 覆盖非红的值。这条规则让「占用 → 红灯」由 Create 保证，
+     * 我们最坏只是让灯更严。
+     */
+    public static SignalState resolve(SignalState current, SignalState wanted) {
+        if (current == SignalState.RED) return SignalState.RED;
+        return wanted == null ? current : wanted;
+    }
+
     public static int size() {
         return OVERRIDES.size();
     }

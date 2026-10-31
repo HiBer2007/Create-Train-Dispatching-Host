@@ -93,6 +93,21 @@ public final class SignalOverridesTest {
         SignalOverrides.clear();
         failures += check("clear 之后为空", SignalOverrides.size() == 0);
 
+        // ── 红灯永远不放宽 ──────────────────────────────────────────────
+        //
+        // 安全不变式：Create 已按占用/强制红算出 RED 时，我方意图无论如何都不能改成非红。
+        // 否则会出现「区段里有车，灯是绿的」——那比灯不改变严重得多。
+        failures += check("原版 RED + 我方 GREEN → 仍是 RED",
+            SignalOverrides.resolve(SignalState.RED, SignalState.GREEN) == SignalState.RED);
+        failures += check("原版 RED + 我方 YELLOW → 仍是 RED",
+            SignalOverrides.resolve(SignalState.RED, SignalState.YELLOW) == SignalState.RED);
+        failures += check("原版 GREEN + 我方 RED → RED（可以更严）",
+            SignalOverrides.resolve(SignalState.GREEN, SignalState.RED) == SignalState.RED);
+        failures += check("原版 GREEN + 我方 YELLOW → YELLOW（我方意图生效）",
+            SignalOverrides.resolve(SignalState.GREEN, SignalState.YELLOW) == SignalState.YELLOW);
+        failures += check("我方为空 → 保持原版",
+            SignalOverrides.resolve(SignalState.GREEN, null) == SignalState.GREEN);
+
         System.out.println();
         if (failures > 0) {
             System.out.println("灯色意图验收失败: " + failures + " 项");
