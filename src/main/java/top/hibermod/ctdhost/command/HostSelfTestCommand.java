@@ -67,6 +67,29 @@ public final class HostSelfTestCommand {
         // 自检在这里能证明的只有「缓存路径在工作」：至少重建过一次，且耗时是个正常数。
         // 「没变化时不重建」由 PLAN 里那次 1200 tick 稳态实验证明（rebuilds 恒为 1），
         // 那需要观察一段时间，不是一条即时命令能判的。
+        // 车站：契约里一直有 stations()，但曾经**没有任何代码往里填**，恒为空。
+        // 这一项守住「有车站的世界里，拓扑里必须能看到车站」。
+        int stationSites = mirror.current() == null ? 0 : mirror.current().stations().size();
+        int deviceSites = mirror.current() == null ? 0 : mirror.current().devices().size();
+        int worldStations = 0;
+        try {
+            for (var graph : Create.RAILWAYS.trackNetworks.values()) {
+                worldStations += graph.getPoints(
+                    com.simibubi.create.content.trains.graph.EdgePointType.STATION).size();
+            }
+        } catch (Throwable t) {
+            top.hibermod.ctdapi.diagnostics.Failures.caught("自检：数车站", t);
+        }
+
+        if (worldStations == 0) {
+            lines.add(pad("车站已收录") + "SKIP  世界里没有车站");
+        } else {
+            fails += add(lines, "车站已收录",
+                stationSites >= worldStations && deviceSites >= stationSites,
+                "世界有 " + worldStations + " 站，拓扑里只有 " + stationSites
+                    + " 站 / " + deviceSites + " 个设备");
+        }
+
         fails += add(lines, "拓扑缓存可观测",
             mirror.rebuildCount() >= 1 && mirror.lastRebuildMillis() >= 0
                 && mirror.lastRebuildMillis() < 2000,
