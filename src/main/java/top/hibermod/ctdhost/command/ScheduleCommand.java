@@ -63,9 +63,21 @@ public final class ScheduleCommand {
             if (train.runtime == null) continue;
 
             Schedule current = train.runtime.schedule;
-            if (current == null || current.entries.isEmpty()) continue;
+            if (current == null) continue;
 
-            train.runtime.setSchedule(new Schedule(), false);
+            // **不能**用 `entries.isEmpty()` 当「没事可做」的判据。
+            // 损坏状态恰恰是「cyclic=true 且 entries 为空」——早先就是这么写的，
+            // 于是最该修的那一份被跳过，命令还回了一句 `cleared 0 train(s)`。
+            boolean corrupt = top.hibermod.ctdhost.execute.ScheduleHealth.isCorrupt(
+                current.cyclic, current.entries.size());
+            if (current.entries.isEmpty() && !corrupt) continue;
+
+            // 关键：`new Schedule()` 的默认值是 (entries=[], cyclic=true, savedProgress=0)——
+            // 也就是**我们要修的那个损坏状态本身**。早先这里写的就是 `new Schedule()`，
+            // 于是「修复」命令把一份损坏时刻表换成了另一份一模一样的损坏时刻表，
+            // 还回了一句 `cleared 1 train(s)`。
+            Schedule empty = new Schedule(new java.util.ArrayList<>(), false, 0);
+            train.runtime.setSchedule(empty, false);
             cleared++;
         }
 

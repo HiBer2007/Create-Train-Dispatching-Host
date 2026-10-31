@@ -8,6 +8,7 @@
     "SignalBoundaryMixin",
     "NavigationMixin",
     "TrainTickMixin",
+    "ScheduleRuntimeGuardMixin",
     "PassiveSlowdownMixin"
   ],
   "client": [
