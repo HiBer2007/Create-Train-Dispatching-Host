@@ -46,7 +46,11 @@ public final class AspectsCommand {
 
     private static int run(CommandSourceStack src) {
         int shown = 0;
-        Set<UUID> seenEdges = new HashSet<>();
+
+        // 去重键用**边点自己的 id**。
+        // 早先按「节点 + 边哈希」去重，结果同一条边界会从两端各被访问一次，
+        // 命令输出里每架信号机都打印两遍——看起来像世界里有四架，实际只有两架。
+        Set<UUID> seen = new HashSet<>();
 
         for (Map.Entry<UUID, TrackGraph> entry : Create.RAILWAYS.trackNetworks.entrySet()) {
             TrackGraph graph = entry.getValue();
@@ -60,13 +64,10 @@ public final class AspectsCommand {
 
                 for (TrackEdge edge : connections.values()) {
                     if (edge == null) continue;
-                    if (!seenEdges.add(java.util.UUID.nameUUIDFromBytes(
-                            (String.valueOf(nodeLocation) + edge.getEdgeData().hashCode()).getBytes()))) {
-                        continue;
-                    }
 
                     for (TrackEdgePoint point : edge.getEdgeData().getPoints()) {
                         if (!(point instanceof SignalBoundary boundary)) continue;
+                        if (!seen.add(boundary.getId())) continue;
 
                         SignalState first = SignalApplier.readState(boundary, true);
                         SignalState second = SignalApplier.readState(boundary, false);
