@@ -73,6 +73,14 @@ public final class HostSelfTestCommand {
                 corrupt++;
             }
         }
+        // ②c 兜底注入本身也要可验证：只靠日志「拦过几次」不够，
+        // 因为「一次都没拦」既可能是数据健康，也可能是注入没生效。
+        boolean guard = injected(
+            com.simibubi.create.content.trains.schedule.ScheduleRuntime.class,
+            "ctd$scheduleGuardMarker");
+        fails += add(lines, "时刻表兜底注入", guard,
+            "损坏的循环时刻表会再次把服务端打崩");
+
         fails += add(lines, "时刻表健康", corrupt == 0,
             corrupt + " 列车持有 cyclic 且无条目的时刻表，服务端会崩；跑 /ctd host schedule clear");
 
