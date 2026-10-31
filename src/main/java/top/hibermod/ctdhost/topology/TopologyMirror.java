@@ -115,6 +115,10 @@ public final class TopologyMirror {
         int nodeCount = 0;
         int edgeCount = 0;
 
+        // 岔口候选：Create 没有道岔实体，岔口就是「连接数 ≥ 3 的节点」。
+        // 之前 Topology.switches() 恒为空——契约在、没人填，内核看不到任何岔口。
+        java.util.List<top.hibermod.ctdapi.Topology.SwitchSite> junctions = new java.util.ArrayList<>();
+
         for (TrackGraph graph : graphs.values()) {
             for (TrackNodeLocation loc : graph.getNodes()) {
                 TrackNode node = graph.locateNode(loc);
@@ -132,6 +136,26 @@ public final class TopologyMirror {
                 b.node(new top.hibermod.ctdapi.Topology.Node(
                     id, connections.size(), connections.size() > 2));
                 nodeCount++;
+
+                // 度数 ≥3 的节点就是岔口。股道 = 从它出发的各条边。
+                if (connections.size() >= 3) {
+                    try {
+                        java.util.List<Rail.EdgeId> branches = new java.util.ArrayList<>();
+                        for (TrackNode other : connections.keySet()) {
+                            branches.add(StableIds.edge(node, other));
+                        }
+                        junctions.add(new top.hibermod.ctdapi.Topology.SwitchSite(
+                            id,
+                            top.hibermod.ctdapi.Topology.SwitchPosition.UNKNOWN,
+                            java.util.List.copyOf(branches),
+                            -1,
+                            null,
+                            true,
+                            false));
+                    } catch (Throwable t) {
+                        top.hibermod.ctdhost.Failures.caught("拓扑重建（岔口）", t);
+                    }
+                }
 
                 for (Map.Entry<TrackNode, TrackEdge> e : connections.entrySet()) {
                     Rail.EdgeId edgeId = StableIds.edge(node, e.getKey());
@@ -222,6 +246,11 @@ public final class TopologyMirror {
             }
         }
 
+        for (var sw : junctions) {
+            b.switchSite(sw);
+        }
+        lastSwitchCount = junctions.size();
+
         lastStationCount = stationCount;
         lastStationSeen = stationSeen;
 
@@ -246,6 +275,11 @@ public final class TopologyMirror {
     public int lastStationSeen() { return lastStationSeen; }
 
     private int lastStationSeen;
+
+    /** 上一次重建收录的岔口数（度数 ≥3 的节点）。 */
+    public int lastSwitchCount() { return lastSwitchCount; }
+
+    private int lastSwitchCount;
 
     /** 上一次重建耗时（毫秒）。 */
     public long lastRebuildMillis() { return lastRebuildMillis; }

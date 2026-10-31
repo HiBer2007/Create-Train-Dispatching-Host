@@ -90,6 +90,19 @@ public final class HostSelfTestCommand {
                     + " 站 / " + deviceSites + " 个设备");
         }
 
+        // 岔口：Create 没有道岔实体，岔口 = 度数 ≥3 的节点。
+        // 契约里一直有 switches()，也曾恒为空。
+        int junctionNodes = 0;
+        if (mirror.current() != null) {
+            for (var n : mirror.current().nodes()) {
+                if (n.isSwitch()) junctionNodes++;
+            }
+        }
+        int switchSites = mirror.current() == null ? 0 : mirror.current().switches().size();
+
+        fails += add(lines, "岔口已收录", switchSites == junctionNodes,
+            "度数≥3 的节点 " + junctionNodes + " 个，拓扑里岔口 " + switchSites + " 个");
+
         fails += add(lines, "拓扑缓存可观测",
             mirror.rebuildCount() >= 1 && mirror.lastRebuildMillis() >= 0
                 && mirror.lastRebuildMillis() < 2000,
