@@ -63,6 +63,8 @@ public abstract class CorruptScheduleTickMixin {
         if (level == null || !level.dimension().equals(Level.OVERWORLD)) return;
 
         try {
+            java.util.Set<String> corruptNow = new java.util.HashSet<>();
+
             for (var train : Create.RAILWAYS.trains.values()) {
                 if (train.runtime == null) continue;
 
@@ -74,15 +76,21 @@ public abstract class CorruptScheduleTickMixin {
                 CTD_STASHED_SCHEDULES.add(schedule);
                 train.runtime.schedule = null;
 
+                String key = train.name.getString();
+                corruptNow.add(key);
+
                 // 只报一次：这段每帧都跑，不节流的话一次事故能刷出几百条，
                 // 把 swallowed 变成噪音——而它的用途正是「有没有新东西坏了」。
-                String key = train.name.getString();
                 if (CTD_REPORTED.add(key)) {
                     Failures.caught("时刻表兜底：'" + key
                         + "' 持有的时刻表没有条目（任何空时刻表都会让 Create 越界），已在源头临时摘除（用 /ctd host schedule clear 永久修复）",
                         null);
                 }
             }
+
+            // 只保留「现在仍然坏着」的列车名：
+            // 修好之后再坏，才会重新报一次。否则同一列车第二次故障是静默的。
+            CTD_REPORTED.retainAll(corruptNow);
         } catch (Throwable t) {
             Failures.caught("时刻表兜底：摘除阶段", t);
             ctd$restore();
