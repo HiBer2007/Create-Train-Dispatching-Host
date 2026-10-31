@@ -121,6 +121,9 @@ public final class CommandApplier implements DispatchFrameImpl.CommandSink {
 
     @Override
     public void applyHud(List<Hud.HudPanel> panels) {
+        // 留一份最近快照：屏幕画错时，要能回答「内核到底说了什么」。
+        top.hibermod.ctdhost.execute.HudStore.update(panels, gameTime);
+
         for (Hud.HudPanel p : panels) {
             top.hibermod.ctdapi.operation.OperationFeed.hudPanel(p);
             forwardedHud++;

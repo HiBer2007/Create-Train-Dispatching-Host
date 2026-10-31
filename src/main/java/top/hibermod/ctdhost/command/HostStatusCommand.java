@@ -27,6 +27,7 @@ public final class HostStatusCommand {
         return Commands.literal("host")
             .then(Commands.literal("status").executes(ctx -> status(ctx.getSource())))
             .then(top.hibermod.ctdhost.command.KernelsCommand.build())
+            .then(top.hibermod.ctdhost.command.HudCommand.build())
             .then(Commands.literal("switches").executes(ctx -> switches(ctx.getSource())))
             .then(Commands.literal("assignments").executes(ctx -> assignments(ctx.getSource())))
             .then(top.hibermod.ctdhost.command.DebugStationCommand.build())
