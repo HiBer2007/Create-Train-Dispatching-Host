@@ -78,13 +78,19 @@ public final class HostSelfTestCommand {
         boolean guard = injected(
             com.simibubi.create.content.trains.schedule.ScheduleRuntime.class,
             "ctd$scheduleGuardMarker");
+        boolean aspectGuard = injected(
+            com.simibubi.create.content.trains.signal.SignalBoundary.class,
+            "ctd$tickStateGuardMarker");
+        fails += add(lines, "灯色接管注入", aspectGuard,
+            "信号灯色会在下一帧被 Create 覆盖，内核写的灯等于没写");
+
         fails += add(lines, "时刻表兜底注入", guard,
             "损坏的循环时刻表会再次把服务端打崩");
 
         fails += add(lines, "时刻表健康", corrupt == 0,
             corrupt + " 列车持有 cyclic 且无条目的时刻表，服务端会崩；跑 /ctd host schedule clear");
 
-        // ③ 内核'
+        // ③ 内核
         int kernels = Create.RAILWAYS.trains.isEmpty() ? 0 : 1;
         boolean kernelRegistered = top.hibermod.ctdhost.HostRuntime.get().kernelCount() > 0;
         fails += add(lines, "已注册内核", kernelRegistered,

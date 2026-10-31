@@ -45,7 +45,8 @@ public final class SignalApplier {
      * @param graphs 当前所有轨道图
      * @return 成功写入的数量
      */
-    public int apply(List<Command.AspectCommand> commands, Map<UUID, TrackGraph> graphs) {
+    public int apply(List<Command.AspectCommand> commands, Map<UUID, TrackGraph> graphs,
+                     long gameTime) {
         int applied = 0;
         for (Command.AspectCommand c : commands) {
             Aspect aspect = SignalRegistries.aspect(c.aspectId()).orElse(null);
@@ -55,7 +56,13 @@ public final class SignalApplier {
             if (boundary == null) continue;             // 信号机已被拆
 
             SignalState state = toCreateState(aspect.category());
-            if (writeState(boundary, sideIndex(c.side()), state)) applied++;
+            boolean side = sideIndex(c.side());
+
+            // ① 记下意图：Create 每帧会重算 cachedStates，光写字段只能活一帧。
+            SignalOverrides.set(boundary.getId(), side, state, gameTime);
+
+            // ② 当帧也写一次：能让本帧的显示立刻变，不用等下一个 tick。
+            if (writeState(boundary, side, state)) applied++;
         }
         return applied;
     }

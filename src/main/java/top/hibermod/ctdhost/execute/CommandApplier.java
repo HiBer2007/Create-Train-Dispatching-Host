@@ -54,7 +54,7 @@ public final class CommandApplier implements DispatchFrameImpl.CommandSink {
 
     @Override
     public void applyAspects(List<Command.AspectCommand> commands) {
-        lastAppliedSignals = signals.apply(commands, graphs.get());
+        lastAppliedSignals = signals.apply(commands, graphs.get(), gameTime);
     }
 
     // 以下尚未实现。留空而不是抛异常：内核多写一条指令不该让整帧崩掉。

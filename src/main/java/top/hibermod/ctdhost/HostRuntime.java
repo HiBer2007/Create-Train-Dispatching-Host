@@ -125,6 +125,9 @@ public final class HostRuntime {
         this.gameTime = level.getGameTime();
         applier.setGameTime(gameTime);
 
+        // 过期意图每帧清一次：不清的话 Map 会留着所有写过的边界的陈旧条目
+        top.hibermod.ctdhost.execute.SignalOverrides.prune(gameTime);
+
         // 首次收到 tick 时打一条，证明调度真的在跑（含入口来源）
         if (TICKS.get() <= 1) {
             LOG.info("ctdhost: dispatch ticking (gameTime={}, dim={})",

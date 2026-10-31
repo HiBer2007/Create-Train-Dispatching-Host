@@ -6,6 +6,7 @@
   "mixins": [
     "GlobalRailwayManagerMixin",
     "SignalBoundaryMixin",
+    "SignalBoundaryTickStateMixin",
     "NavigationMixin",
     "TrainTickMixin",
     "ScheduleRuntimeGuardMixin",

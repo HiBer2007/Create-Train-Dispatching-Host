@@ -71,8 +71,29 @@ public final class AspectsCommand {
                         SignalState first = SignalApplier.readState(boundary, true);
                         SignalState second = SignalApplier.readState(boundary, false);
 
+                        // 诊断：有没有「我方意图」、是否新鲜、会不会接管、红石是否强制红。
+                        // 只显示意图不显示新鲜度会误导：过期意图看起来仍然「存在」。
+                        var ovr = top.hibermod.ctdhost.execute.SignalOverrides.get(boundary.getId());
+                        long now = net.neoforged.neoforge.server.ServerLifecycleHooks
+                            .getCurrentServer() == null ? 0L
+                            : net.neoforged.neoforge.server.ServerLifecycleHooks
+                                .getCurrentServer().overworld().getGameTime();
+
+                        final boolean takeover = top.hibermod.ctdhost.execute.SignalOverrides
+                            .shouldTakeOver(boundary.getId(), now);
+                        final String ovrText = ovr == null ? "-"
+                            : (ovr.first() + "/" + ovr.second()
+                                + (ovr.fresh(now) ? "" : "(stale)")
+                                + (ovr.complete() ? "" : "(partial)")
+                                + " takeover=" + takeover);
+
+                        final boolean forcedFirst = boundary.isForcedRed(true);
+                        final boolean forcedSecond = boundary.isForcedRed(false);
+
                         final String line = "  " + shortId(boundary.getId())
-                            + "  FIRST=" + first + "  SECOND=" + second;
+                            + "  FIRST=" + first + "  SECOND=" + second
+                            + "  override=" + ovrText
+                            + "  forced=" + forcedFirst + "/" + forcedSecond;
 
                         src.sendSuccess(() -> Component.literal(line), false);
                         shown++;
