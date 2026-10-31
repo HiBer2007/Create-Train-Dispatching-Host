@@ -209,6 +209,7 @@ public final class TopologyMirror {
         // 内核想按站排进路只能自己再扫一遍 Create 的表。
         int stationCount = 0;
         int stationSeen = 0;
+        java.util.Map<Rail.EdgeId, java.util.UUID> stationByEdge = new java.util.HashMap<>();
 
         for (var graph : graphs.values()) {
             try {
@@ -239,6 +240,7 @@ public final class TopologyMirror {
                         true,
                         new net.minecraft.nbt.CompoundTag()));
 
+                    stationByEdge.putIfAbsent(edgeId, station.id);
                     stationCount++;
                 }
             } catch (Throwable t) {
@@ -250,6 +252,40 @@ public final class TopologyMirror {
             b.switchSite(sw);
         }
         lastSwitchCount = junctions.size();
+
+        // 区段：当前按「一条边 = 一个区段」切分。
+        //
+        // Create 的闭塞分区（SignalEdgeGroup）以信号机为界，跨多条边；
+        // 精确还原它需要沿边界走图，成本高且容易在道岔处算错。
+        // 先给一个**定义明确、粒度更细**的近似：每条边就是一个区段，
+        // 站台所在的边标为 PLATFORM 并记下所属车站。
+        //
+        // 宁可给一个说清了口径的近似，也不要留一个恒为空的契约——
+        // 空的 sections() 会让内核以为「这个世界没有区段」。
+        int sectionCount = 0;
+
+        for (var edgeView : b.edgesSnapshot()) {
+            try {
+                java.util.UUID owner = stationByEdge.get(edgeView.id());
+                var kind = owner != null
+                    ? top.hibermod.ctdapi.Topology.SectionKind.PLATFORM
+                    : top.hibermod.ctdapi.Topology.SectionKind.MAIN;
+
+                b.section(new top.hibermod.ctdapi.Topology.Section(
+                    new top.hibermod.ctdapi.Topology.SectionId(edgeView.id().hashCode()),
+                    kind,
+                    java.util.List.of(new top.hibermod.ctdapi.Rail.Span(
+                        edgeView.id(), 0.0, edgeView.length())),
+                    edgeView.length(),
+                    "",
+                    owner));
+                sectionCount++;
+            } catch (Throwable t) {
+                top.hibermod.ctdhost.Failures.caught("拓扑重建（区段）", t);
+            }
+        }
+
+        lastSectionCount = sectionCount;
 
         lastStationCount = stationCount;
         lastStationSeen = stationSeen;
@@ -280,6 +316,11 @@ public final class TopologyMirror {
     public int lastSwitchCount() { return lastSwitchCount; }
 
     private int lastSwitchCount;
+
+    /** 上一次重建收录的区段数。 */
+    public int lastSectionCount() { return lastSectionCount; }
+
+    private int lastSectionCount;
 
     /** 上一次重建耗时（毫秒）。 */
     public long lastRebuildMillis() { return lastRebuildMillis; }

@@ -163,6 +163,16 @@ public final class TopologyView implements Topology {
         public Builder maxTrainLength(double v) { this.maxTrainLength = v; return this; }
         public Builder node(Node n) { nodes.put(n.id(), n); return this; }
         public Builder edge(Edge e) { edges.put(e.id(), e); return this; }
+
+        /**
+         * 已收集的边（只读快照）。
+         *
+         * <p>区段是按边切的，需要在 build 之前读到全部边；
+         * 直接暴露内部 Map 会让调用方有机会改它，所以给一份快照。
+         */
+        public java.util.Collection<Edge> edgesSnapshot() {
+            return java.util.List.copyOf(edges.values());
+        }
         public Builder signal(SignalSite s) { signals.add(s); return this; }
         public Builder switchSite(SwitchSite s) { switches.add(s); return this; }
         public Builder station(StationSite s) { stations.add(s); return this; }

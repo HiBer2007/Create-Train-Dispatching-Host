@@ -64,7 +64,8 @@ public final class HostStatusCommand {
         src.sendSuccess(() -> Component.literal("  kernels     : " + kernels), false);
         src.sendSuccess(() -> Component.literal("  sites       : stations=" + stations
             + " (seen " + host.mirror().lastStationSeen() + ") devices=" + deviceSites
-            + " switches=" + (view == null ? 0 : view.switches().size())), false);
+            + " switches=" + (view == null ? 0 : view.switches().size())
+            + " sections=" + (view == null ? 0 : view.sections().size())), false);
         src.sendSuccess(() -> Component.literal("  topology    : nodes=" + nodes + " edges=" + edges
             + " signals=" + signals + " aspects="
             + top.hibermod.ctdapi.status.SignalStates.size()

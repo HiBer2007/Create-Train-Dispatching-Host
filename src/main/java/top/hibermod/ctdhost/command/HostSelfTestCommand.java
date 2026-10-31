@@ -103,6 +103,13 @@ public final class HostSelfTestCommand {
         fails += add(lines, "岔口已收录", switchSites == junctionNodes,
             "度数≥3 的节点 " + junctionNodes + " 个，拓扑里岔口 " + switchSites + " 个");
 
+        // 区段：当前口径是「一条边 = 一个区段」，所以数量必须等于边数。
+        // 口径写在这里，是为了将来真按信号机切分时，这一条会被显式改掉，
+        // 而不是悄悄失效。
+        int sectionSites = mirror.current() == null ? 0 : mirror.current().sections().size();
+        fails += add(lines, "区段已收录", sectionSites == edges,
+            "边 " + edges + " 条，区段 " + sectionSites + " 个（口径：一条边一个区段）");
+
         fails += add(lines, "拓扑缓存可观测",
             mirror.rebuildCount() >= 1 && mirror.lastRebuildMillis() >= 0
                 && mirror.lastRebuildMillis() < 2000,
