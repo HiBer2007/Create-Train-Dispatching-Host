@@ -80,6 +80,11 @@ dependencies {
     // 运行时依赖：只为本地 runServer/runClient 验证用，不会打进 jar
     runtimeOnly files("libs/create-1.21.1-6.0.11-312.jar")
     runtimeOnly files("libs/flywheel-1.0.7-48.jar")
+// Ponder 既要在运行期（Create 依赖它），也要在**编译期**：
+    // SmartBlockEntity 实现了 ponder 的 VirtualBlockEntity 接口，
+    // 只要编译期碰到 SmartBlockEntity（例如给它挂 BlockEntityBehaviour），
+    // 就要求这个接口可见——否则报「找不到符号 net.createmod.ponder.api.VirtualBlockEntity」。
+    compileOnly files("libs/ponder-neoforge-1.0.85+mc1.21.1.jar")
     runtimeOnly files("libs/ponder-neoforge-1.0.85+mc1.21.1.jar")
 }
 
@@ -138,6 +143,12 @@ tasks.register('switchApplierTest', JavaExec) {
     description = 'C7 验收：道岔逻辑锁（上锁/解锁/冲突/多岔口）'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'top.hibermod.ctdhost.tools.SwitchApplierTest'
+}
+tasks.register('k4DoorTest', JavaExec) {
+    group = 'verification'
+    description = 'K4：门许可优先级、发车偏差/颜色、字符 JSON'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'top.hibermod.ctdhost.tools.K4DoorAndIndicatorTest'
 }
 tasks.register('signalApplierTest', JavaExec) {
     group = 'verification'

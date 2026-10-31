@@ -132,6 +132,8 @@ public final class CommandApplier implements DispatchFrameImpl.CommandSink {
 
     @Override
     public void applyBoards(List<Pis.BoardModel> boards) {
+        // 留一份最近快照：发车指示器与站台门指示器要按位置读它。
+        top.hibermod.ctdhost.pis.BoardStore.update(boards, gameTime);
         for (Pis.BoardModel b : boards) {
             top.hibermod.ctdapi.operation.OperationFeed.boardModel(b);
             forwardedBoards++;

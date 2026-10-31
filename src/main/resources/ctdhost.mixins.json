@@ -12,6 +12,9 @@
     "ScheduleRuntimeGuardMixin",
     "ScheduleRuntimeTickGuardMixin",
     "CorruptScheduleTickMixin",
+    "SlidingDoorBlockEntityMixin",
+    "SlidingDoorBlockMixin",
+    "SlidingDoorMovementBehaviourMixin",
     "PassiveSlowdownMixin"
   ],
   "client": [

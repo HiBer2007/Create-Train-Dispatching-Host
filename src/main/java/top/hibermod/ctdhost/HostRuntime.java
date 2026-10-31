@@ -128,6 +128,14 @@ public final class HostRuntime {
         // 过期意图每帧清一次：不清的话 Map 会留着所有写过的边界的陈旧条目
         top.hibermod.ctdhost.execute.SignalOverrides.prune(gameTime);
 
+        // 车门接管：每 20 刻算一次「哪些站台可以开门」，并对信号模式的门执行。
+        // 放在信号之后：门许可要看车是否停稳，而车停稳与否由信号与指令共同决定。
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            top.hibermod.ctdhost.door.DoorService.tick(serverLevel, gameTime);
+            // 发车指示器：把「距正点多久」写到站台旁的辉光管上。
+            top.hibermod.ctdhost.pis.DepartureIndicatorService.tick(serverLevel, gameTime);
+        }
+
         // 首次收到 tick 时打一条，证明调度真的在跑（含入口来源）
         if (TICKS.get() <= 1) {
             LOG.info("ctdhost: dispatch ticking (gameTime={}, dim={})",

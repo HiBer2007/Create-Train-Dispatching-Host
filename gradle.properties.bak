@@ -1,0 +1,18 @@
+## 模组元数据
+mod_id = ctdhost
+mod_name = Create Train Dispatching Host
+mod_version=0.3.0
+maven_group = top.hibermod
+archives_name = create-train-dispatching-host
+mod_authors = HiBer_2007
+mod_description = Host integration for the Create Train Dispatching API
+
+## Minecraft / NeoForge
+minecraft_version = 1.21.1
+neo_version = 21.1.219
+
+## Create（编译期依赖，运行期由玩家安装）
+create_version = 6.0.11-312
+
+## 本模组依赖的 CTD API（目前用 libs/ 下的本地 jar）
+ctdapi_jar=create-train-dispatching-api-0.3.0.jar
