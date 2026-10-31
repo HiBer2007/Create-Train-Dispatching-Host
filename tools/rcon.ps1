@@ -48,7 +48,10 @@ function Read-Packet {
 $client = New-Object System.Net.Sockets.TcpClient
 $client.Connect($Host_, $Port)
 $stream = $client.GetStream()
-$stream.ReadTimeout = 5000
+# 脚本超时是 15s（ScriptRuntime.DEFAULT_TIMEOUT_MS），客户端读超时必须比它长，
+# 否则死循环脚本会让 `/ctd reload` 看起来"卡死"，而实际上服务端 15 秒后会给结果——
+# 结果只是没人接收了。20s = 15s + 余量。
+    $stream.ReadTimeout = 20000
 
 Send-Packet -Stream $stream -Id 1 -Type 3 -Body $Password
 $auth = Read-Packet -Stream $stream
