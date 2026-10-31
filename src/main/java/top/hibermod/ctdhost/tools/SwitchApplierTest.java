@@ -68,6 +68,46 @@ public final class SwitchApplierTest {
         failures += check("解锁后不再拦任何股道",
             !applier.blocks(node, north) && !applier.blocks(node, east));
 
+        // ④b 冲突时**拒绝覆盖**（而不是后来者赢）
+        //
+        // 早先 apply 是无条件 put：两个内核抢同一个岔口时后写的赢，
+        // 而先写的那列车已经按旧股道排了进路——结果是**两列车同时被判为可以走**。
+        Rail.NodeId contested = node(64, 64, 0);
+        Rail.EdgeId lineA = edge(contested, node(72, 64, 0));
+        Rail.EdgeId lineB = edge(contested, node(64, 64, 8));
+
+        applier.apply(List.of(
+            new Command.SwitchCommand(contested, Topology.SwitchPosition.NORMAL, lineA, 7L)),
+            Map.of());
+
+        long rejectedBefore = applier.rejected();
+        applier.apply(List.of(
+            new Command.SwitchCommand(contested, Topology.SwitchPosition.REVERSE_LEFT, lineB, 9L)),
+            Map.of());
+
+        failures += check("异持有人抢同一岔口被拒绝",
+            applier.rejected() == rejectedBefore + 1,
+            "rejected=" + applier.rejected());
+        failures += check("被拒绝时不覆盖原锁",
+            applier.lockOf(contested).map(lineA::equals).orElse(false),
+            String.valueOf(applier.lockOf(contested)));
+        failures += check("被拒绝时原持有人不变",
+            applier.holderOf(contested) == 7L,
+            "holder=" + applier.holderOf(contested));
+
+        // 同一持有人改锁是允许的（它自己的进路变道）
+        applier.apply(List.of(
+            new Command.SwitchCommand(contested, Topology.SwitchPosition.REVERSE_LEFT, lineB, 7L)),
+            Map.of());
+        failures += check("同一持有人可以改锁",
+            applier.lockOf(contested).map(lineB::equals).orElse(false),
+            String.valueOf(applier.lockOf(contested)));
+
+        // 清掉这一区的锁，别影响后面的计数
+        applier.apply(List.of(
+            new Command.SwitchCommand(contested, Topology.SwitchPosition.UNKNOWN, null, 0L)),
+            Map.of());
+
         // ⑤ 多岔口互不干扰
         Rail.NodeId other = node(32, 64, 0);
         Rail.EdgeId otherBranch = edge(other, node(40, 64, 0));
@@ -83,15 +123,26 @@ public final class SwitchApplierTest {
             applier.holderOf(node) == 1L && applier.holderOf(other) == 2L);
         failures += check("锁 A 不影响 B 的股道", !applier.blocks(other, otherBranch));
 
-        // ⑥ 重复锁同一岔口不增长
+        // ⑥ 同一持有人重复上锁：覆盖，不增长；异持有人：拒绝
+        //
+        // 早先这里断言的是「后一次上锁覆盖前一次」——那正是我刚废掉的行为。
+        // 异持有人能覆盖，等于两列车同时被判为可以走。
         applier.apply(
-            List.of(new Command.SwitchCommand(node, Topology.SwitchPosition.NORMAL, east, 3L)),
+            List.of(new Command.SwitchCommand(node, Topology.SwitchPosition.NORMAL, east, 1L)),
             Map.of());
-        failures += check("重复上锁不增加条目", applier.locks().size() == 2,
+        failures += check("同一持有人改锁不增加条目", applier.locks().size() == 2,
             "locks=" + applier.locks().size());
-        failures += check("后一次上锁覆盖前一次",
+        failures += check("同一持有人可以改到自己要的股道",
             applier.lockOf(node).map(east::equals).orElse(false));
 
+        int beforeReject = applier.locks().size();
+        applier.apply(
+            List.of(new Command.SwitchCommand(node, Topology.SwitchPosition.REVERSE_LEFT, north, 99L)),
+            Map.of());
+        failures += check("异持有人改锁被拒绝（锁没变）",
+            applier.lockOf(node).map(east::equals).orElse(false)
+                && applier.locks().size() == beforeReject,
+            "locks=" + applier.locks().size());
         System.out.println();
         if (failures > 0) {
             System.out.println("道岔逻辑锁验收失败: " + failures + " 项");

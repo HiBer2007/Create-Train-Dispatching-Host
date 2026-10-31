@@ -64,6 +64,12 @@ public final class SwitchesCommand {
 
         src.sendSuccess(() -> Component.literal(physical), false);
 
+        if (applier.rejected() > 0) {
+            final long rejected = applier.rejected();
+            src.sendSuccess(() -> Component.literal(
+                "被拒绝的锁：" + rejected + " 条（岔口已被别人锁向别的股道——这是安全行为，不是故障）"), false);
+        }
+
         if (locks.isEmpty()) {
             src.sendSuccess(() -> Component.literal(
                 "当前没有被锁住的岔口（switches: logical=0）"), false);

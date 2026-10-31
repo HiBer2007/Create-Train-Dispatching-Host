@@ -72,6 +72,13 @@ public final class SwitchApplier {
      *
      * @return 生效条数（逻辑锁全部计入）
      */
+    /** 因为冲突被拒绝的锁数量（诊断用）。 */
+    private long rejected;
+
+    public long rejected() {
+        return rejected;
+    }
+
     public int apply(List<Command.SwitchCommand> commands, Map<UUID, TrackGraph> graphs) {
         int applied = 0;
         for (Command.SwitchCommand c : commands) {
@@ -79,6 +86,27 @@ public final class SwitchApplier {
                 logicalLocks.remove(c.node());
                 holders.remove(c.node());
             } else {
+                // 冲突判定：**同一岔口已被别人锁向另一条股道时，拒绝覆盖**。
+                //
+                // 早先这里是无条件 put——两个内核抢同一个岔口时后写的赢，
+                // 而先写的那列车已经按旧股道排了进路，岔口却在它脚下被改掉了。
+                // 这不是效率问题，是**两列车同时被判为可以走**。
+                Rail.EdgeId existing = logicalLocks.get(c.node());
+                long existingHolder = holders.getOrDefault(c.node(), 0L);
+
+                boolean conflict = existing != null
+                    && !existing.equals(c.branch())
+                    && existingHolder != c.holder();
+
+                if (conflict) {
+                    rejected++;
+                    top.hibermod.ctdapi.diagnostics.Failures.caught(
+                        "道岔冲突：node=" + c.node().encode()
+                            + " 已被 " + existing.encode() + " 持有(holder=" + existingHolder
+                            + ")，拒绝 " + c.branch().encode() + "(holder=" + c.holder() + ")", null);
+                    continue;   // 不覆盖、不计入 applied
+                }
+
                 logicalLocks.put(c.node(), c.branch());
                 holders.put(c.node(), c.holder());
             }
