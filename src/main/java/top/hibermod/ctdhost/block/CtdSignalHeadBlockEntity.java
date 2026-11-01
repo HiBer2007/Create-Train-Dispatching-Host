@@ -71,7 +71,14 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
             return;
         }
 
-        aspect = top.hibermod.ctdapi.status.SignalStates.get(signal.edgePoint.getEdgePoint().id);
+        String next = top.hibermod.ctdapi.status.SignalStates.get(signal.edgePoint.getEdgePoint().id);
+        if (!next.equals(aspect)) {
+            // 关键：只改字段不够，客户端不知道。必须标脏 + 发方块更新包，
+            // 否则客户端 BE 里的 aspect 永远是空，渲染器直接 return，屏幕上一个黑盒子。
+            aspect = next;
+            setChanged();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
     }
 
     @Override
