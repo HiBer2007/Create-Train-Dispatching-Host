@@ -25,11 +25,14 @@ import top.hibermod.ctdhost.execute.SignalHeadLamps;
  */
 public class CtdSignalHeadRenderer implements BlockEntityRenderer<CtdSignalHeadBlockEntity> {
 
+    private static boolean LOGGED;
+
     public CtdSignalHeadRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override
     public void render(CtdSignalHeadBlockEntity be, float partialTick, PoseStack ms,
                        MultiBufferSource buffer, int light, int overlay) {
+        if (!LOGGED) { LOGGED = true; System.out.println("[ctdhost] head render called, aspect=[" + be.aspect() + "]"); }
         int[] colors = SignalHeadLamps.colorsOf(be.aspect());
         if (colors == null) return;                     // 无信号 / 灭灯
 

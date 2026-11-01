@@ -54,7 +54,14 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
     }
 
     public void serverTick(Level level, BlockPos pos, BlockState state) {
-        if (debug) return;                              // 调试模式：不覆盖手写的 Aspect
+        if (debug) {
+            // 调试模式不覆盖 aspect，但**仍要同步**给客户端：
+            // /data merge 只改服务端 NBT，客户端 BE 不会自动收到，
+            // 于是渲染器拿到的 aspect 永远是空——这就是「渲染器在跑却什么都看不到」。
+            setChanged();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            return;
+        }
         if (++ticks < REFRESH_TICKS) return;
         ticks = 0;
 
