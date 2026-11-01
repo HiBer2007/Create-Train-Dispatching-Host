@@ -76,7 +76,7 @@ public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements En
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
                                                                   BlockEntityType<T> type) {
-'        if (level.isClientSide) {
+        if (level.isClientSide) {
             // 客户端：顺手把渲染器注册上（幂等）。不依赖任何事件总线。
             top.hibermod.ctdhost.client.CtdHeadRenderers.ensureRegistered();
             return null;
