@@ -144,6 +144,12 @@ tasks.register('switchApplierTest', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'top.hibermod.ctdhost.tools.SwitchApplierTest'
 }
+tasks.register('fixedRouteTest', JavaExec) {
+    group = 'verification'
+    description = '固定方向：直行优先、无直行取左、顺序无关'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'top.hibermod.ctdhost.tools.FixedRouteTest'
+}
 tasks.register('k4DoorTest', JavaExec) {
     group = 'verification'
     description = 'K4：门许可优先级、发车偏差/颜色、字符 JSON'

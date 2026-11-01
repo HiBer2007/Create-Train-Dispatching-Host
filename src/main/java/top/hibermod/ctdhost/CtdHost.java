@@ -65,6 +65,10 @@ public final class CtdHost {
     public CtdHost(IEventBus modBus) {
         LOG.info("ctdhost: constructing (mod bus present: {})", modBus != null);
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
+        // 方块与方块实体：自动道岔机（只有装了它的岔口才允许信号系统自动扳动）。
+        top.hibermod.ctdhost.block.CtdBlocks.BLOCKS.register(modBus);
+        top.hibermod.ctdhost.block.CtdBlocks.BLOCK_ENTITIES.register(modBus);
+        top.hibermod.ctdhost.block.CtdBlocks.ITEMS.register(modBus);
         // 自检不能在构造期跑：那时 Create 的静态状态还没初始化，
         // 查出来的「没注入」可能是「还没加载」。
         //

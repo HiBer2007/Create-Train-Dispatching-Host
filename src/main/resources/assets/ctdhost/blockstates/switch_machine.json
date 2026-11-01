@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "ctdhost:block/switch_machine" }
+  }
+}

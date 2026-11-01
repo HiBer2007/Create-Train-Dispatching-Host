@@ -5,5 +5,6 @@
   "item.ctdhost.script_timetable.hint.bound": "调度脚本：%s",
   "item.ctdhost.script_timetable.hint.usage": "对着列车右键即可绑定",
   "item.ctdhost.script_timetable.no_train": "48 格内没有列车",
-  "item.ctdhost.script_timetable.bound": "已把 %2$s 绑定到脚本 %1$s"
+  "item.ctdhost.script_timetable.bound": "已把 %2$s 绑定到脚本 %1$s",
+  "block.ctdhost.switch_machine": "自动道岔机"
 }

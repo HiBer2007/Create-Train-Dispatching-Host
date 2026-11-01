@@ -75,6 +75,13 @@ public final class SwitchApplier {
     /** 因为冲突被拒绝的锁数量（诊断用）。 */
     private long rejected;
 
+    /** 因为岔口没装自动道岔机而被拒绝的次数。 */
+    private long rejectedNoMachine;
+
+    public long rejectedNoMachine() {
+        return rejectedNoMachine;
+    }
+
     public long rejected() {
         return rejected;
     }
@@ -97,6 +104,16 @@ public final class SwitchApplier {
                 boolean conflict = existing != null
                     && !existing.equals(c.branch())
                     && existingHolder != c.holder();
+
+                // 没装自动道岔机的岔口：**拒绝自动扳动**。
+                //
+                // 这不是「暂时不支持」，而是安全边界：一个没人管的岔口
+                // 按固定方向走（有直行就直行，否则左转），行为可预测；
+                // 让调度去扳它，等于让列车走进一条没人确认过的股道。
+                if (!SwitchMachines.hasMachine(c.node())) {
+                    rejectedNoMachine++;
+                    continue;
+                }
 
                 if (conflict) {
                     rejected++;

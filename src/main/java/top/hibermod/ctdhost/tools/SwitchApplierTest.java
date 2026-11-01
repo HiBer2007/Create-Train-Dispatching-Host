@@ -38,6 +38,11 @@ public final class SwitchApplierTest {
         Rail.EdgeId north = edge(node, node(0, 64, 8));
         Rail.EdgeId east = edge(node, node(8, 64, 0));
 
+        // 门禁：只有装了自动道岔机的岔口才允许自动扳动。
+        // 这些测试验的是「锁本身」，所以先把用到的岔口都装上机器。
+        top.hibermod.ctdhost.execute.SwitchMachines.register(node.encode(),
+            new net.minecraft.core.BlockPos(0, 64, 0));
+
         // ① 未锁时：没有任何限制
         failures += check("未锁时 lockOf 为空", applier.lockOf(node).isEmpty());
         failures += check("未锁时不拦截任何股道",
@@ -73,6 +78,7 @@ public final class SwitchApplierTest {
         // 早先 apply 是无条件 put：两个内核抢同一个岔口时后写的赢，
         // 而先写的那列车已经按旧股道排了进路——结果是**两列车同时被判为可以走**。
         Rail.NodeId contested = node(64, 64, 0);
+        top.hibermod.ctdhost.execute.SwitchMachines.register(contested.encode(), new net.minecraft.core.BlockPos(64, 64, 0));
         Rail.EdgeId lineA = edge(contested, node(72, 64, 0));
         Rail.EdgeId lineB = edge(contested, node(64, 64, 8));
 
@@ -110,6 +116,7 @@ public final class SwitchApplierTest {
 
         // ⑤ 多岔口互不干扰
         Rail.NodeId other = node(32, 64, 0);
+        top.hibermod.ctdhost.execute.SwitchMachines.register(other.encode(), new net.minecraft.core.BlockPos(32, 64, 0));
         Rail.EdgeId otherBranch = edge(other, node(40, 64, 0));
 
         applier.apply(List.of(
