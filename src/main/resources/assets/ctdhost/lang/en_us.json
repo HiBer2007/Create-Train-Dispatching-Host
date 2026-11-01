@@ -6,5 +6,6 @@
   "item.ctdhost.script_timetable.hint.usage": "Right-click near a train to bind it",
   "item.ctdhost.script_timetable.no_train": "No train within 48 blocks",
   "item.ctdhost.script_timetable.bound": "Bound %2$s to script %1$s",
+  "block.ctdhost.ctd_signal": "CTD Signal",
   "block.ctdhost.switch_machine": "Automatic Switch Machine"
 }

@@ -30,6 +30,12 @@ public class CtdSignalBlock extends SignalBlock {
         super(properties);
     }
 
+    @Override
+    public net.minecraft.world.level.block.entity.BlockEntityType<
+            ? extends com.simibubi.create.content.trains.signal.SignalBlockEntity> getBlockEntityType() {
+        return CtdBlocks.CTD_SIGNAL_BE.get();
+    }
+
     /** 与 Create 的信号机同样的方块属性（金属、不遮挡）。 */
     public static BlockBehaviour.Properties defaultProperties() {
         return BlockBehaviour.Properties.of()

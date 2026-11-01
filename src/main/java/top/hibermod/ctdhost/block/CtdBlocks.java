@@ -46,6 +46,14 @@ public final class CtdBlocks {
     public static final DeferredItem<BlockItem> CTD_SIGNAL_ITEM =
         ITEMS.registerSimpleBlockItem(CTD_SIGNAL);
 
+    // 必须有自己的 BE 类型：BlockEntityType 会校验 validBlocks，
+    // 复用 Create 的 TRACK_SIGNAL 会在放置时报「Invalid block entity」。
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CtdSignalBlockEntity>> CTD_SIGNAL_BE =
+        BLOCK_ENTITIES.register("ctd_signal",
+            () -> BlockEntityType.Builder.<CtdSignalBlockEntity>of(
+                CtdSignalBlockEntity::create,
+                CTD_SIGNAL.get()).build(null));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SwitchMachineBlockEntity>>
         SWITCH_MACHINE_BE = BLOCK_ENTITIES.register("switch_machine",
             () -> BlockEntityType.Builder.of(SwitchMachineBlockEntity::new,
