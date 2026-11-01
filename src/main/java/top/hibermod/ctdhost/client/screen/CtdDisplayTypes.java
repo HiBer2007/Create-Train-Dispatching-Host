@@ -35,7 +35,7 @@ public final class CtdDisplayTypes {
         if (registered) return;
         registered = true;
 
-'        // 灯头的 BER 也在这里注册。
+        // 灯头的 BER 也在这里注册。
         // 注解那条路（@EventBusSubscriber / @Mod(dist=CLIENT) / 反射）在这个会话里
         // 全都「没被调用过」，而这条路径已经被站台屏证明会执行。
         try {
