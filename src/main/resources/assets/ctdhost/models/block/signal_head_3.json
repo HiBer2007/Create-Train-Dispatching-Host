@@ -1,0 +1,26 @@
+{
+  "textures": {
+    "particle": "ctdhost:block/signal_hood",
+    "hood": "ctdhost:block/signal_hood",
+    "body": "ctdhost:block/signal_body",
+    "lampA": "ctdhost:block/lamp_red",
+    "lampB": "ctdhost:block/lamp_off"
+  },
+  "elements": [
+    { "from": [4,4,6], "to": [12,12,10],
+      "faces": {
+        "north": {"texture":"#hood"}, "south": {"texture":"#hood"},
+        "east": {"texture":"#hood"}, "west": {"texture":"#hood"},
+        "up": {"texture":"#hood"}, "down": {"texture":"#hood"} } },
+    { "from": [5.5,9.5,5.6], "to": [10.5,11.5,6.2],
+      "faces": {
+        "north": {"texture":"#lampA"}, "south": {"texture":"#lampA"},
+        "east": {"texture":"#lampA"}, "west": {"texture":"#lampA"},
+        "up": {"texture":"#lampA"}, "down": {"texture":"#lampA"} } },
+    { "from": [5.5,4.5,5.6], "to": [10.5,6.5,6.2],
+      "faces": {
+        "north": {"texture":"#lampB"}, "south": {"texture":"#lampB"},
+        "east": {"texture":"#lampB"}, "west": {"texture":"#lampB"},
+        "up": {"texture":"#lampB"}, "down": {"texture":"#lampB"} } }
+  ]
+}

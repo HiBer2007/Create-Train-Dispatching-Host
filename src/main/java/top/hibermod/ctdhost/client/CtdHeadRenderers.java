@@ -22,15 +22,9 @@ public final class CtdHeadRenderers {
 
     /** 幂等；只在客户端调用。 */
     public static void ensureRegistered() {
-        if (done) return;
-        done = true;
-        try {
-            net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
-                top.hibermod.ctdhost.block.CtdBlocks.SIGNAL_HEAD_BE.get(),
-                CtdSignalHeadRenderer::new);
-            System.out.println("[ctdhost] 灯头渲染器已懒注册");
-        } catch (Throwable t) {
-            System.out.println("[ctdhost] 灯头渲染器注册失败: " + t);
+        // 灯现在由**方块模型**画（signal_head_0..7 + 亮色贴图），不再运行时绘制。
+        // 运行时那版画出来的永远是黑方块，已废弃；这里保留成空实现，
+        // 免得删掉调用点再引入新的编译问题。
         }
     }
 }
