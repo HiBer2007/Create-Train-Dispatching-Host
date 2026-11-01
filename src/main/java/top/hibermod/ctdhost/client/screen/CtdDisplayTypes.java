@@ -35,7 +35,19 @@ public final class CtdDisplayTypes {
         if (registered) return;
         registered = true;
 
-        // 顺带把辉光模型登记上：它们必须在模型烘焙之前进入 Catnip 的静态表。
+'        // 灯头的 BER 也在这里注册。
+        // 注解那条路（@EventBusSubscriber / @Mod(dist=CLIENT) / 反射）在这个会话里
+        // 全都「没被调用过」，而这条路径已经被站台屏证明会执行。
+        try {
+            net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
+                top.hibermod.ctdhost.block.CtdBlocks.SIGNAL_HEAD_BE.get(),
+                top.hibermod.ctdhost.client.CtdSignalHeadRenderer::new);
+            LOG.info("ctdhost: 灯头渲染器已注册");
+        } catch (Throwable t) {
+            LOG.error("ctdhost: 灯头渲染器注册失败", t);
+        }
+
+        // 顺带把辉光模型登记上'：它们必须在模型烘焙之前进入 Catnip 的静态表。
         top.hibermod.ctdhost.client.CtdPartialModels.bootstrap();
 
         try {
