@@ -33,9 +33,17 @@ public class CtdSignalHeadRenderer implements BlockEntityRenderer<CtdSignalHeadB
         int[] colors = SignalHeadLamps.colorsOf(be.aspect());
         if (colors == null) return;                     // 无信号 / 灭灯
 
-        BlockState state = be.getBlockState();
+'        BlockState state = be.getBlockState();
+        net.minecraft.core.Direction facing = state.getValue(
+            top.hibermod.ctdhost.block.CtdSignalHeadBlock.FACING);
+
         ms.pushPose();
         ms.translate(0.5, 0.5, 0.5);
+
+        // 把灯泡推到灯头**外表面之外**。
+        // 第一版画在 ±0.12 的偏移上、缩放 0.22，结果整颗埋在灯头盒子里，
+        // 屏幕上只看到一个黑方块——「画了但看不见」比「没画」更难查。
+        ms.translate(facing.getStepX() * 0.34, 0, facing.getStepZ() * 0.34);'
 
         for (int slot = 0; slot < 2; slot++) {
             int argb = colors[slot];
@@ -44,7 +52,7 @@ public class CtdSignalHeadRenderer implements BlockEntityRenderer<CtdSignalHeadB
             ms.pushPose();
             // 两个灯位上下叠放，对应色灯信号机的两个灯位
             ms.translate(0, slot == 0 ? 0.12 : -0.12, 0);
-            ms.scale(0.22f, 0.22f, 0.22f);
+            ms.scale(0.26f, 0.20f, 0.26f);
 
             var consumer = buffer.getBuffer(net.minecraft.client.renderer.RenderType.translucent());
             drawCube(ms, consumer, argb);

@@ -24,6 +24,7 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
     private static final int REFRESH_TICKS = 20;
 
     private String aspect = "";
+    private boolean debug;
     private int ticks;
 
     public CtdSignalHeadBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -39,6 +40,7 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
     }
 
     public void serverTick(Level level, BlockPos pos, BlockState state) {
+        if (debug) return;                              // 调试模式：不覆盖手写的 Aspect
         if (++ticks < REFRESH_TICKS) return;
         ticks = 0;
 
@@ -62,11 +64,13 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putString("Aspect", aspect);
+        tag.putBoolean("Debug", debug);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         aspect = tag.getString("Aspect");
+        debug = tag.getBoolean("Debug");
     }
 }
