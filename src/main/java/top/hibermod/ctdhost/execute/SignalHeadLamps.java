@@ -58,7 +58,7 @@ public final class SignalHeadLamps {
     /** 梁段与空气可以穿过；其他方块视为「到头了」。 */
     private static boolean isMastOrAir(Level level, BlockPos pos) {
         var state = level.getBlockState(pos);
-        return state.isAir() || state.getBlock() instanceof top.hibermod.ctdhost.block.CtdSignalMastBlock;
+        return state.isAir() || state.is(com.simibubi.create.AllBlocks.METAL_GIRDER.getBlock());
     }
 
     /**

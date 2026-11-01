@@ -56,10 +56,6 @@ public final class CtdBlocks {
         BLOCK_ENTITIES.register("signal_head",
             () -> BlockEntityType.Builder.of(CtdSignalHeadBlockEntity::create, SIGNAL_HEAD.get()).build(null));
 
-    public static final DeferredBlock<CtdSignalMastBlock> SIGNAL_MAST =
-        BLOCKS.register("signal_mast", () -> new CtdSignalMastBlock(CtdSignalMastBlock.defaultProperties()));
-    public static final DeferredItem<BlockItem> SIGNAL_MAST_ITEM =
-        ITEMS.registerSimpleBlockItem(SIGNAL_MAST);
 
     // 必须有自己的 BE 类型：BlockEntityType 会校验 validBlocks，
     // 复用 Create 的 TRACK_SIGNAL 会在放置时报「Invalid block entity」。
