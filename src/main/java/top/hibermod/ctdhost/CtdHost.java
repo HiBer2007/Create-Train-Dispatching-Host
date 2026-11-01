@@ -69,7 +69,21 @@ public final class CtdHost {
         top.hibermod.ctdhost.block.CtdBlocks.BLOCKS.register(modBus);
         top.hibermod.ctdhost.block.CtdBlocks.BLOCK_ENTITIES.register(modBus);
         top.hibermod.ctdhost.block.CtdBlocks.ITEMS.register(modBus);
-        // 自检不能在构造期跑：那时 Create 的静态状态还没初始化，
+
+        // 站台屏类型只在客户端注册。
+        //
+        // 用「类是否存在」判断，而不是 FMLEnvironment：前者不依赖任何 dist API，
+        // 而且服务端根本没有 net.minecraft.client，Class.forName 会直接失败——
+        // 失败即跳过，不需要额外的分支。
+        try {
+            Class.forName("net.minecraft.client.Minecraft");
+            Class.forName("top.hibermod.ctdhost.client.screen.CtdDisplayTypes")
+                .getMethod("init", net.neoforged.bus.api.IEventBus.class)
+                .invoke(null, modBus);
+        } catch (Throwable ignored) {
+            // 服务端：没有客户端类，正常跳过
+        }
+
         // 查出来的「没注入」可能是「还没加载」。
         //
         // 也不能放在 common setup：那里 Train 往往**还没被加载过**，

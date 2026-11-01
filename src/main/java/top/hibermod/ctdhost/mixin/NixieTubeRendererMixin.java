@@ -37,6 +37,12 @@ import net.minecraft.world.level.block.state.BlockState;
 @Mixin(NixieTubeRenderer.class)
 public abstract class NixieTubeRendererMixin {
 
+    static {
+        // 这个 mixin 只注册在 "client" 段里，所以这段代码只会在客户端跑。
+        // 用静态初始化注册站台屏类型：比 FMLClientSetupEvent 更早、也更不可能被漏掉。
+        top.hibermod.ctdhost.client.screen.CtdDisplayTypes.registerAll();
+    }
+
     private static final float GLOW_VIEW_DISTANCE = 24.0f;
 
     /** 诊断计数：每条通往「放弃」的路各记一次，用来判断是哪一道闸门关着。 */

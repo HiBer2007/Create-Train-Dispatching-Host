@@ -38,18 +38,18 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final BERLabel body = new BERLabel();
 
     public BERCtdPlatform() {
-        header.position.set(Point.of(3, 3.2f));
-        header.horizontalMinScale.set(0.5f);
-        header.horizontalMaxScale.set(0.9f);
-        header.verticalMinScale.set(0.75f);
-        header.verticalMaxScale.set(0.9f);
+        header.position.set(Point.of(2, 2.5f));
+        header.horizontalMinScale.set(0.2f);
+        header.horizontalMaxScale.set(0.4f);
+        header.verticalMinScale.set(0.2f);
+        header.verticalMaxScale.set(0.4f);
         header.horizontalScrollMode.set(EScrollMode.WHEN_NEEDED);
 
-        body.position.set(Point.of(3, 12.2f));
-        body.horizontalMinScale.set(0.5f);
-        body.horizontalMaxScale.set(0.9f);
-        body.verticalMinScale.set(0.75f);
-        body.verticalMaxScale.set(0.9f);
+        body.position.set(Point.of(2, 9.0f));
+        body.horizontalMinScale.set(0.2f);
+        body.horizontalMaxScale.set(0.4f);
+        body.verticalMinScale.set(0.2f);
+        body.verticalMaxScale.set(0.4f);
         body.horizontalScrollMode.set(EScrollMode.WHEN_NEEDED);
     }
 
