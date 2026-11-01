@@ -1,9 +1,7 @@
 {
-  "texture_size": [64, 64],
-  "textures": {
-    "particle": "ctdhost:block/signal_atlas",
-    "atlas": "ctdhost:block/signal_atlas"
-  },
+  "render_type": "minecraft:translucent",
+  "texture_size": [64, 80],
+  "textures": { "particle": "ctdhost:block/signal_atlas", "atlas": "ctdhost:block/signal_atlas" },
   "elements": [
     { "name": "hood", "from": [4,4,6], "to": [12,12,10],
       "faces": {

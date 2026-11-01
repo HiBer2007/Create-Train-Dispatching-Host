@@ -1,9 +1,7 @@
 {
-  "texture_size": [64, 64],
-  "textures": {
-    "particle": "ctdhost:block/signal_atlas",
-    "atlas": "ctdhost:block/signal_atlas"
-  },
+  "render_type": "minecraft:translucent",
+  "texture_size": [64, 80],
+  "textures": { "particle": "ctdhost:block/signal_atlas", "atlas": "ctdhost:block/signal_atlas" },
   "elements": [
     { "name": "hood", "from": [4,4,6], "to": [12,12,10],
       "faces": {
@@ -20,5 +18,7 @@
         "north": {"uv": [8,0,12,4], "texture": "#atlas"}, "south": {"uv": [8,0,12,4], "texture": "#atlas"},
         "east": {"uv": [8,0,12,4], "texture": "#atlas"}, "west": {"uv": [8,0,12,4], "texture": "#atlas"},
         "up": {"uv": [8,0,12,4], "texture": "#atlas"}, "down": {"uv": [8,0,12,4], "texture": "#atlas"} } }
+    ,{ "name": "glowB", "from": [4.5,3.5,5.3], "to": [11.5,7.5,5.6],
+      "faces": { "north": {"uv": [4,16,8,20], "texture": "#atlas"}, "south": {"uv": [4,16,8,20], "texture": "#atlas"} } }
   ]
 }
