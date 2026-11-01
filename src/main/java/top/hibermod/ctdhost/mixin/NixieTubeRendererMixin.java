@@ -130,8 +130,12 @@ public abstract class NixieTubeRendererMixin {
                 .partial(AllPartialModels.SIGNAL_WHITE_CUBE, blockState)
                 .light(LightTexture.FULL_BLOCK)
                 .disableDiffuse()
+                .light(0xf000f0)
+                .disableDiffuse()
                 .scale(1 + 1 / 16f)
-                .renderInto(ms, buffer.getBuffer(RenderTypes.additive()));
+                // 管身必须用 translucent：Create 官方就是这么画的。
+                // 用加法画白色管身会把颜色整个冲成白，这是「颜色不对」的直接原因。
+                .renderInto(ms, buffer.getBuffer(net.minecraft.client.renderer.RenderType.translucent()));
 
             ms.popPose();
         }
