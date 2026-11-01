@@ -38,6 +38,14 @@ public final class CtdBlocks {
     public static final DeferredItem<BlockItem> SWITCH_MACHINE_ITEM =
         ITEMS.registerSimpleBlockItem(SWITCH_MACHINE);
 
+    // ── K5：CTD 自己的信号机本体 ───────────────────────────────────────
+    // 继承 Create 的 SignalBlock：边界、红石强制红、链式解析都照旧，只换外观与渲染。
+    public static final DeferredBlock<CtdSignalBlock> CTD_SIGNAL =
+        BLOCKS.register("ctd_signal", () -> new CtdSignalBlock(CtdSignalBlock.defaultProperties()));
+
+    public static final DeferredItem<BlockItem> CTD_SIGNAL_ITEM =
+        ITEMS.registerSimpleBlockItem(CTD_SIGNAL);
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SwitchMachineBlockEntity>>
         SWITCH_MACHINE_BE = BLOCK_ENTITIES.register("switch_machine",
             () -> BlockEntityType.Builder.of(SwitchMachineBlockEntity::new,
