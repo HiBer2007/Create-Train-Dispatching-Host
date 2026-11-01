@@ -43,7 +43,8 @@ public class CtdSignalHeadRenderer implements BlockEntityRenderer<CtdSignalHeadB
         // 把灯泡推到灯头**外表面之外**。
         // 第一版画在 ±0.12 的偏移上、缩放 0.22，结果整颗埋在灯头盒子里，
         // 屏幕上只看到一个黑方块——「画了但看不见」比「没画」更难查。
-        ms.translate(facing.getOpposite().getStepX() * 0.34, 0, facing.getOpposite().getStepZ() * 0.34);
+        // 不按朝向偏移：灯头盒子只有 0.25 格厚，任何一侧偏移都可能算错方向。
+        // 把灯泡做得比盒子宽，从四面都能看见——牺牲一点真实感，换「一定能看见」。
 
         for (int slot = 0; slot < 2; slot++) {
             int argb = colors[slot];
@@ -52,7 +53,7 @@ public class CtdSignalHeadRenderer implements BlockEntityRenderer<CtdSignalHeadB
             ms.pushPose();
             // 两个灯位上下叠放，对应色灯信号机的两个灯位
             ms.translate(0, slot == 0 ? 0.12 : -0.12, 0);
-            ms.scale(0.26f, 0.20f, 0.26f);
+            ms.scale(0.56f, 0.18f, 0.56f);
 
             var consumer = buffer.getBuffer(net.minecraft.client.renderer.RenderType.translucent());
             drawCube(ms, consumer, argb);
