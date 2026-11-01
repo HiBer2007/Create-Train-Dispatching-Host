@@ -1,0 +1,10 @@
+{
+  "textures": { "particle": "ctdhost:block/signal_body", "body": "ctdhost:block/signal_body" },
+  "elements": [
+    { "from": [7, 0, 7], "to": [9, 16, 9],
+      "faces": {
+        "north": {"texture": "#body"}, "south": {"texture": "#body"},
+        "east": {"texture": "#body"}, "west": {"texture": "#body"},
+        "up": {"texture": "#body"}, "down": {"texture": "#body"} } }
+  ]
+}
