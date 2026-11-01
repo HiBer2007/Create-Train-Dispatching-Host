@@ -35,6 +35,9 @@ public final class CtdDisplayTypes {
         if (registered) return;
         registered = true;
 
+        // 顺带把辉光模型登记上：它们必须在模型烘焙之前进入 Catnip 的静态表。
+        top.hibermod.ctdhost.client.CtdPartialModels.bootstrap();
+
         try {
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_platform",

@@ -31,6 +31,22 @@ public final class CtdPartialModels {
 
     private CtdPartialModels() {}
 
+    /**
+     * 强制类初始化。
+     *
+     * <p>Catnip 的 {@code PartialModel.of(...)} 会把模型登记进一个静态表，
+     * 之后由它自己在 {@code ModelEvent.RegisterAdditional} 里统一烘焙。
+     * **登记必须发生在模型烘焙之前**，否则这些模型永远不会被烘焙，
+     * 渲染时拿到的就是「缺失模型」——屏幕上表现为洋红。
+     *
+     * <p>我们之前是在 mixin 的渲染代码里第一次碰到这个类，那时烘焙早结束了，
+     * 于是五个模型全是洋红。这里提供一个显式的入口，让客户端尽早触碰它。
+     */
+    public static void bootstrap() {
+        // 触发静态初始化即可，不需要做任何事。
+        GLOW_RED.toString();
+    }
+
     private static PartialModel glow(String color) {
         return PartialModel.of(
             ResourceLocation.fromNamespaceAndPath(CtdHost.MOD_ID, "block/signal_glow_" + color));

@@ -1,15 +1,21 @@
 {
-  "parent": "minecraft:block/block",
-  "textures": { "particle": "ctdhost:block/signal_glow_yellow", "all": "ctdhost:block/signal_glow_yellow" },
-  "elements": [
-    { "from": [0,0,0], "to": [16,16,16],
-      "faces": {
-        "down":  { "texture": "#all", "cullface": "down" },
-        "up":    { "texture": "#all", "cullface": "up" },
-        "north": { "texture": "#all", "cullface": "north" },
-        "south": { "texture": "#all", "cullface": "south" },
-        "west":  { "texture": "#all", "cullface": "west" },
-        "east":  { "texture": "#all", "cullface": "east" }
-      } }
-  ]
+	"credit": "ctdhost: 与 create:block/track_signal/white_glow 同构，只换贴图",
+	"textures": {
+		"0": "ctdhost:block/signal_glow_yellow",
+		"particle": "ctdhost:block/signal_glow_yellow"
+	},
+	"elements": [
+		{
+			"from": [-0.5, -0.5, -0.5],
+			"to": [0.5, 0.5, 0.5],
+			"faces": {
+				"north": {"uv": [0, 0, 1, 1], "texture": "#0"},
+				"east": {"uv": [0, 0, 1, 1], "texture": "#0"},
+				"south": {"uv": [0, 0, 1, 1], "texture": "#0"},
+				"west": {"uv": [0, 0, 1, 1], "texture": "#0"},
+				"up": {"uv": [0, 0, 1, 1], "texture": "#0"},
+				"down": {"uv": [0, 0, 1, 1], "texture": "#0"}
+			}
+		}
+	]
 }

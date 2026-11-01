@@ -53,11 +53,24 @@ public abstract class NixieTubeRendererMixin {
         if (n <= 3) System.out.println("[ctdhost] tube render: " + key);
     }
 
+    /** 渲染前摘掉的 signalState，渲染后要放回去。 */
+    private static final java.util.Map<net.minecraft.core.BlockPos, Object> SAVED =
+        new java.util.concurrent.ConcurrentHashMap<>();
+
     @Inject(method = "renderSafe", at = @At("HEAD"), cancellable = true, require = 1)
     private void ctd$driveTubes(NixieTubeBlockEntity be, float partialTicks, PoseStack ms,
                                 MultiBufferSource buffer, int light, int overlay,
                                 CallbackInfo ci) {
         try {
+            // 关键：Create 的 renderAsSignal 里 signalState 优先于 computerSignal。
+            // 所以要让 computerSignal 生效，必须先把 signalState 临时摘掉，
+            // 渲染完再放回去（否则信号机自身的 tick 会以为状态丢了）。
+            java.util.UUID ctdId = ctd$signalIdOf(be);
+            String ctdAspect = ctdId == null ? "" : top.hibermod.ctdapi.status.SignalStates.get(ctdId);
+            if (!ctdAspect.isEmpty() && ctd$driveAsComputerSignal(be, ctdAspect)) {
+                return;                                        // 交给 Create 自己的渲染器画
+            }
+
             if (be.signalState == null) {
                 diag("not a signal display (signalState == null)");
                 return;
@@ -118,7 +131,7 @@ public abstract class NixieTubeRendererMixin {
             // 用**自己的**带色辉光贴图，不再给白管染色：
             // Create 官方也是三张预着色贴图 + 加法混合，染色会被白色底冲淡。
             CachedBuffers
-                .partial(AllPartialModels.SIGNAL_WHITE_GLOW, blockState)
+                .partial(top.hibermod.ctdhost.client.CtdPartialModels.of(colorName), blockState)
                 .light(LightTexture.FULL_BLOCK)
                 .disableDiffuse()
                 .scale(2, 5.125f, 2)
@@ -143,6 +156,63 @@ public abstract class NixieTubeRendererMixin {
         ms.popPose();
     }
 
+    /**
+     * 用 Create 自己的 {@code computerSignal} 通道画灯管。
+     *
+     * <p>为什么走这条路：{@code NixieTubeBlockEntity#computerSignal} 是**公开字段**，
+     * Create 的 {@code renderAsSignal} 会按 {@code TubeDisplay} 的 r/g/b 直接画
+     * 彩色灯管（含辉光、闪烁、朝向、距离裁剪）。不引入任何自定义模型与贴图，
+     * 因此也不会出现「模型没被烘焙 → 洋红」。
+     *
+     * <p>唯一的障碍：{@code renderAsSignal} 里 {@code signalState} 优先于
+     * {@code computerSignal}。所以这里把 {@code signalState} 临时摘掉，
+     * 渲染结束后由 {@link #ctd$restoreSignalState} 放回去。
+     *
+     * @return true 表示已接管，调用方应直接 return（不要 cancel）
+     */
+    private static boolean ctd$driveAsComputerSignal(NixieTubeBlockEntity be, String aspect) {
+        int[] colors = ctd$colorsOf(aspect);
+        if (colors == null) return false;
+
+        var state = be.signalState;
+        if (state != null) {
+            SAVED.put(((net.minecraft.world.level.block.entity.BlockEntity) be).getBlockPos(), state);
+            be.signalState = null;
+        }
+
+        var cs = new NixieTubeBlockEntity.ComputerSignal();
+        ctd$fill(cs.first, colors[0]);
+        ctd$fill(cs.second, colors[1]);
+        be.computerSignal = cs;
+        return true;
+    }
+
+    private static void ctd$fill(NixieTubeBlockEntity.ComputerSignal.TubeDisplay tube, int argb) {
+        tube.r = (byte) ((argb >> 16) & 0xFF);
+        tube.g = (byte) ((argb >> 8) & 0xFF);
+        tube.b = (byte) (argb & 0xFF);
+        tube.glowWidth = 4;
+        tube.glowHeight = 4;
+    }
+
+    /** 渲染结束后把 signalState 放回去，别让信号机自己的逻辑以为状态丢了。 */
+    @Inject(method = "renderSafe", at = @At("RETURN"))
+    private void ctd$restoreSignalState(NixieTubeBlockEntity be, float partialTicks, PoseStack ms,
+                                        MultiBufferSource buffer, int light, int overlay,
+                                        CallbackInfo ci) {
+        var pos = ((net.minecraft.world.level.block.entity.BlockEntity) be).getBlockPos();
+        Object saved = SAVED.remove(pos);
+        if (saved instanceof SignalBlockEntity.SignalState s) {
+            be.signalState = s;
+        }
+    }
+
+    /** 从管子反查它所属信号机的边界 id（供 aspect 查询用）。 */
+    private static java.util.UUID ctd$signalIdOf(NixieTubeBlockEntity be) {
+        SignalBlockEntity signal = ctd$signalOf(be);
+        if (signal == null || signal.edgePoint == null || signal.edgePoint.getEdgePoint() == null) return null;
+        return signal.edgePoint.getEdgePoint().id;
+    }
     /** 语义颜色 → 我们自己的贴图名。 */
     private static String ctd$colorName(int argb) {
         int r = (argb >> 16) & 0xFF;
