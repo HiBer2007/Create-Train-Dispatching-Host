@@ -56,7 +56,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     @Override
     public void tick(Level level, BlockPos pos, BlockState state,
                      AdvancedDisplayBlockEntity blockEntity, AdvancedDisplayRenderInstance parent) {
-        CtdPlatformSettings settings = getDisplaySettings(blockEntity);
+        CtdPlatformSettings settings = safeSettings(blockEntity);
 
         String stationText = settings.station().isEmpty() ? "(未设车站)" : shorten(settings.station());
         String platformText = settings.platform().isEmpty() ? "" : " 站台 " + settings.platform();
@@ -90,7 +90,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
                        EUpdateReason reason) {
         if (!blockEntity.isController()) return;
 
-        CtdPlatformSettings settings = getDisplaySettings(blockEntity);
+        CtdPlatformSettings settings = safeSettings(blockEntity);
 
         Rectangle area = Rectangle.withSize(3, 3,
             blockEntity.getXSizeScaled() * 16 - 6,
@@ -112,6 +112,24 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             case ARRIVALS -> DLColor.fromInt(0xFF4488FF);
             case BOTH -> DLColor.fromInt(0xFFDDCC33);
         });
+    }
+
+    /**
+     * 取设置，取不到就用默认值。
+     *
+     * <p>为什么需要它：显示器的设置对象由 CRN 按 `DisplayId` 创建。如果只改了 id
+     * 而没有重建设置对象，`getSettings()` 会返回**旧类型**的设置，
+     * 强转直接抛 `ClassCastException`——渲染随之中断，屏幕上什么都没有。
+     *
+     * <p>**空白屏是最难查的失败**：分不清是没注册、没渲染、还是渲染时抛了。
+     * 这里退化成默认设置，至少能画出「(未设车站)」，让人一眼看出管线是通的。
+     */
+    public static CtdPlatformSettings safeSettings(AdvancedDisplayBlockEntity be) {
+        try {
+            return (CtdPlatformSettings) be.getSettings();
+        } catch (Throwable t) {
+            return new CtdPlatformSettings();
+        }
     }
 
     /** 显示内容的文字（中文在这里硬编码：这是内部调试文本，不进 lang 文件）。 */

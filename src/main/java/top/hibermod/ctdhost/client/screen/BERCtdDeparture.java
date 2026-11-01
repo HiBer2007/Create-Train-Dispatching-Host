@@ -51,7 +51,7 @@ public class BERCtdDeparture implements AbstractAdvancedDisplayRenderer<CtdPlatf
     @Override
     public void tick(Level level, BlockPos pos, BlockState state,
                      AdvancedDisplayBlockEntity blockEntity, AdvancedDisplayRenderInstance parent) {
-        CtdPlatformSettings settings = getDisplaySettings(blockEntity);
+        CtdPlatformSettings settings = BERCtdPlatform.safeSettings(blockEntity);
 
         // 实时车次直接取自显示器方块实体：CRN 已经把车次算好放在 getStops() 里，
         // 不需要我们再做一次服务端→客户端同步。
