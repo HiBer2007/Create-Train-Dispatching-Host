@@ -89,6 +89,26 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
     }
 
     @Override
+    /**
+     * 客户端同步用的 tag。
+     *
+     * 只写 saveAdditional 是不够的：那是**存档**用的，客户端收到的
+     * 是 getUpdateTag 的内容。少了这个方法，客户端 BE 的 aspect 永远是空串，
+     * 渲染器第一行就 return——屏幕上只有黑盒子。
+     */
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("Aspect", aspect);
+        tag.putBoolean("Debug", debug);
+        return tag;
+    }
+
+    @Override
+    public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+    }
+
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putString("Aspect", aspect);
