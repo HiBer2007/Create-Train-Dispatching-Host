@@ -48,6 +48,8 @@ neoForge {
 
     runs {
         client {
+            // 直连本地服务端，省掉手动点多人游戏
+            programArguments.addAll '--quickPlayMultiplayer', 'localhost:25565'
             client()
         }
         server {

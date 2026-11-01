@@ -125,8 +125,14 @@ public final class DepartureIndicatorService {
 
         if (tubes.isEmpty()) return 0;
 
+        // 颜色：辉光管是**按颜色分方块**的（create:red_nixie_tube 等），
+        // 文字颜色来自方块染料色，不是 computerSignal。
+        // 所以先换方块再写字——换方块会重建 BE，顺序反了文字会丢。
+        String colorName = colorBlockName(colorFor());
+
         for (int i = 0; i < tubes.size(); i++) {
-            NixieTubeBlockEntity tube = tubes.get(i);
+            NixieTubeBlockEntity tube = recolor(level, tubes.get(i), colorName);
+            if (tube == null) continue;
             try {
                 if (text == null || i >= text.length()) {
                     tube.displayEmptyText(i);
@@ -180,6 +186,50 @@ public final class DepartureIndicatorService {
             .replace("\\", "\\\\")
             .replace("\"", "\\\"");
         return "{\"text\":\"" + escaped + "\"}";
+    }
+
+    /** 灯色 → 辉光管方块名（null 表示不改颜色）。 */
+    static String colorBlockName(Rgb rgb) {
+        if (rgb == GREEN) return "green_nixie_tube";
+        if (rgb == RED) return "red_nixie_tube";
+        if (rgb == WHITE) return "white_nixie_tube";
+        return null;
+    }
+
+    /**
+     * 把一根管子换成指定颜色，并返回**换过之后**的方块实体。
+     *
+     * <p>换方块会重建 BE，所以必须在换完之后再写字；顺序反了文字会丢。
+     * 颜色没变时直接返回原 BE，不做任何写操作。
+     */
+    static NixieTubeBlockEntity recolor(ServerLevel level, NixieTubeBlockEntity tube, String blockName) {
+        if (blockName == null) return tube;
+
+        BlockPos pos = tube.getBlockPos();
+        net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+        net.minecraft.resources.ResourceLocation id =
+            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("create", blockName);
+        var block = net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(id);
+        if (block == null || block == state.getBlock()) return tube;
+
+        var newState = block.defaultBlockState();
+        for (var property : state.getProperties()) {
+            if (newState.hasProperty(property)) {
+                newState = copyProperty(state, newState, property);
+            }
+        }
+
+        level.setBlockAndUpdate(pos, newState);
+        var be = level.getBlockEntity(pos);
+        return be instanceof NixieTubeBlockEntity recolored ? recolored : null;
+    }
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private static net.minecraft.world.level.block.state.BlockState copyProperty(
+            net.minecraft.world.level.block.state.BlockState from,
+            net.minecraft.world.level.block.state.BlockState to,
+            net.minecraft.world.level.block.state.properties.Property property) {
+        return to.setValue(property, (Comparable) from.getValue(property));
     }
 
     public static int lastWritten() {
