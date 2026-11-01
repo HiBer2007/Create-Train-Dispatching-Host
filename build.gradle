@@ -86,6 +86,11 @@ dependencies {
     // 就要求这个接口可见——否则报「找不到符号 net.createmod.ponder.api.VirtualBlockEntity」。
     compileOnly files("libs/ponder-neoforge-1.0.85+mc1.21.1.jar")
     runtimeOnly files("libs/ponder-neoforge-1.0.85+mc1.21.1.jar")
+
+    // CRN（Create Railways Navigator）：站台屏幕要注册它的高级显示器类型，
+    // 所以编译期需要它的类。运行期仍然由 run/mods 提供。
+    compileOnly files("run/mods/createrailwaysnavigator-neoforge-1.21.1-beta-0.10.0-C6.jar")
+    compileOnly files("run/mods/dragonlib-3.0.29+mc1.21.1-neoforge.jar")
 }
 
 tasks.withType(JavaCompile).configureEach {
