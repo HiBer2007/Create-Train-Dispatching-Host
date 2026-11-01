@@ -118,7 +118,7 @@ public abstract class NixieTubeRendererMixin {
             // 用**自己的**带色辉光贴图，不再给白管染色：
             // Create 官方也是三张预着色贴图 + 加法混合，染色会被白色底冲淡。
             CachedBuffers
-                .partial(top.hibermod.ctdhost.client.CtdPartialModels.of(colorName), blockState)
+                .partial(AllPartialModels.SIGNAL_WHITE_GLOW, blockState)
                 .light(LightTexture.FULL_BLOCK)
                 .disableDiffuse()
                 .scale(2, 5.125f, 2)
