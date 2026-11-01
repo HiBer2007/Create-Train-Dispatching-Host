@@ -80,7 +80,7 @@ public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements En
             // 客户端：顺手把渲染器注册上（幂等）。不依赖任何事件总线。
             top.hibermod.ctdhost.client.CtdHeadRenderers.ensureRegistered();
             return null;
-        }'
+        }
         return (lvl, pos, st, be) -> {
             if (be instanceof CtdSignalHeadBlockEntity head) {
                 head.serverTick(lvl, pos, st);
