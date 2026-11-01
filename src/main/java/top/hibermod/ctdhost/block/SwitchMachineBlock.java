@@ -54,8 +54,27 @@ public class SwitchMachineBlock extends BaseEntityBlock {
         return RenderShape.MODEL;
     }
 
+    /**
+     * 慢速重试：机器可能在拓扑还没建好时被放下（例如刚进世界）。
+     *
+     * <p>早先只在 onPlace 里绑一次，绑定失败就永远未绑定——而「未绑定」
+     * 的表现是「这台机器好像没用」，很难归因。这里每 40 刻重试一次，
+     * 直到绑上为止。
+     */
     @Nullable
     @Override
+    public <T extends BlockEntity> net.minecraft.world.level.block.entity.BlockEntityTicker<T> getTicker(
+            Level level, BlockState state, net.minecraft.world.level.block.entity.BlockEntityType<T> type) {
+        if (level.isClientSide) return null;
+
+        return (lvl, pos, st, be) -> {
+            if (!(be instanceof SwitchMachineBlockEntity machine)) return;
+            if (machine.node() != null) return;
+            if (lvl.getGameTime() % 40 != 0) return;
+            machine.bindNearestJunction();
+        };
+    }
+
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new SwitchMachineBlockEntity(pos, state);
     }
