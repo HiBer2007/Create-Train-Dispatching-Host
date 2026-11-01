@@ -58,7 +58,9 @@ public final class SignalHeadLamps {
     /** 梁段与空气可以穿过；其他方块视为「到头了」。 */
     private static boolean isMastOrAir(Level level, BlockPos pos) {
         var state = level.getBlockState(pos);
-        return state.isAir() || state.is(com.simibubi.create.AllBlocks.METAL_GIRDER.getBlock());
+        // 用注册名判断，绕开 Registrate 的 BlockEntry 泛型：
+        var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        return state.isAir() || id.getPath().equals("metal_girder");
     }
 
     /**
