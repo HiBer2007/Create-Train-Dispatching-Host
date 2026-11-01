@@ -2,12 +2,18 @@ package top.hibermod.ctdhost.block;
 
 import com.mojang.serialization.MapCodec;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
@@ -15,11 +21,11 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 /**
  * 灯头方块：地面 / 高杆 / 吊顶 / 墙壁四种形态共用这一份逻辑。
  *
- * 区别只在模型与安装位置（由 blockstate 的 facing 与各自注册的模型决定）。
- * 灯色不在这里存——它每 N 刻去下方（或侧面）的 ctd_signal 读，
- * 保持「状态只有一份」。
+ * <p>它必须实现 {@link EntityBlock}——灯头要「每秒去问一次信号机现在什么颜色」，
+ * 那是方块实体的活。第一版只继承了 {@code HorizontalDirectionalBlock}，
+ * 结果 {@code /data get block} 报「The target block is not a block entity」。
  */
-public class CtdSignalHeadBlock extends HorizontalDirectionalBlock {
+public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
@@ -60,5 +66,21 @@ public class CtdSignalHeadBlock extends HorizontalDirectionalBlock {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return CtdSignalHeadBlockEntity.create(pos, state);
+    }
+
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state,
+                                                                  BlockEntityType<T> type) {
+        if (level.isClientSide) return null;
+        return (lvl, pos, st, be) -> {
+            if (be instanceof CtdSignalHeadBlockEntity head) {
+                head.serverTick(lvl, pos, st);
+            }
+        };
     }
 }
