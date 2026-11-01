@@ -52,6 +52,10 @@ public final class CtdBlocks {
     public static final DeferredItem<BlockItem> SIGNAL_HEAD_ITEM =
         ITEMS.registerSimpleBlockItem(SIGNAL_HEAD);
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CtdSignalHeadBlockEntity>> SIGNAL_HEAD_BE =
+        BLOCK_ENTITIES.register("signal_head",
+            () -> BlockEntityType.Builder.of(CtdSignalHeadBlockEntity::create, SIGNAL_HEAD.get()).build(null));
+
     public static final DeferredBlock<CtdSignalMastBlock> SIGNAL_MAST =
         BLOCKS.register("signal_mast", () -> new CtdSignalMastBlock(CtdSignalMastBlock.defaultProperties()));
     public static final DeferredItem<BlockItem> SIGNAL_MAST_ITEM =
