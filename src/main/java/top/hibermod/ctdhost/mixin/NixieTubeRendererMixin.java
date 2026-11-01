@@ -111,28 +111,25 @@ public abstract class NixieTubeRendererMixin {
             ms.pushPose();
             ms.translate(slot == 0 ? -4 / 16f : 4 / 16f, 0, 0);
 
-            boolean warm = ctd$isWarm(argb);
-            int tint = ctd$tint(argb);
+            String colorName = ctd$colorName(argb);
 
             // 辉光层：先用对应颜色的 glow，再给管身上色
-            dev.engine_room.flywheel.lib.model.baked.PartialModel glow =
-                warm ? AllPartialModels.SIGNAL_YELLOW_GLOW : AllPartialModels.SIGNAL_WHITE_GLOW;
-            dev.engine_room.flywheel.lib.model.baked.PartialModel tube =
-                warm ? AllPartialModels.SIGNAL_YELLOW : AllPartialModels.SIGNAL_WHITE;
 
+            // 用**自己的**带色辉光贴图，不再给白管染色：
+            // Create 官方也是三张预着色贴图 + 加法混合，染色会被白色底冲淡。
             CachedBuffers
-                .partial(glow, blockState)
+                .partial(top.hibermod.ctdhost.client.CtdPartialModels.of(colorName), blockState)
                 .light(LightTexture.FULL_BLOCK)
                 .disableDiffuse()
-                .color(tint)
                 .scale(2, 5.125f, 2)
                 .renderInto(ms, buffer.getBuffer(RenderTypes.additive()));
 
+            // 用**自己的**带色辉光贴图，不再给白管染色：
+            // Create 官方也是三张预着色贴图 + 加法混合，染色会被白色底冲淡。
             CachedBuffers
-                .partial(tube, blockState)
+                .partial(AllPartialModels.SIGNAL_WHITE_CUBE, blockState)
                 .light(LightTexture.FULL_BLOCK)
                 .disableDiffuse()
-                .color(tint)
                 .scale(1 + 1 / 16f)
                 .renderInto(ms, buffer.getBuffer(RenderTypes.additive()));
 
@@ -140,6 +137,18 @@ public abstract class NixieTubeRendererMixin {
         }
 
         ms.popPose();
+    }
+
+    /** 语义颜色 → 我们自己的贴图名。 */
+    private static String ctd$colorName(int argb) {
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = argb & 0xFF;
+        if (r > 200 && g < 120 && b < 120) return "red";
+        if (r > 200 && g > 180 && b < 120) return "yellow";
+        if (g > 150 && r < 120) return "green";
+        if (b > 180 && r < 120) return "blue";
+        return "white";
     }
 
     /** 管子选型：红只用于红，其余用黄或白再染色。 */
