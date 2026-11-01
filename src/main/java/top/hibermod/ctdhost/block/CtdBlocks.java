@@ -46,6 +46,17 @@ public final class CtdBlocks {
     public static final DeferredItem<BlockItem> CTD_SIGNAL_ITEM =
         ITEMS.registerSimpleBlockItem(CTD_SIGNAL);
 
+    // ── K5：灯头与金属梁 ───────────────────────────────────────────────
+    public static final DeferredBlock<CtdSignalHeadBlock> SIGNAL_HEAD =
+        BLOCKS.register("signal_head", () -> new CtdSignalHeadBlock(CtdSignalHeadBlock.defaultProperties()));
+    public static final DeferredItem<BlockItem> SIGNAL_HEAD_ITEM =
+        ITEMS.registerSimpleBlockItem(SIGNAL_HEAD);
+
+    public static final DeferredBlock<CtdSignalMastBlock> SIGNAL_MAST =
+        BLOCKS.register("signal_mast", () -> new CtdSignalMastBlock(CtdSignalMastBlock.defaultProperties()));
+    public static final DeferredItem<BlockItem> SIGNAL_MAST_ITEM =
+        ITEMS.registerSimpleBlockItem(SIGNAL_MAST);
+
     // 必须有自己的 BE 类型：BlockEntityType 会校验 validBlocks，
     // 复用 Create 的 TRACK_SIGNAL 会在放置时报「Invalid block entity」。
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CtdSignalBlockEntity>> CTD_SIGNAL_BE =
