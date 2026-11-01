@@ -27,13 +27,26 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
  */
 public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
+    /**
+     * 灯色编码，**存在方块状态里**。
+     *
+     * 为什么不用方块实体字段：BE 的字段要自己写 getUpdateTag/发包才会同步，
+     * 而这个会话里那条路试了三次都没通（客户端读到的永远是空串）。
+     * 方块状态由游戏自己同步，天然可靠。
+     * 0=灭 1=绿 2=黄 3=红 4=白 5=蓝 6=红+黄 7=白+绿
+     */
+    public static final net.minecraft.world.level.block.state.properties.IntegerProperty ASPECT =
+        net.minecraft.world.level.block.state.properties.IntegerProperty.create("aspect", 0, 7);
+
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
     public static final MapCodec<CtdSignalHeadBlock> CODEC = simpleCodec(CtdSignalHeadBlock::new);
 
     public CtdSignalHeadBlock(Properties properties) {
         super(properties);
-        registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
+        registerDefaultState(defaultBlockState()
+            .setValue(FACING, Direction.NORTH)
+            .setValue(ASPECT, 0));
     }
 
     @Override
@@ -50,7 +63,7 @@ public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, ASPECT);
     }
 
     @Override

@@ -33,7 +33,9 @@ public class CtdSignalHeadRenderer implements BlockEntityRenderer<CtdSignalHeadB
     public void render(CtdSignalHeadBlockEntity be, float partialTick, PoseStack ms,
                        MultiBufferSource buffer, int light, int overlay) {
         if (!LOGGED) { LOGGED = true; System.out.println("[ctdhost] head render called, aspect=[" + be.aspect() + "]"); }
-        int[] colors = SignalHeadLamps.colorsOf(be.aspect());
+        // 从**方块状态**取灯色编码：方块状态由游戏自己同步，不依赖 BE 字段跨端传输。
+        int code = be.getBlockState().getValue(top.hibermod.ctdhost.block.CtdSignalHeadBlock.ASPECT);
+        int[] colors = colorsForCode(code);
         if (colors == null) return;                     // 无信号 / 灭灯
 
         BlockState state = be.getBlockState();
@@ -67,6 +69,19 @@ public class CtdSignalHeadRenderer implements BlockEntityRenderer<CtdSignalHeadB
         ms.popPose();
     }
 
+    /** 方块状态编码 → 两个灯位的 ARGB（0 表示该灯位不亮）。 */
+    private static int[] colorsForCode(int code) {
+        return switch (code) {
+            case 1 -> new int[] { 0, 0xFF30D158 };                       // 绿
+            case 2 -> new int[] { 0, 0xFFFFD60A };                       // 黄
+            case 3 -> new int[] { 0xFFFF453A, 0 };                       // 红
+            case 4 -> new int[] { 0xFFFFFFFF, 0 };                       // 白
+            case 5 -> new int[] { 0xFF0A84FF, 0 };                       // 蓝（CBTC）
+            case 6 -> new int[] { 0xFFFF453A, 0xFFFFD60A };              // 红 + 黄
+            case 7 -> new int[] { 0xFFFFFFFF, 0xFF30D158 };              // 白 + 绿
+            default -> null;                                             // 灭
+        };
+    }
     /** 画一个居中的单位立方体，六面同色。 */
     private static void drawCube(PoseStack ms, com.mojang.blaze3d.vertex.VertexConsumer consumer, int argb) {
         int a = (argb >> 24) & 0xFF;

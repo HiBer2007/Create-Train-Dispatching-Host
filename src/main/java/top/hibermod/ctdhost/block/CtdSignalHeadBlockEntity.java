@@ -49,11 +49,33 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
         return new CtdSignalHeadBlockEntity(CtdBlocks.SIGNAL_HEAD_BE.get(), pos, state);
     }
 
+    /** 语义 id → 方块状态编码（0=灭 1=绿 2=黄 3=红 4=白 5=蓝 6=红+黄 7=白+绿）。 */
+    public static int codeOf(String aspect) {
+        String path = aspect.contains(":") ? aspect.substring(aspect.indexOf(':') + 1) : aspect;
+        return switch (path) {
+            case "clear" -> 7;
+            case "approach" -> 3;
+            case "approach_limited", "caution_diverging" -> 2;
+            case "stop" -> 6;
+            case "call_on" -> 5;
+            case "cbtc_mode" -> 5;
+            case "shunt" -> 4;
+            default -> 0;
+        };
+    }
+
     public String aspect() {
         return aspect;
     }
 
     public void serverTick(Level level, BlockPos pos, BlockState state) {
+        int code = codeOf(aspect);
+        var st = getBlockState();
+        if (st.getValue(top.hibermod.ctdhost.block.CtdSignalHeadBlock.ASPECT) != code) {
+            level.setBlock(worldPosition,
+                st.setValue(top.hibermod.ctdhost.block.CtdSignalHeadBlock.ASPECT, code), 3);
+        }
+
         if (debug) {
             // 调试模式不覆盖 aspect，但**仍要同步**给客户端：
             // /data merge 只改服务端 NBT，客户端 BE 不会自动收到，
