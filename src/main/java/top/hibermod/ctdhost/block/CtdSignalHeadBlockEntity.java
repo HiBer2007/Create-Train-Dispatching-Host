@@ -88,7 +88,6 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
         }
     }
 
-    @Override
     /**
      * 客户端同步用的 tag。
      *
