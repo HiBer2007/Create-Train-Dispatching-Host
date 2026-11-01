@@ -53,9 +53,22 @@ public class BERCtdDeparture implements AbstractAdvancedDisplayRenderer<CtdPlatf
                      AdvancedDisplayBlockEntity blockEntity, AdvancedDisplayRenderInstance parent) {
         CtdPlatformSettings settings = getDisplaySettings(blockEntity);
 
-        clock.text.set(TextUtils.text("--:--"));
-        caption.text.set(TextUtils.text(settings.platform().isEmpty()
-            ? "距正点" : "站台 " + settings.platform() + " 距正点"));
+        // 实时车次直接取自显示器方块实体：CRN 已经把车次算好放在 getStops() 里，
+        // 不需要我们再做一次服务端→客户端同步。
+        java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops = blockEntity.getStops();
+
+        if (stops.isEmpty()) {
+            clock.text.set(TextUtils.text("--:--"));
+        } else {
+            var entry = stops.get(0);
+            long deviation = entry.deviation(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
+            clock.text.set(TextUtils.text(formatDeviation((int) deviation)));
+            clock.color.set(colorForDeviation((int) deviation));
+        }
+        String destination = stops.isEmpty() ? ""
+            : stops.get(0).displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
+        String prefix = settings.platform().isEmpty() ? "距正点" : "站台 " + settings.platform();
+        caption.text.set(TextUtils.text(destination.isEmpty() ? prefix : prefix + " · " + destination));
     }
 
     @Override
@@ -84,6 +97,15 @@ public class BERCtdDeparture implements AbstractAdvancedDisplayRenderer<CtdPlatf
         caption.preferredWidth.set(blockEntity.getXSizeScaled() * 16 - 3 - caption.x.get());
         caption.horizontalAlign.set(ETextAlignment.CENTER);
         caption.color.set(DLColor.fromInt(0xFFBBBBBB));
+    }
+
+    /** 偏差格式化成 {@code +1:23} / {@code -0:45} / {@code 0:00}。 */
+    static String formatDeviation(int ticks) {
+        int totalSeconds = Math.abs(ticks) / 20;
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        String sign = ticks > 0 ? "+" : ticks < 0 ? "-" : "";
+        return sign + minutes + ":" + String.format("%02d", seconds);
     }
 
     /** 早点绿、晚点红、正点白、未知中性。 */

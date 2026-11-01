@@ -62,7 +62,19 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         String platformText = settings.platform().isEmpty() ? "" : " 站台 " + settings.platform();
         header.text.set(TextUtils.text(stationText + platformText));
 
-        body.text.set(Component.literal(contentLabel(settings.content())));
+        // 实时车次：CRN 已经把车次算好放在 getStops() 里，直接用。
+        java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops = blockEntity.getStops();
+        if (stops.isEmpty()) {
+            body.text.set(Component.literal(contentLabel(settings.content()) + " · 暂无车次"));
+        } else {
+            var entry = stops.get(0);
+            long deviation = entry.deviation(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
+            int minutes = (int) Math.abs(deviation) / 20 / 60;
+            String when = deviation > 0 ? ("晚 " + minutes + " 分")
+                : deviation < 0 ? ("早 " + minutes + " 分") : "正点";
+            body.text.set(Component.literal(
+                entry.displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE) + " · " + when));
+        }
     }
 
     @Override
