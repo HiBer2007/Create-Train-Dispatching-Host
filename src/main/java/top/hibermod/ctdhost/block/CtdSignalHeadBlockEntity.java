@@ -31,6 +31,20 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
         super(type, pos, state);
     }
 
+    /**
+     * 客户端渲染器注册的挂载点。
+     *
+     * setLevel 在两端都会被调用，而且**一定早于第一次渲染**——
+     * 事件总线、@Mod(dist)、mixin 静态初始化、Block#getTicker 都试过了，全都没触发。
+     */
+    @Override
+    public void setLevel(net.minecraft.world.level.Level level) {
+        super.setLevel(level);
+        if (level.isClientSide) {
+            top.hibermod.ctdhost.client.CtdHeadRenderers.ensureRegistered();
+        }
+    }
+
     public static CtdSignalHeadBlockEntity create(BlockPos pos, BlockState state) {
         return new CtdSignalHeadBlockEntity(CtdBlocks.SIGNAL_HEAD_BE.get(), pos, state);
     }
