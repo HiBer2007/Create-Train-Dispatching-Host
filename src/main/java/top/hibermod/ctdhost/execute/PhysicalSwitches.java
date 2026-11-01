@@ -55,7 +55,12 @@ final class PhysicalSwitches {
      * @param want  期望通往的那条边
      * @return 真的扳动了返回 true；没有对应道岔、方向无效、被锁住都返回 false
      */
-    static boolean throwTo(TrackGraph graph, Rail.NodeId node, Rail.EdgeId want) {
+    /** 对外入口：把某个岔口扳到指定股道。返回是否真的动了（已经是那儿也算成功）。 */
+    public static boolean throwTo(TrackGraph graph, Rail.NodeId node, Rail.EdgeId want) {
+        return throwToInternal(graph, node, want);
+    }
+
+    static boolean throwToInternal(TrackGraph graph, Rail.NodeId node, Rail.EdgeId want) {
         resolve();
         if (switchEdgePointType == null || graph == null) return false;
 

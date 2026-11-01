@@ -87,7 +87,8 @@ public final class MachinesCommand {
 
         final int j = junctions, u = unarmed;
         src.sendSuccess(() -> Component.literal(
-            "合计岔口 " + j + " 个：装了机器 " + (j - u) + "，固定方向 " + u), false);
+            "合计岔口 " + j + " 个：装了机器 " + (j - u) + "，固定方向 " + u
+                + "  [" + top.hibermod.ctdhost.execute.SwitchEnforcement.counters() + "]"), false);
 
         return junctions;
     }

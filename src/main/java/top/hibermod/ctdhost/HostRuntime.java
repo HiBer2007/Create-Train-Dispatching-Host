@@ -134,6 +134,11 @@ public final class HostRuntime {
             top.hibermod.ctdhost.door.DoorService.tick(serverLevel, gameTime);
             // 发车指示器：把「距正点多久」写到站台旁的辉光管上。
             top.hibermod.ctdhost.pis.DepartureIndicatorService.tick(serverLevel, gameTime);
+
+        // 固定方向：没装自动道岔机的岔口，物理道岔也要被按到固定股道。
+        if (mirror != null && mirror.current() != null) {
+            top.hibermod.ctdhost.execute.SwitchEnforcement.tick(mirror.current(), gameTime);
+        }
         }
 
         // 首次收到 tick 时打一条，证明调度真的在跑（含入口来源）
