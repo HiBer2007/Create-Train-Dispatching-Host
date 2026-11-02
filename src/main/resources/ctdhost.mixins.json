@@ -15,7 +15,8 @@
     "SlidingDoorBlockEntityMixin",
     "SlidingDoorBlockMixin",
     "SlidingDoorMovementBehaviourMixin",
-    "PassiveSlowdownMixin"
+    "PassiveSlowdownMixin",
+    "AdvancedDisplayHoldMixin"
   ],
   "client": [
     "SignalRendererMixin"

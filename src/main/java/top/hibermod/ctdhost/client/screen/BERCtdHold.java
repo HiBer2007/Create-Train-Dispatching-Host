@@ -50,6 +50,14 @@ public class BERCtdHold implements AbstractAdvancedDisplayRenderer<CtdPlatformSe
         label.clippingArea.set(area);
         label.preferredWidth.set((float) (blockEntity.getXSizeScaled() * 16 - 6));
 
+        // 扣车标记挂在 BE 上（mixin 加的字段），随 BE 一起同步到达客户端。
+        String hold = blockEntity instanceof CtdHoldAccess acc ? acc.ctdgetHold() : "";
+        if (!hold.isEmpty()) {
+            label.text.set(Component.literal("扣车 · " + hold));
+            label.color.set(DLColor.fromInt(0xFFFF453A));
+            return;
+        }
+
         var stops = blockEntity.getStops();
         if (stops != null && !stops.isEmpty()) {
             var first = stops.get(0);
