@@ -32,7 +32,7 @@ public final class CtdDisplayTypes {
 
     /** 直接注册（不依赖任何事件总线）。由客户端 mixin 的静态初始化调用。 */
     public static synchronized void registerAll() {
-        LOG.info("ctdhost: registerAll 开始执行（registered={}）", registered);
+        LOG.info("ctdhost: registerAll start (registered={})", registered);
         if (registered) return;
         registered = true;
 
@@ -65,9 +65,9 @@ public final class CtdDisplayTypes {
                 CtdPlatformSettings::new, BERCtdPlatform::new,
                 new DisplayProperties(true, be -> 1));
 
-            LOG.info("ctdhost: 站台屏类型注册成功 ctd_platform / ctd_departure");
+            LOG.info("ctdhost: display types registered: ctd_platform / ctd_departure / ctd_timer / ctd_hold");
         } catch (Throwable t) {
-            LOG.error("ctdhost: 站台屏类型注册失败", t);
+            LOG.error("ctdhost: display type registration failed: {}", t.toString());
             top.hibermod.ctdhost.Failures.caught("站台屏类型注册", t);
         }
     }
