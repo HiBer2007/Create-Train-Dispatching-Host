@@ -64,6 +64,16 @@ public final class CtdHost {
     }
     public CtdHost(IEventBus modBus) {
         LOG.info("ctdhost: constructing (mod bus present: {})", modBus != null);
+
+        // 客户端注册：放在构造的**最前面**，只要构造发生就一定执行。
+        try {
+            Class.forName("net.minecraft.client.Minecraft");
+            Class.forName("top.hibermod.ctdhost.client.screen.CtdDisplayTypes")
+                .getMethod("registerAll").invoke(null);
+            System.out.println("[ctdhost] 客户端注册已调用");
+        } catch (Throwable t) {
+            System.out.println("[ctdhost] 客户端注册跳过/失败: " + t);
+        }
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
         // 方块与方块实体：自动道岔机（只有装了它的岔口才允许信号系统自动扳动）。
         top.hibermod.ctdhost.block.CtdBlocks.BLOCKS.register(modBus);
@@ -78,34 +88,12 @@ public final class CtdHost {
         // 以前挂在 @Mixin 类的静态初始化块里——**mixin 的静态块不保证执行**，
         // 结果就是显示类型没注册、GUI 列表里看不到。这里改成构造期反射调用，
         // 服务端因为找不到 net.minecraft.client 会直接跳过。
-        try {
-            Class.forName("net.minecraft.client.Minecraft");
-            Class.forName("top.hibermod.ctdhost.client.screen.CtdDisplayTypes")
-                .getMethod("registerAll")
-                .invoke(null);
-        } catch (Throwable ignored) {
-            // 不静默：客户端失败要看得见（服务端因为没有客户端类，属正常跳过）。
-            if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
-                System.out.println("[ctdhost] 客户端注册失败: " + ignored);
-            }
-        }
 
         // 站台屏类型只在客户端注册。
         //
         // 用「类是否存在」判断，而不是 FMLEnvironment：前者不依赖任何 dist API，
         // 而且服务端根本没有 net.minecraft.client，Class.forName 会直接失败——
         // 失败即跳过，不需要额外的分支。
-        try {
-            Class.forName("net.minecraft.client.Minecraft");
-            Class.forName("top.hibermod.ctdhost.client.screen.CtdDisplayTypes")
-                .getMethod("init", net.neoforged.bus.api.IEventBus.class)
-                .invoke(null, modBus);
-        } catch (Throwable ignored) {
-            // 不静默：客户端失败要看得见（服务端因为没有客户端类，属正常跳过）。
-            if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
-                System.out.println("[ctdhost] 客户端注册失败: " + ignored);
-            }
-        }
 
         // 查出来的「没注入」可能是「还没加载」。
         //
