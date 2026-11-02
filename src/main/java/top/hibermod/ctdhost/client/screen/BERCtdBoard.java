@@ -72,7 +72,7 @@ public class BERCtdBoard implements AbstractAdvancedDisplayRenderer<CtdPlatformS
         float rowH = Math.max(7f, (h - 2) / totalRows);
         float scale = Math.min(0.75f, rowH * 0.62f / 9f);
 
-        place(header, area, w, 1, scale, join(HEAD));
+        place(header, area, w, 1, rowH, scale, join(HEAD));
         for (int i = 0; i < MAX_ROWS; i++) {
             BERLabel row = rows[i];
             if (i >= dataRows) { row.text.set(null); continue; }
@@ -80,7 +80,7 @@ public class BERCtdBoard implements AbstractAdvancedDisplayRenderer<CtdPlatformS
             String name = safe(e.trainName(), "—");
             String dest = safe(e.displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE), "—");
             String status = e.isCancelled() ? "停运" : "正点";
-            place(row, area, w, 1 + rowH * (i + 1), scale,
+            place(row, area, w, 1 + rowH * (i + 1), rowH, scale,
                 join(new String[]{name, "--:--", dest, status}));
         }
     }
@@ -102,12 +102,12 @@ public class BERCtdBoard implements AbstractAdvancedDisplayRenderer<CtdPlatformS
         return s == null || s.isBlank() ? fallback : s;
     }
 
-    private static void place(BERLabel label, Rectangle area, float w, float y,
-                              float scale, String text) {
+    private static void place(BERLabel label, Rectangle area, float w,
+                              float bandTop, float bandHeight, float scale, String text) {
         label.clippingArea.set(area);
         label.text.set(TextUtils.text(text));
         label.preferredWidth.set((float) Math.max(1, w - 2));
-        label.position.set(Point.of(1, Math.max(0, y)));
+        label.position.set(Point.of(1, Math.max(0, CtdLayout.baseline(bandTop, bandHeight, scale))));
         label.horizontalMinScale.set(scale);
         label.horizontalMaxScale.set(scale);
         label.verticalMinScale.set(scale);

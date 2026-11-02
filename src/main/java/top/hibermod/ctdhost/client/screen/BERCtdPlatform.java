@@ -124,27 +124,27 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         }
 
         // 四条带的高度（占比）
-        float b0 = h * 0.16f;
-        float b1 = h * 0.34f;
-        float b2 = h * 0.20f;
-        float b3 = h * 0.16f;
+        float b0 = h * 0.15f;
+        float b1 = h * 0.32f;
+        float b2 = h * 0.18f;
+        float b3 = h * 0.14f;
 
         float y0 = 1;
         float y1 = y0 + b0;
         float y2 = y1 + b1;
         float y3 = y2 + b2;
 
-        float s0 = fit(b0, 0.55f);
-        float s1 = fit(b1, 1.30f);
-        float s2 = fit(b2, 0.70f);
-        float s3 = fit(b3, 0.50f);
+        float s0 = CtdLayout.fit(b0, 0.55f);
+        float s1 = CtdLayout.fit(b1, 1.30f);
+        float s2 = CtdLayout.fit(b2, 0.70f);
+        float s3 = CtdLayout.fit(b3, 0.50f);
 
         String dest = first == null ? "—"
             : first.displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
-        place(header, area, w, y0, s0, "开往 " + dest
+        place(header, area, w, CtdLayout.baseline(y0, b0, s0), s0, "开往 " + dest
             + (settings.platform().isEmpty() ? "" : "   " + settings.platform() + " 站台"));
 
-        place(caption, area, w, y1 + (b1 - 9 * s2) - b2 * 0.0f, s2, "本次");
+        place(caption, area, w, CtdLayout.baseline(y1, b1 * 0.42f, s2), s2, "本次");
 
         String mins = "--";
         if (first != null) {
@@ -153,11 +153,11 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
                 : first.scheduled().departureIn(now);
             mins = String.valueOf(Math.max(0, ticks / 20 / 60));
         }
-        place(minutes, area, w, y1, s1, mins);
+        place(minutes, area, w, CtdLayout.baseline(y1 + b1 * 0.35f, b1 * 0.65f, s1), s1, mins);
         // 「分钟」紧贴在数字右侧，宽度用数字实际宽度估（1 位 ≈ 8*s1，2 位 ≈ 16*s1）
-        float numW = (mins.length() * 8f) * s1;
-        place(unit, area, w, y1 + (b1 - 9 * s2) - b2 * 0.0f, s2, "分钟");
-        unit.position.set(Point.of(4 + numW + 2, unit.y.get()));
+        float numW = CtdLayout.width(mins, s1) + 3;
+        place(unit, area, w, CtdLayout.baseline(y1 + b1 * 0.45f, b1 * 0.55f, s2), s2, "分钟");
+        unit.position.set(Point.of(4 + numW, unit.y.get()));
 
         String next = "--";
         if (stops.size() > 1) {
@@ -167,10 +167,9 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
                 : second.scheduled().departureIn(now);
             next = String.valueOf(Math.max(0, t2 / 20 / 60));
         }
-        place(nextRow, area, w, y2, s2, "下次   " + next + " 分钟");
+        place(nextRow, area, w, CtdLayout.baseline(y2, b2, s2), s2, "下次   " + next + " 分钟");
 
-        place(footer, area, w, y3 + 1, s3,
-            "下一站 " + dest + "  ·  " + contentLabel(settings.content()) + "  ·  请站在安全线以内候车");
+        place(footer, area, w, CtdLayout.baseline(y3, b3, s3), s3, "下一站 " + dest + "  ·  " + contentLabel(settings.content()) + "  ·  请站在安全线以内候车");
     }
 
     /** 带高 → 字号：字体行高按 9px 计，留 38% 余量。 */

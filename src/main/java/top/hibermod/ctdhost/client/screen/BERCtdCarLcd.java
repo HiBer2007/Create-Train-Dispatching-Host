@@ -13,21 +13,19 @@ import de.mrjulsen.mcdragonlib.util.math.Point;
 import de.mrjulsen.mcdragonlib.util.math.Rectangle;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * 车厢内 LCD 动态地图（照实拍排版）。
+ * 车厢内 LCD 动态地图。三条带，互不重叠：
  *
  * <pre>
- *   ┌──────┬──────────────────────────────┬────────┐
- *   │ 2号线 │  下一站  Next Station         │        │
- *   │  ▉   │  珠江新城  ▶                  │ 终点   │
- *   └──────┴──────────────────────────────┴────────┘
+ *   带 A（0 – 30%）  下一站  Next Station        （小字）
+ *   带 B（30 – 75%） 珠江新城  ▶                （大字）
+ *   带 C（75 – 100%）开往 终点站                 （小字）
  * </pre>
  *
- * 左边是线别色块，中间「下一站」小字 + 站名大字 + 箭头，右下角是终点站。
+ * 左侧另有一条线别色块，纵向居中。
  */
 public class BERCtdCarLcd implements AbstractAdvancedDisplayRenderer<CtdPlatformSettings> {
 
@@ -40,17 +38,13 @@ public class BERCtdCarLcd implements AbstractAdvancedDisplayRenderer<CtdPlatform
     public BERCtdCarLcd() {
         badge.horizontalAlign.set(ETextAlignment.CENTER);
         badge.color.set(DLColor.fromInt(0xFF263238));
-
         nextSmall.horizontalAlign.set(ETextAlignment.LEFT);
         nextSmall.color.set(DLColor.fromInt(0xFF78909C));
-
         stationName.horizontalAlign.set(ETextAlignment.LEFT);
         stationName.color.set(DLColor.fromInt(0xFF1A1A1A));
-
         arrow.horizontalAlign.set(ETextAlignment.LEFT);
         arrow.color.set(DLColor.fromInt(0xFFD32F2F));
-
-        dest.horizontalAlign.set(ETextAlignment.RIGHT);
+        dest.horizontalAlign.set(ETextAlignment.LEFT);
         dest.color.set(DLColor.fromInt(0xFF546E7A));
     }
 
@@ -72,53 +66,60 @@ public class BERCtdCarLcd implements AbstractAdvancedDisplayRenderer<CtdPlatform
 
         float w = Math.max(1, blockEntity.getXSizeScaled()) * 16f;
         float h = Math.max(1, blockEntity.getYSizeScaled()) * 16f;
-        Rectangle area = Rectangle.withSize(1, 1, w - 2, h - 2);
+        Rectangle area = Rectangle.withSize(0, 0, (int) w, (int) h);
 
-        float small = Math.min(0.55f, Math.min(w / 170f, h / 40f));
-        float big = Math.min(1.1f, Math.min(w / 80f, h / 18f));
+        float leftW = Math.max(7f, w * 0.17f);
 
-        // 左侧线别色块
+        float bA = h * 0.30f;
+        float bB = h * 0.45f;
+        float bC = h * 0.25f;
+
+        float sSmall = CtdLayout.fit(bA, 0.55f);
+        float sBig = CtdLayout.fit(bB, 1.10f);
+
         String line = blockEntity.getTrainDisplayName();
-        badge.text.set(TextUtils.text(line == null || line.isBlank() ? "—" : line));
-        badge.clippingArea.set(Rectangle.withSize(1, 1, (int) Math.max(6, w * 0.16f), (int) (h - 2)));
-        badge.preferredWidth.set((float) Math.max(4, w * 0.16f));
-        badge.position.set(Point.of(1, Math.max(1, h * 0.35f)));
-        setScale(badge, small);
+        place(badge, area, leftW, 1, h - 2, sSmall, safe(line, "—"));
+        badge.horizontalAlign.set(ETextAlignment.CENTER);
 
         String next = blockEntity.getNextStop().map(x -> x.title()).orElse("—");
+        String finalStop = blockEntity.getFinalStop().map(x -> x.title()).orElse("—");
 
-        nextSmall.text.set(TextUtils.text("下一站  Next Station"));
-        nextSmall.clippingArea.set(area);
-        nextSmall.preferredWidth.set((float) Math.max(4, w - Math.max(6, w * 0.16f) - 4));
-        nextSmall.position.set(Point.of(Math.max(6, w * 0.16f) + 2, Math.max(2, h * 0.16f)));
-        setScale(nextSmall, small);
+        place(nextSmall, area, w - leftW - 3, 1, bA, sSmall, "下一站  Next Station");
+        nextSmall.position.set(Point.of(leftW + 2, CtdLayout.baseline(1, bA, sSmall)));
 
-        stationName.text.set(TextUtils.text(next));
-        stationName.clippingArea.set(area);
-        stationName.preferredWidth.set((float) Math.max(4, w - Math.max(6, w * 0.16f) - 12));
-        stationName.position.set(Point.of(Math.max(6, w * 0.16f) + 2, Math.max(6, h * 0.38f)));
-        setScale(stationName, big);
+        place(stationName, area, w - leftW - 12, 1 + bA, bB, sBig, next);
+        stationName.position.set(Point.of(leftW + 2, CtdLayout.baseline(1 + bA, bB, sBig)));
 
-        arrow.text.set(TextUtils.text("▶"));
         arrow.clippingArea.set(area);
-        arrow.preferredWidth.set(4.0f);
-        arrow.position.set(Point.of(Math.max(8, w - 10), Math.max(6, h * 0.38f)));
-        setScale(arrow, big);
+        arrow.text.set(TextUtils.text("▶"));
+        arrow.preferredWidth.set(6f);
+        arrow.position.set(Point.of(Math.max(leftW + 4, w - 8), CtdLayout.baseline(1 + bA, bB, sBig)));
+        arrow.horizontalMaxScale.set(sBig);
+        arrow.verticalMaxScale.set(sBig);
+        arrow.horizontalMinScale.set(sBig);
+        arrow.verticalMinScale.set(sBig);
 
-        String finalStop = blockEntity.getFinalStop().map(x -> x.title()).orElse("");
-        // 面板太矮时省掉终点行，避免压到站名。
-        if (h < 24f) { dest.text.set(null); arrow.text.set(TextUtils.text("▶")); }
-        else { dest.text.set(TextUtils.text("开往 " + finalStop)); }
-        dest.clippingArea.set(area);
-        dest.preferredWidth.set((float) Math.max(4, w * 0.5f));
-        dest.position.set(Point.of(Math.max(w * 0.45f, 4), Math.max(10, h - 6 * small - 1)));
-        setScale(dest, small);
+        if (h >= 24f) {
+            place(dest, area, w - leftW - 3, 1 + bA + bB, bC, sSmall, "开往 " + finalStop);
+            dest.position.set(Point.of(leftW + 2, CtdLayout.baseline(1 + bA + bB, bC, sSmall)));
+        } else {
+            dest.text.set(null);
+        }
     }
 
-    private static void setScale(BERLabel label, float s) {
-        label.horizontalMinScale.set(s);
-        label.horizontalMaxScale.set(s);
-        label.verticalMinScale.set(s);
-        label.verticalMaxScale.set(s);
+    private static String safe(String s, String fallback) {
+        return s == null || s.isBlank() ? fallback : s;
+    }
+
+    private static void place(BERLabel label, Rectangle area, float w,
+                              float bandTop, float bandHeight, float scale, String text) {
+        label.clippingArea.set(area);
+        label.text.set(TextUtils.text(text));
+        label.preferredWidth.set((float) Math.max(1, w));
+        label.position.set(Point.of(2, CtdLayout.baseline(bandTop, bandHeight, scale)));
+        label.horizontalMinScale.set(scale);
+        label.horizontalMaxScale.set(scale);
+        label.verticalMinScale.set(scale);
+        label.verticalMaxScale.set(scale);
     }
 }

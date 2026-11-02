@@ -48,13 +48,13 @@ public class BERCtdCarScroll implements AbstractAdvancedDisplayRenderer<CtdPlatf
 
         float w = Math.max(1, blockEntity.getXSizeScaled()) * 16f;
         float h = Math.max(1, blockEntity.getYSizeScaled()) * 16f;
-        Rectangle area = Rectangle.withSize(1, 1, w - 2, h - 2);
+        Rectangle area = Rectangle.withSize(0, 0, (int) w, (int) h);
 
         line.clippingArea.set(area);
         line.preferredWidth.set(w - 4);
-        line.position.set(Point.of(2, h / 2f - 3));
 
-        float s = Math.min(1.0f, h / 12f);
+        float s = Math.min(0.9f, (h - 4f) * 0.62f / 9f);
+        line.position.set(Point.of(2, CtdLayout.baseline(1, h - 2, s)));
         line.horizontalMinScale.set(s);
         line.horizontalMaxScale.set(s);
         line.verticalMinScale.set(s);
