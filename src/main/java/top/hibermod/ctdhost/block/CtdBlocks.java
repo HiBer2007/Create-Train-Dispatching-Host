@@ -44,7 +44,10 @@ public final class CtdBlocks {
         BLOCKS.register("ctd_signal", () -> new CtdSignalBlock(CtdSignalBlock.defaultProperties()));
 
     public static final DeferredItem<BlockItem> CTD_SIGNAL_ITEM =
-        ITEMS.registerSimpleBlockItem(CTD_SIGNAL);
+        // 信号机必须用 TrackTargetingBlockItem：拿物品右键轨道才会产生绑定。
+        ITEMS.register("ctd_signal",
+            () -> new CtdSignalItem(CTD_SIGNAL.get(), new net.minecraft.world.item.Item.Properties(),
+                com.simibubi.create.content.trains.graph.EdgePointType.SIGNAL));
 
     // ── K5：灯头与金属梁 ───────────────────────────────────────────────
     public static final DeferredBlock<CtdSignalHeadBlock> SIGNAL_HEAD =

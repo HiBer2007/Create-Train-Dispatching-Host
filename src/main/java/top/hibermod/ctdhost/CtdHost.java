@@ -70,6 +70,9 @@ public final class CtdHost {
         top.hibermod.ctdhost.block.CtdBlocks.BLOCK_ENTITIES.register(modBus);
         top.hibermod.ctdhost.block.CtdBlocks.ITEMS.register(modBus);
 
+        // 创造模式物品栏：不挂这个事件的话，方块在创造模式里看不到。
+        modBus.addListener(top.hibermod.ctdhost.block.CtdCreativeTab::onBuildContents);
+
         // 站台屏类型只在客户端注册。
         //
         // 用「类是否存在」判断，而不是 FMLEnvironment：前者不依赖任何 dist API，
