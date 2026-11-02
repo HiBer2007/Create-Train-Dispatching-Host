@@ -103,7 +103,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         station = nbt.getString(NBT_STATION);
         platform = nbt.getString(NBT_PLATFORM);
         content = Content.byId(nbt.getString(NBT_CONTENT));
-        org.slf4j.LoggerFactory.getLogger("ctdhost").info(
+        org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings loaded station=[{}] platform=[{}] sys=[{}]",
             station, platform, signalSystem);
     }
@@ -115,7 +115,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         nbt.putString(NBT_STATION, station);
         nbt.putString(NBT_PLATFORM, platform);
         nbt.putString(NBT_CONTENT, content.id());
-        org.slf4j.LoggerFactory.getLogger("ctdhost").info(
+        org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings saved station=[{}] platform=[{}] sys=[{}]",
             station, platform, signalSystem);
     }
@@ -169,7 +169,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         box.addEventListener(
             de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLRichTextLabel.TextChangedEvent.class,
             (s, e) -> {
-                org.slf4j.LoggerFactory.getLogger("ctdhost").info(
+                org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
                     "ctdhost: text changed key={} value=[{}]", langKey, e.text().getPlainText());
                 setter.accept(e.text().getPlainText());
                 return false;
