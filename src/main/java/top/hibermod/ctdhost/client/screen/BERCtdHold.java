@@ -48,6 +48,14 @@ public class BERCtdHold implements AbstractAdvancedDisplayRenderer<CtdPlatformSe
             blockEntity.getXSizeScaled() * 16 - 6,
             blockEntity.getYSizeScaled() * 16 - 6);
         label.clippingArea.set(area);
+
+        // 自动字号：按显示器格数缩放，1x1 也能放下。
+        float w = Math.max(1, blockEntity.getXSizeScaled());
+        float h = Math.max(1, blockEntity.getYSizeScaled());
+        float scale = Math.min(1.0f, Math.min(w * 16f / 44f, h * 16f / 18f));
+        label.horizontalScale.set(de.mrjulsen.mcdragonlib.util.Pair.of(scale, scale));
+        label.verticalScale.set(de.mrjulsen.mcdragonlib.util.Pair.of(scale, scale));
+        label.position.set(de.mrjulsen.mcdragonlib.util.math.Point.of(3, h * 16f / 2f - 4 * scale));
         label.preferredWidth.set((float) (blockEntity.getXSizeScaled() * 16 - 6));
 
         // 扣车标记挂在 BE 上（mixin 加的字段），随 BE 一起同步到达客户端。

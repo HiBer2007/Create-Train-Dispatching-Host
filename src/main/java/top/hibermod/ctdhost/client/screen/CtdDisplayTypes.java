@@ -46,24 +46,24 @@ public final class CtdDisplayTypes {
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_platform",
                 CtdPlatformSettings::new, BERCtdPlatform::new,
-                new DisplayProperties(false, be -> 3));
+                new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_departure",
                 CtdPlatformSettings::new, BERCtdDeparture::new,
-                new DisplayProperties(true, be -> 1));
+                new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
             // 新增：正点计时器（替代辉光管）与扣车指示。
             // 两者都绑定「车站 ID + 站台 ID」，内容来自 getStops()，与 ctd_platform 同源。
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_timer",
                 CtdPlatformSettings::new, BERCtdDeparture::new,
-                new DisplayProperties(true, be -> 1));
+                new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_hold",
                 CtdPlatformSettings::new, BERCtdPlatform::new,
-                new DisplayProperties(true, be -> 1));
+                new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
             LOG.info("ctdhost: display types registered: ctd_platform / ctd_departure / ctd_timer / ctd_hold");
         } catch (Throwable t) {

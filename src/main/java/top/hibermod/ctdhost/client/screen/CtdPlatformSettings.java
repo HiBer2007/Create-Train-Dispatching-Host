@@ -103,6 +103,9 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         station = nbt.getString(NBT_STATION);
         platform = nbt.getString(NBT_PLATFORM);
         content = Content.byId(nbt.getString(NBT_CONTENT));
+        org.slf4j.LoggerFactory.getLogger("ctdhost").info(
+            "ctdhost: settings loaded station=[{}] platform=[{}] sys=[{}]",
+            station, platform, signalSystem);
     }
 
     @Override

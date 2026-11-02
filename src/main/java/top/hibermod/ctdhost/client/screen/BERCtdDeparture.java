@@ -88,6 +88,17 @@ public class BERCtdDeparture implements AbstractAdvancedDisplayRenderer<CtdPlatf
             blockEntity.getXSizeScaled() * 16 - 6,
             blockEntity.getYSizeScaled() * 16 - 6);
 
+        // 自动布局：位置随格数走，1x1 也放得下，2x2 会自动拉开。
+        float h = Math.max(1, blockEntity.getYSizeScaled());
+        clock.position.set(de.mrjulsen.mcdragonlib.util.math.Point.of(3, h * 16f * 0.28f));
+        caption.position.set(de.mrjulsen.mcdragonlib.util.math.Point.of(3, h * 16f * 0.68f));
+        float fs = Math.min(1.0f, h * 16f / 32f);
+        clock.horizontalMinScale.set(0.4f * fs);
+        clock.horizontalMaxScale.set(1.0f * fs);
+        clock.verticalMinScale.set(0.4f * fs);
+        clock.verticalMaxScale.set(1.0f * fs);
+        caption.horizontalMaxScale.set(0.6f * fs);
+        caption.verticalMaxScale.set(0.6f * fs);
         clock.clippingArea.set(area);
         clock.preferredWidth.set(blockEntity.getXSizeScaled() * 16 - 3 - clock.x.get());
         clock.horizontalAlign.set(ETextAlignment.CENTER);
