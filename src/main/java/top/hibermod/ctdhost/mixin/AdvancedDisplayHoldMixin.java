@@ -92,6 +92,19 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
         if (level == null || level.isClientSide) return;
         if (!(self.getSettings() instanceof top.hibermod.ctdhost.client.screen.CtdPlatformSettings s)) return;
 
+        // 顺手写一份信号系统 id 列表：客户端下拉框靠它填充。
+        StringBuilder sb = new StringBuilder();
+        for (var sys : top.hibermod.ctdapi.signal.SignalRegistries.systems()) {
+            if (sb.length() > 0) sb.append((char) 44);
+            sb.append(sys.id().toString());
+        }
+        String wantSys = sb.toString();
+        if (!wantSys.equals(ctdSignalSystems)) {
+            ctdSignalSystems = wantSys;
+            self.setChanged();
+            level.sendBlockUpdated(self.getBlockPos(), self.getBlockState(), self.getBlockState(), 3);
+        }
+
         boolean held = top.hibermod.ctdapi.status.HoldStates.isHeld(s.station(), s.platform());
         String want = held ? (s.station().isEmpty() ? "本台" : s.station()) : "";
         if (!want.equals(ctdHold)) {
