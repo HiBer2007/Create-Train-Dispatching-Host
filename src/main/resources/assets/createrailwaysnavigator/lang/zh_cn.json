@@ -1,9 +1,0 @@
-{
-  "display.createrailwaynavigator.platform.ctd_platform": "CTD 站台屏",
-  "display.createrailwaynavigator.platform.ctd_departure": "CTD 发车指示器",
-  "display.createrailwaynavigator.platform.ctd_timer": "CTD 正点计时器",
-  "display.createrailwaynavigator.platform.ctd_hold": "CTD 扣车指示",
-  "gui.ctdhost.station": "车站号",
-  "gui.ctdhost.platform": "站台号",
-  "gui.ctdhost.signal_system": "信号系统"
-}
