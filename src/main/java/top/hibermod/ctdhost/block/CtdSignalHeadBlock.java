@@ -113,6 +113,24 @@ public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements En
             .setValue(MOUNT, mount);
     }
 
+    /**
+     * 灯头不能悬空：必须依附在信号机方块或金属梁上。
+     *
+     * <p>四种形态的依附关系不同：地面/高杆往**下**依附，吊顶往**上**，挂壁往**侧面**。
+     * 这里不强制「必须是哪一种」，只要求「至少有个能挂的东西」，
+     * 免得把本来合理的摆法（比如先放灯头再放梁）挡掉。
+     */
+    @Override
+    protected boolean canSurvive(BlockState state, net.minecraft.world.level.LevelReader level, BlockPos pos) {
+        if (isSignal(level, pos.below())) return true;          // 地面
+        if (isGirder(level, pos.below())) return true;          // 高杆
+        if (isSignal(level, pos.above())) return true;          // 吊顶
+        for (var d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+            if (isSignal(level, pos.relative(d))) return true;  // 挂壁
+        }
+        return false;
+    }
+
     private static boolean isSignal(net.minecraft.world.level.LevelReader level, BlockPos pos) {
         return level.getBlockState(pos).getBlock() instanceof CtdSignalBlock;
     }
