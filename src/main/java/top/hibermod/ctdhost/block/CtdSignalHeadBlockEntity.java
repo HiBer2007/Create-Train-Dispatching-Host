@@ -25,6 +25,7 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
 
     private String aspect = "";
     private boolean debug;
+    private BlockPos bound;
     private int ticks;
 
     public CtdSignalHeadBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -87,7 +88,13 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
         if (++ticks < REFRESH_TICKS) return;
         ticks = 0;
 
-        BlockPos signalPos = top.hibermod.ctdhost.execute.SignalHeadLamps.findSignal(level, pos);
+        // 优先用**显式绑定**的坐标（可跨任意距离，高杆形态靠它）：
+        //   /data merge block <灯头> {SignalPos:[I;x,y,z]}
+        // 没绑定才退回「沿梁扫描」那条兜底路径。
+        BlockPos signalPos = bound;
+        if (signalPos == null) {
+            signalPos = top.hibermod.ctdhost.execute.SignalHeadLamps.findSignal(level, pos);
+        }
         if (signalPos == null) {
             aspect = "";
             return;
@@ -122,6 +129,9 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
         CompoundTag tag = new CompoundTag();
         tag.putString("Aspect", aspect);
         tag.putBoolean("Debug", debug);
+        if (bound != null) {
+            tag.putIntArray("SignalPos", new int[] { bound.getX(), bound.getY(), bound.getZ() });
+        }
         return tag;
     }
 
@@ -135,6 +145,9 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
         super.saveAdditional(tag, registries);
         tag.putString("Aspect", aspect);
         tag.putBoolean("Debug", debug);
+        if (bound != null) {
+            tag.putIntArray("SignalPos", new int[] { bound.getX(), bound.getY(), bound.getZ() });
+        }
     }
 
     @Override
@@ -142,5 +155,7 @@ public class CtdSignalHeadBlockEntity extends BlockEntity {
         super.loadAdditional(tag, registries);
         aspect = tag.getString("Aspect");
         debug = tag.getBoolean("Debug");
+        int[] sp = tag.getIntArray("SignalPos");
+        bound = sp.length == 3 ? new BlockPos(sp[0], sp[1], sp[2]) : null;
     }
 }
