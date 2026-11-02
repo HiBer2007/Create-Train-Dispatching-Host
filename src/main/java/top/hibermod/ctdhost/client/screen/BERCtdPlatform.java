@@ -96,11 +96,20 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             blockEntity.getXSizeScaled() * 16 - 6,
             blockEntity.getYSizeScaled() * 16 - 6);
 
+        // 自动布局：位置与字号都跟着格数走，避免溢出到屏幕外。
+        float w = Math.max(1, blockEntity.getXSizeScaled()) * 16f;
+        float h = Math.max(1, blockEntity.getYSizeScaled()) * 16f;
+        header.position.set(de.mrjulsen.mcdragonlib.util.math.Point.of(2, Math.max(1, h * 0.12f)));
+        header.horizontalMaxScale.set(Math.min(0.45f, w / 90f));
+        header.verticalMaxScale.set(Math.min(0.45f, h / 40f));
         header.clippingArea.set(area);
         header.preferredWidth.set(blockEntity.getXSizeScaled() * 16 - 3 - header.x.get());
         header.horizontalAlign.set(ETextAlignment.LEFT);
         header.color.set(DLColor.fromInt(0xFFEEEEEE));
 
+        body.position.set(de.mrjulsen.mcdragonlib.util.math.Point.of(2, Math.max(6, h * 0.45f)));
+        body.horizontalMaxScale.set(Math.min(0.8f, w / 60f));
+        body.verticalMaxScale.set(Math.min(0.8f, h / 24f));
         body.clippingArea.set(area);
         body.preferredWidth.set(blockEntity.getXSizeScaled() * 16 - 3 - body.x.get());
         body.horizontalAlign.set(ETextAlignment.LEFT);

@@ -68,6 +68,30 @@ public final class CtdDisplayTypes {
                 CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdPlatform"),
                 new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
+            // ── 国铁风格发车板（车站） ──
+            AdvancedDisplaysRegistry.register(
+                EDisplayType.DEPARTURE_BOARD, "ctd_board",
+                CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdBoard"),
+                new DisplayProperties(false, be -> be.getYSize() * 2 - 1));
+
+            // ── 车上：车门上方 LCD 动态地图 ──
+            AdvancedDisplaysRegistry.register(
+                EDisplayType.PASSENGER_INFORMATION, "ctd_car_lcd",
+                CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdCarLcd"),
+                new DisplayProperties(false, be -> 1));
+
+            // ── 车上：车门上方走字屏 ──
+            AdvancedDisplaysRegistry.register(
+                EDisplayType.PASSENGER_INFORMATION, "ctd_car_scroll",
+                CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdCarScroll"),
+                new DisplayProperties(true, be -> 1));
+
+            // ── 车门外侧终到牌（国铁风格） ──
+            AdvancedDisplaysRegistry.register(
+                EDisplayType.TRAIN_DESTINATION, "ctd_door_sign",
+                CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdDoorSign"),
+                new DisplayProperties(false, be -> 1));
+
             LOG.info("ctdhost: display types registered: ctd_platform / ctd_departure / ctd_timer / ctd_hold");
         } catch (Throwable t) {
             LOG.error("ctdhost: display type registration failed: {}", t.toString());

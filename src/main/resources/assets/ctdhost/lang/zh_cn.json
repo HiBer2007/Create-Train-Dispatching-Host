@@ -1,5 +1,9 @@
 {
-  "signal_system.ctdapi.mainline_4": "四显示自动闭塞（干线）",
+  "display.createrailwaysnavigator.departure_board.ctd_board": "CTD 发车信息板（国铁）",
+  "display.createrailwaysnavigator.passenger_information.ctd_car_lcd": "CTD 车厢 LCD 动态地图",
+  "display.createrailwaysnavigator.passenger_information.ctd_car_scroll": "CTD 车厢走字屏",
+  "display.createrailwaysnavigator.train_destination.ctd_door_sign": "CTD 车门外侧终到牌",
+"signal_system.ctdapi.mainline_4": "四显示自动闭塞（干线）",
   "signal_system.ctdapi.diagnostic_head": "诊断信号机",
   "signal_system.ctd.cbtc": "CBTC 移动闭塞",
   "signal_system.ctd.fixed_block": "固定闭塞",

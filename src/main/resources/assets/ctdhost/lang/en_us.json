@@ -1,5 +1,9 @@
 {
-  "signal_system.ctdapi.mainline_4": "Four-aspect automatic block (mainline)",
+  "display.createrailwaysnavigator.departure_board.ctd_board": "CTD Departure Board (CR style)",
+  "display.createrailwaysnavigator.passenger_information.ctd_car_lcd": "CTD Car LCD Map",
+  "display.createrailwaysnavigator.passenger_information.ctd_car_scroll": "CTD Car Scrolling LED",
+  "display.createrailwaysnavigator.train_destination.ctd_door_sign": "CTD Door Destination Sign",
+"signal_system.ctdapi.mainline_4": "Four-aspect automatic block (mainline)",
   "signal_system.ctdapi.diagnostic_head": "Diagnostic signal",
   "signal_system.ctd.cbtc": "CBTC moving block",
   "signal_system.ctd.fixed_block": "Fixed block",
