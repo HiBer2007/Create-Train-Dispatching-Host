@@ -31,13 +31,6 @@ import net.minecraft.world.level.block.state.BlockState;
 @Mixin(SignalRenderer.class)
 public abstract class SignalRendererMixin {
 
-    static {
-        // 客户端注册（站台屏类型、灯头渲染器）原本挂在 NixieTubeRendererMixin 的静态初始化上。
-        // 那个 mixin 已废弃删除，改挂在这里：SignalRenderer 客户端一定会被加载。
-        top.hibermod.ctdhost.client.screen.CtdDisplayTypes.registerAll();
-    }
-
-    @Inject(method = "renderSafe", at = @At("HEAD"), cancellable = true, require = 1,
             remap = false)
     private void ctd$tintSignalLamp(SignalBlockEntity be, float partialTicks, PoseStack ms,
                                     MultiBufferSource buffer, int light, int overlay,

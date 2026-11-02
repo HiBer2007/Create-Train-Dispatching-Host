@@ -32,6 +32,7 @@ public final class CtdDisplayTypes {
 
     /** 直接注册（不依赖任何事件总线）。由客户端 mixin 的静态初始化调用。 */
     public static synchronized void registerAll() {
+        LOG.info("ctdhost: registerAll 开始执行（registered={}）", registered);
         if (registered) return;
         registered = true;
 
