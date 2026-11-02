@@ -92,7 +92,15 @@ public final class CtdDisplayTypes {
                 CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdDoorSign"),
                 new DisplayProperties(false, be -> 1));
 
-            LOG.info("ctdhost: display types registered: ctd_platform / ctd_departure / ctd_timer / ctd_hold");
+            StringBuilder names = new StringBuilder();
+            for (EDisplayType cat : EDisplayType.values()) {
+                for (String n : AdvancedDisplaysRegistry.getAllNamesOfType(cat)) {
+                    if (!n.startsWith("ctd_")) continue;
+                    if (names.length() > 0) names.append((char) 44).append((char) 32);
+                    names.append(cat.getSerializedName()).append((char) 47).append(n);
+                }
+            }
+            LOG.info("ctdhost: display types registered: {}", names);
         } catch (Throwable t) {
             LOG.error("ctdhost: display type registration failed: {}", t.toString());
             top.hibermod.ctdhost.Failures.caught("站台屏类型注册", t);
