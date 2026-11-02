@@ -70,9 +70,9 @@ public final class CtdHost {
             Class.forName("net.minecraft.client.Minecraft");
             Class.forName("top.hibermod.ctdhost.client.screen.CtdDisplayTypes")
                 .getMethod("registerAll").invoke(null);
-            System.out.println("[ctdhost] 客户端注册已调用");
+            LOG.info("ctdhost: 客户端注册已调用");
         } catch (Throwable t) {
-            System.out.println("[ctdhost] 客户端注册跳过/失败: " + t);
+            LOG.warn("ctdhost: 客户端注册跳过/失败: {}", t.toString());
         }
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
         // 方块与方块实体：自动道岔机（只有装了它的岔口才允许信号系统自动扳动）。
