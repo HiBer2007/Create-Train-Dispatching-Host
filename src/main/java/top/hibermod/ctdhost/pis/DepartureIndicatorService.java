@@ -59,6 +59,10 @@ public final class DepartureIndicatorService {
 
     /** 每 20 刻跑一次。 */
     public static void tick(ServerLevel level, long gameTime) {
+        // 正点计时器已改用 CRN 高级显示器（ctd_timer）：内容直接由 getStops() 提供，
+        // 不再往辉光管写文字，也不再换染料方块。这里保留空实现，
+        // 让所有调用点与计数接口继续可用。
+        if (true) { lastWritten = 0; return; }
         if (lastRun >= 0 && gameTime - lastRun < 20) return;
         lastRun = gameTime;
 
