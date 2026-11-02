@@ -1,5 +1,9 @@
 {
-  "gui.ctdhost.station.description": "Station name, must match the station on the line",
+  "signal_system.ctdapi.mainline_4": "Four-aspect automatic block (mainline)",
+  "signal_system.ctdapi.diagnostic_head": "Diagnostic signal",
+  "signal_system.ctd.cbtc": "CBTC moving block",
+  "signal_system.ctd.fixed_block": "Fixed block",
+"gui.ctdhost.station.description": "Station name, must match the station on the line",
   "gui.ctdhost.platform.description": "Platform number used to filter services",
   "gui.ctdhost.signal_system.description": "Signal system this display belongs to",
 "gui.ctdhost.station": "Station",

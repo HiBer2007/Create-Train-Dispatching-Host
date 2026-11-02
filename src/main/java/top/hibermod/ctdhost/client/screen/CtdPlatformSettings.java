@@ -186,6 +186,11 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         de.mrjulsen.crn.client.gui.widgets.create.CreateItemPicker<String> picker =
             new de.mrjulsen.crn.client.gui.widgets.create.CreateItemPicker<>(0, 0, 0);
         picker.renderArrow.set(true);
+        // 下拉里显示翻译名，缺翻译时退回 id 原文。
+        picker.formatter.set(item -> item == null
+            ? de.mrjulsen.mcdragonlib.util.TextUtils.empty()
+            : net.minecraft.network.chat.Component.translatableWithFallback(
+                signalSystemKey(item), item));
         picker.layoutContraint.set(
             de.mrjulsen.mcdragonlib.client.gui.widgets.layout.FlowLayout.FlowConstraint.FILL);
         picker.items.addAll(items);
@@ -199,6 +204,14 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
                 return false;
             });
         line.addComponent(picker);
+    }
+
+    /** 信号系统 id → 翻译键：{@code signal_system.<namespace>.<path>}。 */
+    private static String signalSystemKey(String id) {
+        net.minecraft.resources.ResourceLocation rl =
+            net.minecraft.resources.ResourceLocation.tryParse(id == null ? "" : id);
+        if (rl == null) return "signal_system.unknown";
+        return "signal_system." + rl.getNamespace() + "." + rl.getPath();
     }
 
 }

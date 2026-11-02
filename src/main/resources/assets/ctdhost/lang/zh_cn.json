@@ -1,5 +1,9 @@
 {
-  "gui.ctdhost.station.description": "填写车站名称，需与线路上的车站一致",
+  "signal_system.ctdapi.mainline_4": "四显示自动闭塞（干线）",
+  "signal_system.ctdapi.diagnostic_head": "诊断信号机",
+  "signal_system.ctd.cbtc": "CBTC 移动闭塞",
+  "signal_system.ctd.fixed_block": "固定闭塞",
+"gui.ctdhost.station.description": "填写车站名称，需与线路上的车站一致",
   "gui.ctdhost.platform.description": "填写站台号，用于筛选该站台的车次",
   "gui.ctdhost.signal_system.description": "选择该屏归属的信号系统",
 "gui.ctdhost.station": "车站号",
