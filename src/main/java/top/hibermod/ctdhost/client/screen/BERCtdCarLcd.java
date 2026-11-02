@@ -39,7 +39,7 @@ public class BERCtdCarLcd implements AbstractAdvancedDisplayRenderer<CtdPlatform
 
     public BERCtdCarLcd() {
         badge.horizontalAlign.set(ETextAlignment.CENTER);
-        badge.color.set(DLColor.fromInt(0xFFFFFFFF));
+        badge.color.set(DLColor.fromInt(0xFF263238));
 
         nextSmall.horizontalAlign.set(ETextAlignment.LEFT);
         nextSmall.color.set(DLColor.fromInt(0xFF78909C));
@@ -106,7 +106,9 @@ public class BERCtdCarLcd implements AbstractAdvancedDisplayRenderer<CtdPlatform
         setScale(arrow, big);
 
         String finalStop = blockEntity.getFinalStop().map(x -> x.title()).orElse("");
-        dest.text.set(TextUtils.text("开往 " + finalStop));
+        // 面板太矮时省掉终点行，避免压到站名。
+        if (h < 24f) { dest.text.set(null); arrow.text.set(TextUtils.text("▶")); }
+        else { dest.text.set(TextUtils.text("开往 " + finalStop)); }
         dest.clippingArea.set(area);
         dest.preferredWidth.set((float) Math.max(4, w * 0.5f));
         dest.position.set(Point.of(Math.max(w * 0.45f, 4), Math.max(10, h - 6 * small - 1)));

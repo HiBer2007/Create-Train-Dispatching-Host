@@ -19,17 +19,17 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * 站台 PIDS（参照实拍排版）。
+ * 站台 PIDS。深色背景，自上而下四条带，互不重叠：
  *
  * <pre>
- *   开往 体育西路                       ← 顶栏，小字
- *   本次    3 分钟                      ← 大号数字
- *   下次   11 分钟
- *   下一站 珠江新城                     ← 底栏，小字
+ *   带 0  开往 体育西路                        （小字）
+ *   带 1  本次       3 分钟                    （数字最大）
+ *   带 2  下次      11 分钟
+ *   带 3  下一站 …  ·  请站在安全线以内候车     （滚动小字）
  * </pre>
  *
- * 视觉要点：顶栏与底栏是小字，中间那行的「分钟数」最大；数字用红色强调，
- * 所有文字都裁在面板内，不会溢出到方块外面。
+ * 字号按「带高 × 0.62 / 9」计算（MC 字体行高 9px），因此每一行只会占据自己那条带，
+ * 且所有文字都裁在面板内。
  */
 public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatformSettings> {
 
@@ -41,29 +41,18 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final BERLabel footer = new BERLabel();
 
     public BERCtdPlatform() {
-        header.position.set(Point.of(2, 1));
         header.horizontalAlign.set(ETextAlignment.LEFT);
-        header.color.set(DLColor.fromInt(0xFF546E7A));
-
-        caption.position.set(Point.of(2, 9));
+        header.color.set(DLColor.fromInt(0xFF607D8B));
         caption.horizontalAlign.set(ETextAlignment.LEFT);
-        caption.color.set(DLColor.fromInt(0xFF37474F));
-
-        minutes.position.set(Point.of(2, 8));
+        caption.color.set(DLColor.fromInt(0xFF546E7A));
         minutes.horizontalAlign.set(ETextAlignment.LEFT);
-        minutes.color.set(DLColor.fromInt(0xFFD32F2F));
-
-        unit.position.set(Point.of(18, 10));
+        minutes.color.set(DLColor.fromInt(0xFFFF5252));
         unit.horizontalAlign.set(ETextAlignment.LEFT);
-        unit.color.set(DLColor.fromInt(0xFF37474F));
-
-        nextRow.position.set(Point.of(2, 18));
+        unit.color.set(DLColor.fromInt(0xFF546E7A));
         nextRow.horizontalAlign.set(ETextAlignment.LEFT);
-        nextRow.color.set(DLColor.fromInt(0xFF37474F));
-
-        footer.position.set(Point.of(2, 22));
+        nextRow.color.set(DLColor.fromInt(0xFF263238));
         footer.horizontalAlign.set(ETextAlignment.LEFT);
-        footer.color.set(DLColor.fromInt(0xFF90A4AE));
+        footer.color.set(DLColor.fromInt(0xFF78909C));
         footer.horizontalScrollMode.set(EScrollMode.ALWAYS);
     }
 
@@ -79,12 +68,6 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     }
 
     @Override
-    public void tick(Level level, BlockPos pos, BlockState state,
-                     AdvancedDisplayBlockEntity blockEntity, AdvancedDisplayRenderInstance parent) {
-        // 文字内容全在 update 里算（那里能拿到尺寸），这里只兜底。
-    }
-
-    @Override
     public void update(Level level, BlockPos pos, BlockState state,
                        AdvancedDisplayBlockEntity blockEntity, AdvancedDisplayRenderInstance parent,
                        EUpdateReason reason) {
@@ -96,40 +79,85 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         float w = Math.max(1, blockEntity.getXSizeScaled()) * 16f;
         float h = Math.max(1, blockEntity.getYSizeScaled()) * 16f;
-        Rectangle area = Rectangle.withSize(1, 1, w - 2, h - 2);
+        Rectangle area = Rectangle.withSize(0, 0, (int) w, (int) h);
 
-        float small = Math.min(0.6f, Math.min(w / 160f, h / 60f));
-        float big = Math.min(1.6f, Math.min(w / 55f, h / 16f));
+        var stops = blockEntity.getStops();
+        var first = stops.isEmpty() ? null : stops.get(0);
 
-        java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops = blockEntity.getStops();
-        var entry = stops.isEmpty() ? null : stops.get(0);
+        // 1 格高（16px）放不下四条带，走紧凑版：只显示「开往 X」与倒计时。
+        boolean compact = h < 24f;
+        if (compact) {
+            Rectangle full = Rectangle.withSize(0, 0, (int) w, (int) h);
+            var firstStop = stops.isEmpty() ? null : stops.get(0);
+            String d = firstStop == null ? "—"
+                : firstStop.displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
+            String m = "--";
+            if (firstStop != null) {
+                long t = firstStop.realtime().isKnown()
+                    ? firstStop.realtime().departureIn(now)
+                    : firstStop.scheduled().departureIn(now);
+                m = String.valueOf(Math.max(0, t / 20 / 60));
+            }
+            float smallScale = Math.min(0.45f, w / 60f);
+            float bigScale = Math.min(1.0f, Math.min(w / 40f, h / 16f));
+            place(header, full, w, 1, smallScale, "开往 " + d);
+            minutes.clippingArea.set(full);
+            minutes.text.set(TextUtils.text(m));
+            minutes.preferredWidth.set((float) Math.max(1, w - 3));
+            minutes.position.set(Point.of(2, Math.max(5, h * 0.38f)));
+            minutes.horizontalMinScale.set(bigScale);
+            minutes.horizontalMaxScale.set(bigScale);
+            minutes.verticalMinScale.set(bigScale);
+            minutes.verticalMaxScale.set(bigScale);
+            unit.clippingArea.set(full);
+            unit.text.set(TextUtils.text("分钟"));
+            unit.preferredWidth.set((float) Math.max(1, w - 3));
+            unit.position.set(Point.of(4 + m.length() * 8f * bigScale, Math.max(7, h * 0.46f)));
+            unit.horizontalMinScale.set(smallScale);
+            unit.horizontalMaxScale.set(smallScale);
+            unit.verticalMinScale.set(smallScale);
+            unit.verticalMaxScale.set(smallScale);
+            caption.text.set(null);
+            nextRow.text.set(null);
+            footer.text.set(null);
+            return;
+        }
 
-        String dest = entry == null ? "—"
-            : entry.displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
-        header.text.set(TextUtils.text("开往 " + dest
-            + (settings.platform().isEmpty() ? "" : "    " + settings.platform() + " 站台")));
-        place(header, area, w, h, 2, Math.max(1, h * 0.06f), small);
+        // 四条带的高度（占比）
+        float b0 = h * 0.16f;
+        float b1 = h * 0.34f;
+        float b2 = h * 0.20f;
+        float b3 = h * 0.16f;
+
+        float y0 = 1;
+        float y1 = y0 + b0;
+        float y2 = y1 + b1;
+        float y3 = y2 + b2;
+
+        float s0 = fit(b0, 0.55f);
+        float s1 = fit(b1, 1.30f);
+        float s2 = fit(b2, 0.70f);
+        float s3 = fit(b3, 0.50f);
+
+        String dest = first == null ? "—"
+            : first.displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
+        place(header, area, w, y0, s0, "开往 " + dest
+            + (settings.platform().isEmpty() ? "" : "   " + settings.platform() + " 站台"));
+
+        place(caption, area, w, y1 + (b1 - 9 * s2) - b2 * 0.0f, s2, "本次");
 
         String mins = "--";
-        if (entry != null) {
-            long ticks = entry.realtime().isKnown()
-                ? entry.realtime().departureIn(now)
-                : entry.scheduled().departureIn(now);
-            if (ticks <= 0) {
-                mins = "0";
-            } else {
-                mins = String.valueOf(Math.max(0, ticks / 20 / 60));
-            }
+        if (first != null) {
+            long ticks = first.realtime().isKnown()
+                ? first.realtime().departureIn(now)
+                : first.scheduled().departureIn(now);
+            mins = String.valueOf(Math.max(0, ticks / 20 / 60));
         }
-        minutes.text.set(TextUtils.text(mins));
-        place(minutes, area, w, h, 2, Math.max(6, h * 0.28f), big);
-        minutes.color.set(DLColor.fromInt(0xFFD32F2F));
-
-        unit.text.set(TextUtils.text("分钟"));
-        place(unit, area, w, h, Math.max(20, w * 0.42f), Math.max(10, h * 0.38f), small);
-
-        caption.text.set(TextUtils.text("本次"));
-        place(caption, area, w, h, 2, Math.max(6, h * 0.28f), small);
+        place(minutes, area, w, y1, s1, mins);
+        // 「分钟」紧贴在数字右侧，宽度用数字实际宽度估（1 位 ≈ 8*s1，2 位 ≈ 16*s1）
+        float numW = (mins.length() * 8f) * s1;
+        place(unit, area, w, y1 + (b1 - 9 * s2) - b2 * 0.0f, s2, "分钟");
+        unit.position.set(Point.of(4 + numW + 2, unit.y.get()));
 
         String next = "--";
         if (stops.size() > 1) {
@@ -139,19 +167,23 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
                 : second.scheduled().departureIn(now);
             next = String.valueOf(Math.max(0, t2 / 20 / 60));
         }
-        nextRow.text.set(TextUtils.text("下次   " + next + " 分钟"));
-        place(nextRow, area, w, h, 2, Math.max(14, h * 0.62f), small);
+        place(nextRow, area, w, y2, s2, "下次   " + next + " 分钟");
 
-        footer.text.set(TextUtils.text("下一站 " + dest + "    ·    "
-            + contentLabel(settings.content()) + "    ·    请站在安全线以内候车"));
-        place(footer, area, w, h, 2, Math.max(18, h * 0.82f), small);
+        place(footer, area, w, y3 + 1, s3,
+            "下一站 " + dest + "  ·  " + contentLabel(settings.content()) + "  ·  请站在安全线以内候车");
     }
 
-    private static void place(BERLabel label, Rectangle area, float w, float h,
-                              float x, float y, float scale) {
+    /** 带高 → 字号：字体行高按 9px 计，留 38% 余量。 */
+    private static float fit(float bandHeight, float max) {
+        return Math.max(0.25f, Math.min(max, bandHeight * 0.62f / 9f));
+    }
+
+    private static void place(BERLabel label, Rectangle area, float w, float y,
+                              float scale, String text) {
         label.clippingArea.set(area);
-        label.preferredWidth.set(Math.max(1, w - x - 1));
-        label.position.set(Point.of(x, Math.min(y, Math.max(0, h - 4))));
+        label.text.set(TextUtils.text(text));
+        label.preferredWidth.set((float) Math.max(1, w - 3));
+        label.position.set(Point.of(2, Math.max(0, y)));
         label.horizontalMinScale.set(scale);
         label.horizontalMaxScale.set(scale);
         label.verticalMinScale.set(scale);
