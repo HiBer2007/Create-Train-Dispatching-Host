@@ -65,15 +65,10 @@ public final class CtdHost {
     public CtdHost(IEventBus modBus) {
         LOG.info("ctdhost: constructing (mod bus present: {})", modBus != null);
 
-        // 客户端注册：放在构造的**最前面**，只要构造发生就一定执行。
-        try {
-            Class.forName("net.minecraft.client.Minecraft");
-            Class.forName("top.hibermod.ctdhost.client.screen.CtdDisplayTypes")
-                .getMethod("registerAll").invoke(null);
-            LOG.info("ctdhost: 客户端注册已调用");
-        } catch (Throwable t) {
-            LOG.warn("ctdhost: 客户端注册跳过/失败: {}", t.toString());
-        }
+        // 显示类型注册：**两端都要执行**。服务端靠它把 NBT 还原成我们的 Settings 类，
+        // 只注册客户端会让服务端退回 EmptyDisplaySettings，字段在存档往返时全丢。
+        top.hibermod.ctdhost.client.screen.CtdDisplayTypes.registerAll();
+
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
         // 方块与方块实体：自动道岔机（只有装了它的岔口才允许信号系统自动扳动）。
         top.hibermod.ctdhost.block.CtdBlocks.BLOCKS.register(modBus);

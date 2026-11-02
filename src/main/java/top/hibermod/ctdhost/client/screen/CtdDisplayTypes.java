@@ -40,29 +40,32 @@ public final class CtdDisplayTypes {
         // 全都「没被调用过」，而这条路径已经被站台屏证明会执行。
 
         // 顺带把辉光模型登记上：它们必须在模型烘焙之前进入 Catnip 的静态表。
-        top.hibermod.ctdhost.client.CtdPartialModels.bootstrap();
+        // 模型登记只在客户端做（服务端没有模型烘焙）。
+        if (isClient()) {
+            try { top.hibermod.ctdhost.client.CtdPartialModels.bootstrap(); } catch (Throwable ignored) { }
+        }
 
         try {
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_platform",
-                CtdPlatformSettings::new, BERCtdPlatform::new,
+                CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdPlatform"),
                 new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_departure",
-                CtdPlatformSettings::new, BERCtdDeparture::new,
+                CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdDeparture"),
                 new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
             // 新增：正点计时器（替代辉光管）与扣车指示。
             // 两者都绑定「车站 ID + 站台 ID」，内容来自 getStops()，与 ctd_platform 同源。
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_timer",
-                CtdPlatformSettings::new, BERCtdDeparture::new,
+                CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdDeparture"),
                 new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_hold",
-                CtdPlatformSettings::new, BERCtdPlatform::new,
+                CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdPlatform"),
                 new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
             LOG.info("ctdhost: display types registered: ctd_platform / ctd_departure / ctd_timer / ctd_hold");
@@ -71,4 +74,33 @@ public final class CtdDisplayTypes {
             top.hibermod.ctdhost.Failures.caught("站台屏类型注册", t);
         }
     }
+    /**
+     * 渲染器只在客户端实例化。
+     *
+     * <p>关键：**类型注册必须在两端都执行**。服务端要靠它把 NBT 还原成正确的
+     * Settings 类（{@code AdvancedDisplaysRegistry.createSettings}），
+     * 只在客户端注册会让服务端退回 {@code EmptyDisplaySettings}，
+     * 我们写的字段在存档往返时全部丢失——这就是「填了保存再打开还是空」的根因。
+     */
+    @SuppressWarnings("unchecked")
+    private static <R> java.util.function.Supplier<R> rendererOf(String className) {
+        return () -> {
+            if (!isClient()) return null;
+            try {
+                return (R) Class.forName(className).getDeclaredConstructor().newInstance();
+            } catch (Throwable t) {
+                LOG.warn("ctdhost: renderer {} unavailable: {}", className, t.toString());
+                return null;
+            }
+        };
+    }
+
+    private static boolean isClient() {
+        try {
+            return net.neoforged.fml.loading.FMLEnvironment.dist.isClient();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
 }
