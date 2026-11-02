@@ -1,5 +1,8 @@
 {
-  "item.ctdhost.script_timetable.blank": "脚本时刻表（空）",
+  "display.createrailwaynavigator.platform.ctd_platform": "CTD 站台屏",
+  "display.createrailwaynavigator.platform.ctd_departure": "CTD 发车指示器",
+  "display.createrailwaynavigator.platform.ctd_timer": "CTD 正点计时器",
+  "display.createrailwaynavigator.platform.ctd_hold": "CTD 扣车指示","item.ctdhost.script_timetable.blank": "脚本时刻表（空）",
   "item.ctdhost.script_timetable.named": "脚本时刻表：%s",
   "item.ctdhost.script_timetable.hint.blank": "未指定调度脚本",
   "item.ctdhost.script_timetable.hint.bound": "调度脚本：%s",
