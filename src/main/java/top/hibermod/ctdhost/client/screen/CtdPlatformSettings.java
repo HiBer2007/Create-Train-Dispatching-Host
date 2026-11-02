@@ -58,6 +58,12 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     private String platform = "";
     private Content content = Content.DEPARTURES;
 
+    public CtdPlatformSettings() {
+        // 参照实拍：浅色面板 + 深色字，像车站吊装的 PIDS。
+        setBackColor(de.mrjulsen.mcdragonlib.util.DLColor.fromInt(0xFFF5F5F5));
+        setFontColor(de.mrjulsen.mcdragonlib.util.DLColor.fromInt(0xFF1A1A1A));
+    }
+
     public String signalSystem() {
         return signalSystem;
     }
