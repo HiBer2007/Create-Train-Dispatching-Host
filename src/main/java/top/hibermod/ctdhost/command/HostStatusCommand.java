@@ -40,6 +40,7 @@ public final class HostStatusCommand {
             .then(top.hibermod.ctdhost.command.DevicesCommand.build())
             .then(top.hibermod.ctdhost.command.SwitchesCommand.build())
             .then(top.hibermod.ctdhost.command.MachinesCommand.build())
+            .then(top.hibermod.ctdhost.command.HoldCommand.build())
             .then(top.hibermod.ctdhost.command.FailuresCommand.build())
             .then(top.hibermod.ctdhost.command.RestrictCommand.build())
             .then(DebugTrackCommand.build())
