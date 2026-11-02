@@ -115,6 +115,9 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         nbt.putString(NBT_STATION, station);
         nbt.putString(NBT_PLATFORM, platform);
         nbt.putString(NBT_CONTENT, content.id());
+        org.slf4j.LoggerFactory.getLogger("ctdhost").info(
+            "ctdhost: settings saved station=[{}] platform=[{}] sys=[{}]",
+            station, platform, signalSystem);
     }
 
     @Override
@@ -165,7 +168,12 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         box.text.get().set(value == null ? "" : value);
         box.addEventListener(
             de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLRichTextLabel.TextChangedEvent.class,
-            (s, e) -> { setter.accept(e.text().getPlainText()); return false; });
+            (s, e) -> {
+                org.slf4j.LoggerFactory.getLogger("ctdhost").info(
+                    "ctdhost: text changed key={} value=[{}]", langKey, e.text().getPlainText());
+                setter.accept(e.text().getPlainText());
+                return false;
+            });
         line.addComponent(box);
     }
     private void buildPickerLine(GuiBuilderContext context, String langKey,

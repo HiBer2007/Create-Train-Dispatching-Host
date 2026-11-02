@@ -38,14 +38,15 @@ public class BERCtdDeparture implements AbstractAdvancedDisplayRenderer<CtdPlatf
         clock.horizontalMaxScale.set(1.2f);
         clock.verticalMinScale.set(0.9f);
         clock.verticalMaxScale.set(1.2f);
-        clock.horizontalScrollMode.set(EScrollMode.WHEN_NEEDED);
+        // 不用滚动：放不下就缩字号（min/maxScale 会处理），滚动在 1x1 上很难看。
+        clock.horizontalScrollMode.set(EScrollMode.FLEX_FIT);
 
         caption.position.set(Point.of(3, 12.2f));
         caption.horizontalMinScale.set(0.4f);
         caption.horizontalMaxScale.set(0.7f);
         caption.verticalMinScale.set(0.6f);
         caption.verticalMaxScale.set(0.7f);
-        caption.horizontalScrollMode.set(EScrollMode.WHEN_NEEDED);
+        caption.horizontalScrollMode.set(EScrollMode.FLEX_FIT);
     }
 
     @Override
@@ -65,10 +66,10 @@ public class BERCtdDeparture implements AbstractAdvancedDisplayRenderer<CtdPlatf
             clock.text.set(TextUtils.text(formatDeviation((int) deviation)));
             clock.color.set(colorForDeviation((int) deviation));
         }
+        // 副标题显示车次/车号（不再显示「距正点」这种没信息量的前缀）。
         String destination = stops.isEmpty() ? ""
-            : stops.get(0).displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
-        String prefix = settings.platform().isEmpty() ? "距正点" : "站台 " + settings.platform();
-        caption.text.set(TextUtils.text(destination.isEmpty() ? prefix : prefix + " · " + destination));
+            : stops.get(0).trainName();
+        caption.text.set(TextUtils.text(destination));
     }
 
     @Override
@@ -128,6 +129,6 @@ public class BERCtdDeparture implements AbstractAdvancedDisplayRenderer<CtdPlatf
     public static DLColor colorForDeviation(int deviationTicks) {
         if (deviationTicks < 0) return DLColor.fromInt(0xFF33BB33);
         if (deviationTicks > 0) return DLColor.fromInt(0xFFCC3333);
-        return DLColor.fromInt(0xFFEEEEEE);
+        return DLColor.fromInt(0xFFFFC107);   // 正点：黄
     }
 }
