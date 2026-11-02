@@ -117,6 +117,12 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     @Override
     public void buildGui(GuiBuilderContext context) {
         super.buildGui(context);
+
+        // 三个输入项：车站号 / 站台号 / 信号系统。
+        // 控件照抄 CRN 的 GuiBuilderWrapper.buildStaticTextGui（addLine(String) + CreateTextBox）。
+        buildTextLine(context, "gui.ctdhost.station", station(), this::setStation);
+        buildTextLine(context, "gui.ctdhost.platform", platform(), this::setPlatform);
+        buildTextLine(context, "gui.ctdhost.signal_system", signalSystem(), this::setSignalSystem);
         // 第一版不做自定义控件：先让类型能被选中、能渲染。
         // 设置项已经在 NBT 里，命令或后续 GUI 都能改。
     }
@@ -130,5 +136,25 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
             platform = old.platform;
             content = old.content;
         }
+    }
+    private void buildTextLine(GuiBuilderContext context, String langKey,
+                               String value, java.util.function.Consumer<String> setter) {
+        de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLPanel line =
+            context.container().addLine(langKey);
+
+        de.mrjulsen.crn.client.gui.widgets.IconSlotWidget icon =
+            line.addComponent(new de.mrjulsen.crn.client.gui.widgets.IconSlotWidget(0, 0));
+        icon.icon.set(de.mrjulsen.crn.client.gui.ModGuiIcons.TEXT.getAsSprite(16, 16));
+
+        de.mrjulsen.crn.client.gui.widgets.create.CreateTextBox box =
+            new de.mrjulsen.crn.client.gui.widgets.create.CreateTextBox(0, 0, 0);
+        box.layoutContraint.set(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.layout.FlowLayout.FlowConstraint.FILL);
+        box.maxCharacters.set((int) Short.MAX_VALUE);
+        box.text.get().set(value == null ? "" : value);
+        box.addEventListener(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLRichTextLabel.TextChangedEvent.class,
+            (s, e) -> { setter.accept(e.text().getPlainText()); return false; });
+        line.addComponent(box);
     }
 }
