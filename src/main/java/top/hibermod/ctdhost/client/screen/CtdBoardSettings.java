@@ -11,7 +11,6 @@ import de.mrjulsen.mcdragonlib.util.DLColor;
 public class CtdBoardSettings extends CtdPlatformSettings {
 
     public CtdBoardSettings() {
-        setBackColor(DLColor.fromInt(0xFF0B1B2B));
         setFontColor(DLColor.fromInt(0xFFFFC107));
     }
 }

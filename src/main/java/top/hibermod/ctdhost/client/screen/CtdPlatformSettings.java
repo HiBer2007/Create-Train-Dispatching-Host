@@ -59,9 +59,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     private Content content = Content.DEPARTURES;
 
     public CtdPlatformSettings() {
-        // 参照实拍：车站与车厢屏都是白色面板 + 深色字。
-        setBackColor(de.mrjulsen.mcdragonlib.util.DLColor.fromInt(0xFFF7F7F7));
-        setFontColor(de.mrjulsen.mcdragonlib.util.DLColor.fromInt(0xFF1A1A1A));
+        // 背景保持默认（透明，露出方块纹理），文字用白色。
+        setFontColor(de.mrjulsen.mcdragonlib.util.DLColor.fromInt(0xFFFFFFFF));
     }
 
     public String signalSystem() {

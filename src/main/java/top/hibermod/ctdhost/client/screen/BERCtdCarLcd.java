@@ -37,15 +37,15 @@ public class BERCtdCarLcd implements AbstractAdvancedDisplayRenderer<CtdPlatform
 
     public BERCtdCarLcd() {
         badge.horizontalAlign.set(ETextAlignment.CENTER);
-        badge.color.set(DLColor.fromInt(0xFF263238));
+        badge.color.set(DLColor.fromInt(0xFF80DEEA));
         nextSmall.horizontalAlign.set(ETextAlignment.LEFT);
-        nextSmall.color.set(DLColor.fromInt(0xFF78909C));
+        nextSmall.color.set(DLColor.fromInt(0xFFB0BEC5));
         stationName.horizontalAlign.set(ETextAlignment.LEFT);
-        stationName.color.set(DLColor.fromInt(0xFF1A1A1A));
+        stationName.color.set(DLColor.fromInt(0xFFFFFFFF));
         arrow.horizontalAlign.set(ETextAlignment.LEFT);
         arrow.color.set(DLColor.fromInt(0xFFD32F2F));
         dest.horizontalAlign.set(ETextAlignment.LEFT);
-        dest.color.set(DLColor.fromInt(0xFF546E7A));
+        dest.color.set(DLColor.fromInt(0xFF9E9E9E));
     }
 
     @Override
