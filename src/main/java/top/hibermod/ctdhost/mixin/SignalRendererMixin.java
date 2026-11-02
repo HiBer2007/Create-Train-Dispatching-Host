@@ -31,6 +31,7 @@ import net.minecraft.world.level.block.state.BlockState;
 @Mixin(SignalRenderer.class)
 public abstract class SignalRendererMixin {
 
+    @Inject(method = "renderSafe", at = @At("HEAD"), cancellable = true, require = 1,
             remap = false)
     private void ctd$tintSignalLamp(SignalBlockEntity be, float partialTicks, PoseStack ms,
                                     MultiBufferSource buffer, int light, int overlay,
