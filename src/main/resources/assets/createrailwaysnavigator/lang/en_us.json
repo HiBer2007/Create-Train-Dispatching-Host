@@ -1,0 +1,9 @@
+{
+  "display.createrailwaynavigator.platform.ctd_platform": "CTD Platform",
+  "display.createrailwaynavigator.platform.ctd_departure": "CTD Departure Indicator",
+  "display.createrailwaynavigator.platform.ctd_timer": "CTD Departure Timer",
+  "display.createrailwaynavigator.platform.ctd_hold": "CTD Hold Indicator",
+  "gui.ctdhost.station": "Station",
+  "gui.ctdhost.platform": "Platform",
+  "gui.ctdhost.signal_system": "Signal system"
+}
