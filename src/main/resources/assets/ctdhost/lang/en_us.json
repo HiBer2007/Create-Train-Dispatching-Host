@@ -1,5 +1,8 @@
 {
-  "gui.ctdhost.station": "Station",
+  "gui.ctdhost.station.description": "Station name, must match the station on the line",
+  "gui.ctdhost.platform.description": "Platform number used to filter services",
+  "gui.ctdhost.signal_system.description": "Signal system this display belongs to",
+"gui.ctdhost.station": "Station",
   "gui.ctdhost.platform": "Platform",
   "gui.ctdhost.signal_system": "Signal system",
 "display.createrailwaynavigator.platform.ctd_platform": "CTD Platform",

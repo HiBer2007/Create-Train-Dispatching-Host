@@ -1,5 +1,8 @@
 {
-  "gui.ctdhost.station": "车站号",
+  "gui.ctdhost.station.description": "填写车站名称，需与线路上的车站一致",
+  "gui.ctdhost.platform.description": "填写站台号，用于筛选该站台的车次",
+  "gui.ctdhost.signal_system.description": "选择该屏归属的信号系统",
+"gui.ctdhost.station": "车站号",
   "gui.ctdhost.platform": "站台号",
   "gui.ctdhost.signal_system": "信号系统",
 "display.createrailwaynavigator.platform.ctd_platform": "CTD 站台屏",

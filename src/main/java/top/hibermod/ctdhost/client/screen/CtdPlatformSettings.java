@@ -145,6 +145,13 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         de.mrjulsen.crn.client.gui.widgets.IconSlotWidget icon =
             line.addComponent(new de.mrjulsen.crn.client.gui.widgets.IconSlotWidget(0, 0));
         icon.icon.set(de.mrjulsen.crn.client.gui.ModGuiIcons.TEXT.getAsSprite(16, 16));
+        // 悬浮文本：标题 + 灰色说明，照 CRN 的 GuiBuilderWrapper 写法。
+        icon.tooltip.set(new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLTooltip(
+            java.util.List.of(
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey),
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey + ".description")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY)),
+            200));
 
         de.mrjulsen.crn.client.gui.widgets.create.CreateTextBox box =
             new de.mrjulsen.crn.client.gui.widgets.create.CreateTextBox(0, 0, 0);
