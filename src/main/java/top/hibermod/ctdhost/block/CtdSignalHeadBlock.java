@@ -38,6 +38,24 @@ public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements En
     public static final net.minecraft.world.level.block.state.properties.IntegerProperty ASPECT =
         net.minecraft.world.level.block.state.properties.IntegerProperty.create("aspect", 0, 7);
 
+    /**
+     * 四种安装形态。灯头的几何与朝向由 facing 决定，
+     * mount 只记录「它装在什么地方」，供放置校验与后续逻辑使用。
+     */
+    public enum Mount implements net.minecraft.util.StringRepresentable {
+        GROUND("ground"),
+        MAST("mast"),
+        CEILING("ceiling"),
+        WALL("wall");
+
+        private final String name;
+        Mount(String name) { this.name = name; }
+        @Override public String getSerializedName() { return name; }
+    }
+
+    public static final net.minecraft.world.level.block.state.properties.EnumProperty<Mount> MOUNT =
+        net.minecraft.world.level.block.state.properties.EnumProperty.create("mount", Mount.class);
+
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
     public static final MapCodec<CtdSignalHeadBlock> CODEC = simpleCodec(CtdSignalHeadBlock::new);
@@ -46,7 +64,8 @@ public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements En
         super(properties);
         registerDefaultState(defaultBlockState()
             .setValue(FACING, Direction.NORTH)
-            .setValue(ASPECT, 0));
+            .setValue(ASPECT, 0)
+            .setValue(MOUNT, Mount.GROUND));
     }
 
     @Override
@@ -63,7 +82,7 @@ public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, ASPECT);
+        builder.add(FACING, ASPECT, MOUNT);
     }
 
     @Override
