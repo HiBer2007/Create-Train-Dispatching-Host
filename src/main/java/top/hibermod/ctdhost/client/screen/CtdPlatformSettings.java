@@ -122,7 +122,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         // 控件照抄 CRN 的 GuiBuilderWrapper.buildStaticTextGui（addLine(String) + CreateTextBox）。
         buildTextLine(context, "gui.ctdhost.station", station(), this::setStation);
         buildTextLine(context, "gui.ctdhost.platform", platform(), this::setPlatform);
-        buildTextLine(context, "gui.ctdhost.signal_system", signalSystem(), this::setSignalSystem);
+        // 信号系统：用下拉选择（数据来自宿主同步过来的列表）。
+        buildPickerLine(context, "gui.ctdhost.signal_system", signalSystem(), this::setSignalSystem);
         // 第一版不做自定义控件：先让类型能被选中、能渲染。
         // 设置项已经在 NBT 里，命令或后续 GUI 都能改。
     }
@@ -164,4 +165,40 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
             (s, e) -> { setter.accept(e.text().getPlainText()); return false; });
         line.addComponent(box);
     }
+    private void buildPickerLine(GuiBuilderContext context, String langKey,
+                                 String value, java.util.function.Consumer<String> setter) {
+        de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLPanel line =
+            context.container().addLine(langKey);
+
+        de.mrjulsen.crn.client.gui.widgets.IconSlotWidget icon =
+            line.addComponent(new de.mrjulsen.crn.client.gui.widgets.IconSlotWidget(0, 0));
+        icon.icon.set(de.mrjulsen.crn.client.gui.ModGuiIcons.PLATFORM_INFORMATION.getAsSprite(16, 16));
+        icon.tooltip.set(new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLTooltip(
+            java.util.List.of(
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey),
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey + ".description")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY)),
+            200));
+
+        java.util.List<String> items = new java.util.ArrayList<>(CtdSignalSystemData.all());
+        if (items.isEmpty()) items.add(value == null ? "" : value);
+
+        de.mrjulsen.crn.client.gui.widgets.create.CreateItemPicker<String> picker =
+            new de.mrjulsen.crn.client.gui.widgets.create.CreateItemPicker<>(0, 0, 0);
+        picker.renderArrow.set(true);
+        picker.layoutContraint.set(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.layout.FlowLayout.FlowConstraint.FILL);
+        picker.items.addAll(items);
+        picker.selectedItem.set(value == null || value.isEmpty()
+            ? java.util.Optional.empty()
+            : java.util.Optional.of(value));
+        picker.addEventListener(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLCycleButton.SelectedItemChanged.class,
+            (s, e) -> {
+                e.item().ifPresent(x -> setter.accept(String.valueOf(x)));
+                return false;
+            });
+        line.addComponent(picker);
+    }
+
 }
