@@ -73,6 +73,20 @@ public final class CtdHost {
         // 创造模式物品栏：不挂这个事件的话，方块在创造模式里看不到。
         modBus.addListener(top.hibermod.ctdhost.block.CtdCreativeTab::onBuildContents);
 
+        // 客户端注册（站台屏类型 / 灯头渲染器）。
+        //
+        // 以前挂在 @Mixin 类的静态初始化块里——**mixin 的静态块不保证执行**，
+        // 结果就是显示类型没注册、GUI 列表里看不到。这里改成构造期反射调用，
+        // 服务端因为找不到 net.minecraft.client 会直接跳过。
+        try {
+            Class.forName("net.minecraft.client.Minecraft");
+            Class.forName("top.hibermod.ctdhost.client.screen.CtdDisplayTypes")
+                .getMethod("registerAll")
+                .invoke(null);
+        } catch (Throwable ignored) {
+            // 服务端：没有客户端类，正常跳过
+        }
+
         // 站台屏类型只在客户端注册。
         //
         // 用「类是否存在」判断，而不是 FMLEnvironment：前者不依赖任何 dist API，
