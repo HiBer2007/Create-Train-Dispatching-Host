@@ -84,7 +84,10 @@ public final class CtdHost {
                 .getMethod("registerAll")
                 .invoke(null);
         } catch (Throwable ignored) {
-            // 服务端：没有客户端类，正常跳过
+            // 不静默：客户端失败要看得见（服务端因为没有客户端类，属正常跳过）。
+            if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+                System.out.println("[ctdhost] 客户端注册失败: " + ignored);
+            }
         }
 
         // 站台屏类型只在客户端注册。
@@ -98,7 +101,10 @@ public final class CtdHost {
                 .getMethod("init", net.neoforged.bus.api.IEventBus.class)
                 .invoke(null, modBus);
         } catch (Throwable ignored) {
-            // 服务端：没有客户端类，正常跳过
+            // 不静默：客户端失败要看得见（服务端因为没有客户端类，属正常跳过）。
+            if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
+                System.out.println("[ctdhost] 客户端注册失败: " + ignored);
+            }
         }
 
         // 查出来的「没注入」可能是「还没加载」。
