@@ -61,6 +61,18 @@ public final class CtdDisplayTypes {
                 CtdPlatformSettings::new, BERCtdDeparture::new,
                 new DisplayProperties(true, be -> 1));
 
+            // 新增：正点计时器（替代辉光管）与扣车指示。
+            // 两者都绑定「车站 ID + 站台 ID」，内容来自 getStops()，与 ctd_platform 同源。
+            AdvancedDisplaysRegistry.register(
+                EDisplayType.PLATFORM, "ctd_timer",
+                CtdPlatformSettings::new, BERCtdDeparture::new,
+                new DisplayProperties(true, be -> 1));
+
+            AdvancedDisplaysRegistry.register(
+                EDisplayType.PLATFORM, "ctd_hold",
+                CtdPlatformSettings::new, BERCtdPlatform::new,
+                new DisplayProperties(true, be -> 1));
+
             LOG.info("ctdhost: 站台屏类型注册成功 ctd_platform / ctd_departure");
         } catch (Throwable t) {
             LOG.error("ctdhost: 站台屏类型注册失败", t);
