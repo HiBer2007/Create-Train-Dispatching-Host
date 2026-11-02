@@ -87,7 +87,40 @@ public class CtdSignalHeadBlock extends HorizontalDirectionalBlock implements En
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        // 按周围方块判定安装形态：
+        //   下方是信号机      → GROUND（地面）
+        //   下方是金属梁      → MAST  （高杆，梁可叠多节）
+        //   上方是信号机      → CEILING（吊顶，隧道）
+        //   侧面是信号机      → WALL  （挂壁，隧道）
+        var level = context.getLevel();
+        var pos = context.getClickedPos();
+        Mount mount = Mount.GROUND;
+
+        if (isSignal(level, pos.below())) {
+            mount = Mount.GROUND;
+        } else if (isGirder(level, pos.below())) {
+            mount = Mount.MAST;
+        } else if (isSignal(level, pos.above())) {
+            mount = Mount.CEILING;
+        } else {
+            for (var d : net.minecraft.core.Direction.Plane.HORIZONTAL) {
+                if (isSignal(level, pos.relative(d))) { mount = Mount.WALL; break; }
+            }
+        }
+
+        return defaultBlockState()
+            .setValue(FACING, context.getHorizontalDirection().getOpposite())
+            .setValue(MOUNT, mount);
+    }
+
+    private static boolean isSignal(net.minecraft.world.level.LevelReader level, BlockPos pos) {
+        return level.getBlockState(pos).getBlock() instanceof CtdSignalBlock;
+    }
+
+    /** 金属梁用注册名判断，绕开 Registrate 的泛型。 */
+    private static boolean isGirder(net.minecraft.world.level.LevelReader level, BlockPos pos) {
+        var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(level.getBlockState(pos).getBlock());
+        return id.getPath().equals("metal_girder");
     }
 
     @Override
