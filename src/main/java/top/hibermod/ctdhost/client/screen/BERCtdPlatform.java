@@ -206,29 +206,29 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         status.horizontalAlign.set(ETextAlignment.CENTER);
 
         // 两趟车：每趟一行（左标签 / 右值），各自在自己的分割线区间内垂直居中
-        float rowBand = 6f;
+        float rowBand = 9f;
         float valH = 8f * 0.17f * k;
         float row1 = divTop;
         nextLabel.horizontalAlign.set(ETextAlignment.LEFT);
         nextDest.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(nextLabel, clip, leftX + 1f, row1 + 0.3f, leftW - 2f, 2f, 0.13f * k, "下一趟开往", 0xFF9AA5AD);
-        put(nextDest, clip, leftX + 1f, row1 + 3.0f, leftW * 0.6f, 3f, 0.17f * k,
+        put(nextLabel, clip, leftX + 1f, row1 + 0.8f, leftW - 2f, 3f, 0.18f * k, "下一趟开往", 0xFF9AA5AD);
+        put(nextDest, clip, leftX + 1f, row1 + 4.6f, leftW * 0.6f, 3f, 0.19f * k,
             dest1, 0xFFFFFFFF);
 
         nextMin.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(nextMin, clip, leftX + leftW * 0.6f, row1 + 3.0f, leftW * 0.4f - 1f, 3f, 0.17f * k,
+        put(nextMin, clip, leftX + leftW * 0.6f, row1 + 4.6f, leftW * 0.4f - 1f, 3f, 0.19f * k,
             min1 + " 分钟", 0xFFECEFF1);
 
         float divMid = divTop + rowBand;
         rects.add(new Rect(leftX, divMid, 0.01f, leftW, 0.3f, divider));
 
         float row2 = divMid;
-        put(thirdLabel, clip, leftX + 1f, row2 + 0.3f, leftW - 2f, 2f, 0.13f * k, "第三趟开往", 0xFF9AA5AD);
-        put(thirdDest, clip, leftX + 1f, row2 + 3.0f, leftW * 0.6f, 3f, 0.17f * k,
+        put(thirdLabel, clip, leftX + 1f, row2 + 0.8f, leftW - 2f, 3f, 0.18f * k, "第三趟开往", 0xFF9AA5AD);
+        put(thirdDest, clip, leftX + 1f, row2 + 4.6f, leftW * 0.6f, 3f, 0.19f * k,
             dest2, 0xFF66BB6A);
 
         thirdMin.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(thirdMin, clip, leftX + leftW * 0.6f, row2 + 3.0f, leftW * 0.4f - 1f, 3f, 0.17f * k,
+        put(thirdMin, clip, leftX + leftW * 0.6f, row2 + 4.6f, leftW * 0.4f - 1f, 3f, 0.19f * k,
             min2 + " 分钟", 0xFFFFE082);
 
 
@@ -294,7 +294,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     }
 
     private static String nameOf(java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops, int i) {
-        if (i >= stops.size()) return "—";
+        if (i >= stops.size()) return "--";
         return stops.get(i).displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
     }
 
