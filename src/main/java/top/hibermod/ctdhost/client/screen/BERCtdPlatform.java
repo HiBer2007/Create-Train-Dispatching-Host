@@ -266,7 +266,8 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         // 底部蓝带（整条）
         rects.add(new Rect(2f, 12.2f, 0f, totalW, 2.8f, blue));
 
-        lab(14).horizontalScrollMode.set(EScrollMode.ALWAYS);
+        // 底栏拆成两个独立组件：左「日期 时间」静态居中，右「滚动提示」滚动
+        lab(14).horizontalScrollMode.set(dual ? EScrollMode.NEVER : EScrollMode.ALWAYS);
         lab(15).horizontalScrollMode.set(EScrollMode.ALWAYS);
 
         var barL = Rectangle.withSize(3f, 12.2f,
@@ -274,8 +275,10 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         var barR = Rectangle.withSize(3f + totalW * 0.5f, 12.2f, totalW * 0.5f - 4f, 3f);
 
         if (dual) {
-            put(lab(14), barL, 3f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.30f, realClockText(),
+            lab(14).horizontalAlign.set(ETextAlignment.CENTER);
+            put(lab(14), barL, 3f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.24f, realClockText(),
                 0xFFFFFFFF);
+            lab(15).horizontalAlign.set(ETextAlignment.LEFT);
             put(lab(15), barR, 3f + totalW * 0.5f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.30f,
                 "感谢您的配合，尊敬的乘客。", 0xFFFFFFFF);
         } else {
