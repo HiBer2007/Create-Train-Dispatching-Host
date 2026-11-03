@@ -217,13 +217,17 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
             line1.horizontalAlign.set(ETextAlignment.LEFT);
             line2.horizontalAlign.set(ETextAlignment.LEFT);
-            put(line1, clip, hx + 0.6f, 2.15f, 7f, 2f, 0.11f, smallText.substring(0, 3),
-                contrastText(accent));
-            put(line2, clip, hx + 0.6f, 3.35f, 7f, 2f, 0.11f, headLine2Text, contrastText(accent));
+            float titleScale = 0.16f;                 // 与 3x2 同大
+            float titleLineH = 8f * titleScale;
+            float titleTop = 2 + (4f - titleLineH * 2f) / 2f;
+            put(line1, clip, hx + 0.6f, titleTop, 8f, titleLineH + 0.2f, titleScale,
+                smallText.substring(0, 3), contrastText(accent));
+            put(line2, clip, hx + 0.6f, titleTop + titleLineH, 8f, titleLineH + 0.2f, titleScale,
+                headLine2Text, contrastText(accent));
 
             dest.horizontalAlign.set(ETextAlignment.CENTER);
             String destText = loop && !loopExit ? settings.lineMode().zh() : nameOf(stops, idx);
-            put(dest, clip, hx + 7.4f, 2 + (4f - 8f * 0.18f) / 2f, yellowW - 7.8f, 3f, 0.18f,
+            put(dest, clip, hx + 8.4f, 2 + (4f - 8f * 0.18f) / 2f, yellowW - 8.8f, 3f, 0.18f,
                 destText, contrastText(accent));
 
             // 蓝带：4x1 站台 ID（线路色） / 2x1 时钟（右对齐）
