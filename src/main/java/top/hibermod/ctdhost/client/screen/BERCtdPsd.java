@@ -41,6 +41,18 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
 
     private record Rect(float x, float y, float z, float w, float h, DLColor color) {}
 
+    /** 一次性诊断开关。 */
+    private static final Once DEBUG = new Once();
+
+    private static final class Once {
+        private boolean done;
+        synchronized boolean once() {
+            if (done) return false;
+            done = true;
+            return true;
+        }
+    }
+
     private final List<Rect> rects = new ArrayList<>();
 
     private final BERLabel name = new BERLabel();
@@ -172,10 +184,18 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         put(stationId, clip, bx - 1.5f, by + badgeSize + 3.4f, badgeSize + 3f, 2.4f, 0.14f,
             s.station().isBlank() ? "--" : s.station(), 0xFF000000);
 
-        // 屏蔽门号：左下角
-        doorUnit2.horizontalAlign.set(ETextAlignment.LEFT);
-        put(doorUnit2, clip, 1.5f, contentBottom - 3.2f, leftW * 0.6f, 2.6f, 0.14f,
+        // 屏蔽门号：放在指示灯正上方、居中
+        doorUnit2.horizontalAlign.set(ETextAlignment.CENTER);
+        put(doorUnit2, clip, 0f, contentBottom - 3.4f, w, 2.6f, 0.14f,
             "屏蔽门 " + (s.doorNumber().isBlank() ? "1" : s.doorNumber()), 0xFF000000);
+
+        // 一次性打印实际取值，便于确认字段到底有没有存进来
+        if (DEBUG.once()) {
+            org.slf4j.LoggerFactory.getLogger("ctdhost").warn(
+                "ctdhost: [PSD] station=[{}] platform=[{}] door=[{}] name=[{}] next=[{}] line=[{}]",
+                s.station(), s.platform(), s.doorNumber(), s.stationName(), s.nextStation(),
+                s.lineName());
+        }
 
         // 底部色带（先画带，再画带上的指示灯，避免被盖）
         rects.add(new Rect(0, contentBottom, 0.01f, w, bottomBar, line));
