@@ -108,6 +108,9 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         for (BERLabel l : labels()) {
             if (l.text.get() != null) l.render(graphics);
         }
+        for (BERLabel l : pool) {
+            if (l != null && l.text.get() != null) l.render(graphics);
+        }
     }
 
     @Override
@@ -186,6 +189,12 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         String statusStr = noBoard ? "请勿上车" : (waiting ? "列车进站"
             : (minutesOf(stops, now, 0) + " 分钟"));
 
+        // 4x1 两半之间的竖分割条
+        if (dual) {
+            rects.add(new Rect(2f + halfW - 0.2f, 2f, 0.02f, 0.4f, 10.2f,
+                DLColor.fromInt(0xFF9AA5AD)));
+        }
+
         for (int i = 0; i < (dual ? 2 : 1); i++) {
             float hx = 2f + i * (halfW + 1f);
             int idx = dual ? i : 0;
@@ -220,29 +229,34 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
             BERLabel nextLbl = lab(i * 7 + 4);
             nextLbl.horizontalAlign.set(ETextAlignment.LEFT);
-            put(nextLbl, clip, hx + halfW * 0.5f, 6.4f, halfW * 0.5f, 2f, 0.09f, "下一趟开往",
+            put(nextLbl, clip, hx + halfW * 0.5f, 6.3f, halfW * 0.5f, 2f, 0.11f, "下一趟开往",
                 0xFF9AA5AD);
 
             BERLabel nextD = lab(i * 7 + 5);
             nextD.horizontalAlign.set(ETextAlignment.LEFT);
-            put(nextD, clip, hx + halfW * 0.5f, 8.2f, halfW * 0.5f, 2f, 0.13f, nameOf(stops, idx + 1),
+            put(nextD, clip, hx + halfW * 0.5f, 8.1f, halfW * 0.5f, 2f, 0.15f, nameOf(stops, idx + 1),
                 0xFFFFFFFF);
 
             BERLabel nextM = lab(i * 7 + 6);
             nextM.horizontalAlign.set(ETextAlignment.LEFT);
-            put(nextM, clip, hx + halfW * 0.5f, 10.2f, halfW * 0.5f, 2f, 0.12f,
+            put(nextM, clip, hx + halfW * 0.5f, 10.0f, halfW * 0.5f, 2f, 0.14f,
                 minutesOf(stops, now, idx + 1) + " 分钟", 0xFFFFE082);
         }
 
         // 底部蓝带（整条）
-        rects.add(new Rect(2f, 12.2f, 0f, totalW, 2.6f, blue));
-        clock.horizontalAlign.set(ETextAlignment.LEFT);
+        rects.add(new Rect(2f, 12.2f, 0f, totalW, 2.8f, blue));
+
+        var barL = Rectangle.withSize(3f, 12.2f,
+            dual ? totalW * 0.5f - 4f : totalW - 2f, 3f);
+        var barR = Rectangle.withSize(3f + totalW * 0.5f, 12.2f, totalW * 0.5f - 4f, 3f);
+
         if (dual) {
-            put(marquee, clip, 3f, 12.6f, totalW * 0.48f, 2f, 0.11f, realClockText(), 0xFFFFFFFF);
-            put(notice, clip, 3f + totalW * 0.5f, 12.6f, totalW * 0.48f, 2f, 0.11f,
-                "感谢您的配合", 0xFFFFFFFF);
+            put(lab(14), barL, 3f, 12.5f, totalW * 0.5f - 4f, 2.4f, 0.20f, realClockText(),
+                0xFFFFFFFF);
+            put(lab(15), barR, 3f + totalW * 0.5f, 12.5f, totalW * 0.5f - 4f, 2.4f, 0.20f,
+                "感谢您的配合，尊敬的乘客。", 0xFFFFFFFF);
         } else {
-            put(marquee, clip, 3f, 12.6f, totalW - 2f, 2f, 0.11f, "感谢您的配合，尊敬的乘客。",
+            put(lab(14), barL, 3f, 12.5f, totalW - 2f, 2.4f, 0.20f, "感谢您的配合，尊敬的乘客。",
                 0xFFFFFFFF);
         }
     }
