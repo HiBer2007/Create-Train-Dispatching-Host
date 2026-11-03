@@ -182,16 +182,17 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         rects.add(new Rect(leftX, 2, 0f, leftW, bandH, accent));
         rects.add(new Rect(rightX, 2, 0f, rightW, bandH, blue));
 
-        // 左带：两行三字「本次列 / 车开往」，在左半格内居中；右半格放终点站
+        // 左带：两行三字「本次列 / 车开往」，左半格内居中且在带内纵向居中
         headLabel.horizontalAlign.set(ETextAlignment.CENTER);
         headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headLabel, clip, leftX, 1.9f, leftW * 0.52f, 2f, 0.16f, "本次列", onAccent);
-        put(headLabel2, clip, leftX, 3.7f, leftW * 0.52f, 2f, 0.16f, "车开往", onAccent);
+        float headLineH = 8f * 0.16f;
+        float headTop = 2 + (bandH - headLineH * 2f) / 2f;
+        put(headLabel, clip, leftX, headTop, leftW * 0.52f, headLineH + 0.4f, 0.16f, "本次列", onAccent);
+        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.52f, headLineH + 0.4f, 0.16f, "车开往", onAccent);
 
         headDest.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headDest, clip, leftX + leftW * 0.52f, 2.3f, leftW * 0.48f - 1f, 3f, 0.20f,
-            headDestText, onAccent);
-
+        put(headDest, clip, leftX + leftW * 0.52f, 2 + (bandH - 8f * 0.20f) / 2f,
+            leftW * 0.48f - 1f, 8f * 0.20f + 0.4f, 0.20f, headDestText, onAccent);
         float divTop = 2 + bandH + 6f;    // 第一条分割线
         rects.add(new Rect(leftX, divTop, 0.01f, leftW, 0.3f, divider));
 
@@ -207,18 +208,16 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         float row1 = divTop + 1.5f;
         nextLabel.horizontalAlign.set(ETextAlignment.LEFT);
         nextDest.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(nextLabel, clip, leftX + 1f, row1, leftW * 0.55f, 3f, 0.115f * k, "下一趟开往", 0xFF9AA5AD);
-        put(nextDest, clip, leftX + leftW * 0.4f, row1, leftW * 0.6f - 1f, 3f, 0.13f * k,
+        put(nextLabel, clip, leftX + 1f, row1, leftW * 0.55f, 4f, 0.15f * k, "下一趟开往", 0xFF9AA5AD);
+        put(nextDest, clip, leftX + leftW * 0.4f, row1, leftW * 0.6f - 1f, 4f, 0.21f * k,
             dest1 + "  " + min1 + " 分钟", 0xFFFFFFFF);
 
         float divMid = row1 + 4.5f;
         rects.add(new Rect(leftX, divMid, 0.01f, leftW, 0.3f, divider));
 
         float row2 = divMid + 1.5f;
-        thirdLabel.horizontalAlign.set(ETextAlignment.LEFT);
-        thirdDest.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(thirdLabel, clip, leftX + 1f, row2, leftW * 0.55f, 3f, 0.115f * k, "第三趟开往", 0xFF9AA5AD);
-        put(thirdDest, clip, leftX + leftW * 0.4f, row2, leftW * 0.6f - 1f, 3f, 0.13f * k,
+        put(thirdLabel, clip, leftX + 1f, row2, leftW * 0.55f, 4f, 0.15f * k, "第三趟开往", 0xFF9AA5AD);
+        put(thirdDest, clip, leftX + leftW * 0.4f, row2, leftW * 0.6f - 1f, 4f, 0.21f * k,
             dest2 + "  " + min2 + " 分钟", 0xFF66BB6A);
 
         nextMin.text.set(null);
