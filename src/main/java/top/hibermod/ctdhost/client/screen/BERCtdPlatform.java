@@ -230,11 +230,14 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             put(dest, clip, hx + 8.4f, 2 + (4f - 8f * 0.18f) / 2f, yellowW - 8.8f, 3f, 0.18f,
                 destText, contrastText(accent));
 
-            // 蓝带：4x1 站台 ID（线路色） / 2x1 时钟（右对齐）
+            // 蓝带：4x1 站台号（「1 站台」，线路色，字号同底栏）/ 2x1 时钟（右对齐）
             clockLab.horizontalAlign.set(dual ? ETextAlignment.CENTER : ETextAlignment.RIGHT);
-            String rightText = dual ? (i == 0 ? settings.platform() : settings.platform2()) : time;
-            put(clockLab, clip, hx + yellowW + 0.4f, 2 + (4f - 8f * 0.18f) / 2f,
-                halfW - yellowW - 0.8f, 3f, 0.18f, rightText,
+            float idScale = dual ? 0.30f : 0.24f;
+            String rightText = dual
+                ? (i == 0 ? settings.platform() : settings.platform2()) + " 站台"
+                : time;
+            put(clockLab, clip, hx + yellowW + 0.4f, 2 + (4f - 8f * idScale) / 2f,
+                halfW - yellowW - 0.8f, 3f, idScale, rightText,
                 dual ? accent.getAsARGB() : 0xFFFFFFFF);
 
             // 中部左：大字状态
@@ -275,7 +278,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         var barR = Rectangle.withSize(3f + totalW * 0.5f, 12.2f, totalW * 0.5f - 4f, 3f);
 
         if (dual) {
-            lab(14).horizontalAlign.set(ETextAlignment.CENTER);
+            lab(14).horizontalAlign.set(ETextAlignment.LEFT);
             put(lab(14), barL, 3f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.24f, realClockText(),
                 0xFFFFFFFF);
             lab(15).horizontalAlign.set(ETextAlignment.LEFT);
