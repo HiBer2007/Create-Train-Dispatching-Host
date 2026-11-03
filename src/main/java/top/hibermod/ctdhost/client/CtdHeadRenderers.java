@@ -1,12 +1,21 @@
 package top.hibermod.ctdhost.client;
 
+import com.simibubi.create.content.trains.signal.SignalRenderer;
+
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+
 /**
- * 灯头渲染器的懒注册。
+ * 方块实体渲染器的懒注册。
  *
- * <p>灯现在其实由**方块模型**画，这个渲染器只作为兜底。注册时机有个坑：
- * 在 mod 构造期调用时 {@code SIGNAL_HEAD_BE} 这个 DeferredHolder **还没绑定**，
- * 会抛 {@code Trying to access unbound value}。所以先判断 {@code isBound()}，
- * 没绑定就直接返回、不标记完成，等下一次（方块被加载时）再试。
+ * <p>两个坑：
+ * <ol>
+ *   <li>mod 构造期 {@code DeferredHolder} 还没绑定，{@code get()} 会抛
+ *       {@code Trying to access unbound value}，所以先 {@code isBound()}。</li>
+ *   <li>我们自己的 {@code ctd_signal} 用的是自己的 BE 类型，Create 的
+ *       {@code SignalRenderer} 只挂在它自己的 {@code TRACK_SIGNAL} 上，
+ *       于是「轨道上那块信号板」不会画出来。这里把 Create 的渲染器
+ *       复用到我们的 BE 类型上。</li>
+ * </ol>
  */
 public final class CtdHeadRenderers {
 
@@ -16,17 +25,28 @@ public final class CtdHeadRenderers {
 
     public static void ensureRegistered() {
         if (done) return;
-        if (!top.hibermod.ctdhost.block.CtdBlocks.SIGNAL_HEAD_BE.isBound()) {
-            return;                       // 还没注册完，下次再试
-        }
+        if (!top.hibermod.ctdhost.block.CtdBlocks.SIGNAL_HEAD_BE.isBound()) return;
+        if (!top.hibermod.ctdhost.block.CtdBlocks.CTD_SIGNAL_BE.isBound()) return;
         done = true;
+
+        var log = org.slf4j.LoggerFactory.getLogger("ctdhost");
         try {
-            net.minecraft.client.renderer.blockentity.BlockEntityRenderers.register(
+            BlockEntityRenderers.register(
                 top.hibermod.ctdhost.block.CtdBlocks.SIGNAL_HEAD_BE.get(),
                 CtdSignalHeadRenderer::new);
-            org.slf4j.LoggerFactory.getLogger("ctdhost").info("ctdhost: head renderer registered");
+            log.info("ctdhost: head renderer registered");
         } catch (Throwable t) {
-            org.slf4j.LoggerFactory.getLogger("ctdhost").warn("ctdhost: head renderer failed: {}", t.toString());
+            log.warn("ctdhost: head renderer failed: {}", t.toString());
+        }
+
+        try {
+            // 复用 Create 的信号机渲染器，让 ctd_signal 在轨道上也显示信号板。
+            BlockEntityRenderers.register(
+                top.hibermod.ctdhost.block.CtdBlocks.CTD_SIGNAL_BE.get(),
+                SignalRenderer::new);
+            log.info("ctdhost: signal block renderer registered");
+        } catch (Throwable t) {
+            log.warn("ctdhost: signal block renderer failed: {}", t.toString());
         }
     }
 }

@@ -1,5 +1,7 @@
 {
-  "display.createrailwaysnavigator.departure_board.ctd_board": "CTD Departure Board (CR style)",
+  "gui.ctdhost.line": "Line code",
+  "gui.ctdhost.line.description": "Shown in the top colour bar, e.g. Line 1, Line 11",
+"display.createrailwaysnavigator.departure_board.ctd_board": "CTD Departure Board (CR style)",
   "display.createrailwaysnavigator.passenger_information.ctd_car_lcd": "CTD Car LCD Map",
   "display.createrailwaysnavigator.passenger_information.ctd_car_scroll": "CTD Car Scrolling LED",
   "display.createrailwaysnavigator.train_destination.ctd_door_sign": "CTD Door Destination Sign",

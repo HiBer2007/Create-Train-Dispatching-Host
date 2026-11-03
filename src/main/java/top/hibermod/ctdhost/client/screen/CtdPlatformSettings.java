@@ -51,11 +51,17 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     private static final String NBT_SIGNAL_SYSTEM = "CtdSignalSystem";
     private static final String NBT_STATION = "CtdStation";
     private static final String NBT_PLATFORM = "CtdPlatform";
+    private static final String NBT_LINE = "CtdLineName";
+    private static final String NBT_LINE_COLOR = "CtdLineColor";
     private static final String NBT_CONTENT = "CtdContent";
 
     private String signalSystem = "";
     private String station = "";
     private String platform = "";
+    /** 线路代号，例如「1号线」「11号线」「广佛城际」；空串表示不显示。 */
+    private String lineName = "";
+    /** 线路颜色（ARGB）；0 表示按代号自动取色。 */
+    private int lineColor = 0;
     private Content content = Content.DEPARTURES;
 
     public CtdPlatformSettings() {
@@ -80,6 +86,22 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     }
 
     /** 站台号；站房类型留空。 */
+    public String lineName() {
+        return lineName;
+    }
+
+    public void setLineName(String value) {
+        lineName = value == null ? "" : value;
+    }
+
+    public int lineColor() {
+        return lineColor;
+    }
+
+    public void setLineColor(int value) {
+        lineColor = value;
+    }
+
     public String platform() {
         return platform;
     }
@@ -107,6 +129,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         signalSystem = nbt.getString(NBT_SIGNAL_SYSTEM);
         station = nbt.getString(NBT_STATION);
         platform = nbt.getString(NBT_PLATFORM);
+        lineName = nbt.getString(NBT_LINE);
+        lineColor = nbt.getInt(NBT_LINE_COLOR);
         content = Content.byId(nbt.getString(NBT_CONTENT));
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings loaded station=[{}] platform=[{}] sys=[{}]",
@@ -119,6 +143,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         nbt.putString(NBT_SIGNAL_SYSTEM, signalSystem);
         nbt.putString(NBT_STATION, station);
         nbt.putString(NBT_PLATFORM, platform);
+        nbt.putString(NBT_LINE, lineName);
+        nbt.putInt(NBT_LINE_COLOR, lineColor);
         nbt.putString(NBT_CONTENT, content.id());
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings saved station=[{}] platform=[{}] sys=[{}]",
@@ -133,6 +159,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         // 控件照抄 CRN 的 GuiBuilderWrapper.buildStaticTextGui（addLine(String) + CreateTextBox）。
         buildTextLine(context, "gui.ctdhost.station", station(), this::setStation);
         buildTextLine(context, "gui.ctdhost.platform", platform(), this::setPlatform);
+        buildTextLine(context, "gui.ctdhost.line", lineName(), this::setLineName);
         // 信号系统：用下拉选择（数据来自宿主同步过来的列表）。
         buildPickerLine(context, "gui.ctdhost.signal_system", signalSystem(), this::setSignalSystem);
         // 第一版不做自定义控件：先让类型能被选中、能渲染。
@@ -146,6 +173,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
             signalSystem = old.signalSystem;
             station = old.station;
             platform = old.platform;
+            lineName = old.lineName;
+            lineColor = old.lineColor;
             content = old.content;
         }
     }

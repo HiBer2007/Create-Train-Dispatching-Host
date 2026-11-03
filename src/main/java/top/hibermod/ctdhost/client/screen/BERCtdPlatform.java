@@ -18,20 +18,21 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * 站台 PIDS。背景默认透明（露出方块纹理），文字白色。
+ * 站台 PIDS。背景默认透明，文字白色。
  *
  * <pre>
- *   带 0   开往 体育西路                        （灰白小字）
- *   带 1   本次  3 分钟                         （数字最大，红色）
- *   带 2   下次 11 分钟
- *   带 3   下一站 … · 发车 · 请站在安全线以内候车
+ *   带 0  【1号线】 开往 体育西路              （线路色 + 灰白小字）
+ *   带 1  本次  3 分钟                        （数字最大，红色）
+ *   带 2  下次 11 分钟
+ *   带 3  下一站 … · 发车 · 请站在安全线以内候车
  * </pre>
  *
- * 带 1 里「本次」「数字」「分钟」共用同一条<b>基线</b>，因此三者的底部对齐，
- * 不会出现「分钟」掉到下一行的情况。
+ * 尺寸约定：3x2（48×32）时四带刚好铺满；2x2 及更矮时底栏改为滚动，
+ * 所有文字都在 clippingArea 内，不会溢到方块外。
  */
 public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatformSettings> {
 
+    private final BERLabel lineLabel = new BERLabel();
     private final BERLabel header = new BERLabel();
     private final BERLabel caption = new BERLabel();
     private final BERLabel minutes = new BERLabel();
@@ -40,8 +41,10 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final BERLabel footer = new BERLabel();
 
     public BERCtdPlatform() {
+        lineLabel.horizontalAlign.set(ETextAlignment.LEFT);
+        lineLabel.color.set(DLColor.fromInt(0xFF42A5F5));
         header.horizontalAlign.set(ETextAlignment.LEFT);
-        header.color.set(DLColor.fromInt(0xFFB0BEC5));
+        header.color.set(DLColor.fromInt(0xFFCFD8DC));
         caption.horizontalAlign.set(ETextAlignment.LEFT);
         caption.color.set(DLColor.fromInt(0xFFECEFF1));
         minutes.horizontalAlign.set(ETextAlignment.LEFT);
@@ -52,12 +55,14 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         nextRow.color.set(DLColor.fromInt(0xFFFFFFFF));
         footer.horizontalAlign.set(ETextAlignment.LEFT);
         footer.color.set(DLColor.fromInt(0xFF9E9E9E));
-        footer.horizontalScrollMode.set(EScrollMode.FLEX_FIT);
     }
 
     @Override
     public void render(BERGraphics<AdvancedDisplayBlockEntity> graphics, float partialTicks,
                        AdvancedDisplayRenderInstance parent, int light, boolean backSide) {
+        // 首次渲染时注册方块实体渲染器：那时 DeferredHolder 已经绑定。
+        top.hibermod.ctdhost.client.CtdHeadRenderers.ensureRegistered();
+        lineLabel.render(graphics, light);
         header.render(graphics, light);
         caption.render(graphics, light);
         minutes.render(graphics, light);
@@ -101,53 +106,86 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             nextMins = String.valueOf(Math.max(0, t2 / 20 / 60));
         }
 
-        // 1 格高：只放「开往 X」与倒计时。
+        // 1 格高：只放「线路 + 开往」与倒计时。
         if (h < 24f) {
-            float sHead = Math.min(0.45f, w / 60f);
-            float sBig = Math.min(0.95f, Math.min(w / 42f, h / 17f));
+            float sHead = Math.min(0.42f, w / 62f);
+            float sBig = Math.min(0.92f, Math.min(w / 44f, h / 18f));
             float base = CtdLayout.baseline(1, h - 2, sBig);
-            place(header, area, w, 1, h * 0.32f, sHead, "开往 " + dest, false);
+
+            String line = settings.lineName();
+            float x = 2;
+            if (!line.isEmpty()) {
+                lineLabel.clippingArea.set(area);
+                lineLabel.text.set(TextUtils.text("【" + line + "】"));
+                lineLabel.preferredWidth.set((float) Math.max(1, w * 0.55f));
+                lineLabel.position.set(Point.of(x, base));
+                setScale(lineLabel, sHead);
+                lineLabel.color.set(lineColor(settings));
+                x += CtdLayout.width("【" + line + "】", sHead) + 3;
+            } else {
+                lineLabel.text.set(null);
+            }
+
+            header.clippingArea.set(area);
+            header.text.set(TextUtils.text("开往 " + dest));
+            header.preferredWidth.set((float) Math.max(1, w - x - 1));
+            header.position.set(Point.of(x, base));
+            setScale(header, sHead);
+
             minutes.clippingArea.set(area);
             minutes.text.set(TextUtils.text(mins));
             minutes.preferredWidth.set((float) Math.max(1, w - 2));
             minutes.position.set(Point.of(2, base));
-            minutes.horizontalMinScale.set(sBig);
-            minutes.horizontalMaxScale.set(sBig);
-            minutes.verticalMinScale.set(sBig);
-            minutes.verticalMaxScale.set(sBig);
+            setScale(minutes, sBig);
+
             float mx = 2 + CtdLayout.width(mins, sBig) + 2;
             unit.clippingArea.set(area);
             unit.text.set(TextUtils.text("分钟"));
             unit.preferredWidth.set((float) Math.max(1, w - mx - 1));
             unit.position.set(Point.of(mx, base));
-            unit.horizontalMinScale.set(sHead);
-            unit.horizontalMaxScale.set(sHead);
-            unit.verticalMinScale.set(sHead);
-            unit.verticalMaxScale.set(sHead);
+            setScale(unit, sHead);
+
             caption.text.set(null);
             nextRow.text.set(null);
             footer.text.set(null);
             return;
         }
 
-        float b0 = h * 0.15f;
-        float b1 = h * 0.32f;
-        float b2 = h * 0.18f;
-        float b3 = h * 0.14f;
+        // 四带：合计 0.78h，其余留白，3x2 刚好。
+        float b0 = h * 0.12f;
+        float b1 = h * 0.30f;
+        float b2 = h * 0.16f;
+        float b3 = h * 0.20f;
 
-        float s0 = CtdLayout.fit(b0, 0.58f);
-        float sSmall = CtdLayout.fit(b2, 0.72f);
-        float sBig = CtdLayout.fit(b1, 1.25f);
+        float s0 = CtdLayout.fit(b0, 0.55f);
+        float sSmall = CtdLayout.fit(b2, 0.70f);
+        float sBig = CtdLayout.fit(b1, 1.20f);
 
         float base0 = CtdLayout.baseline(1, b0, s0);
         float base1 = CtdLayout.baseline(1 + b0, b1, sBig);
         float base2 = CtdLayout.baseline(1 + b0 + b1, b2, sSmall);
-        float base3 = CtdLayout.baseline(1 + b0 + b1 + b2, b3, CtdLayout.fit(b3, 0.52f));
 
-        place(header, area, w, 1, b0, s0, "开往 " + dest
-            + (settings.platform().isEmpty() ? "" : "    " + settings.platform() + " 站台"), false);
+        String line = settings.lineName();
+        float x0 = 2;
+        if (!line.isEmpty()) {
+            lineLabel.clippingArea.set(area);
+            lineLabel.text.set(TextUtils.text("【" + line + "】"));
+            lineLabel.preferredWidth.set((float) Math.max(1, w * 0.55f));
+            lineLabel.position.set(Point.of(x0, base0));
+            setScale(lineLabel, s0);
+            lineLabel.color.set(lineColor(settings));
+            x0 += CtdLayout.width("【" + line + "】", s0) + 3;
+        } else {
+            lineLabel.text.set(null);
+        }
 
-        // 本次 + 数字 + 分钟，三者同基线
+        header.clippingArea.set(area);
+        header.text.set(TextUtils.text("开往 " + dest
+            + (settings.platform().isEmpty() ? "" : "   " + settings.platform() + " 站台")));
+        header.preferredWidth.set((float) Math.max(1, w - x0 - 1));
+        header.position.set(Point.of(x0, base0));
+        setScale(header, s0);
+
         caption.clippingArea.set(area);
         caption.text.set(TextUtils.text("本次"));
         caption.preferredWidth.set((float) Math.max(1, w - 2));
@@ -168,11 +206,34 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         unit.position.set(Point.of(unitX, base1));
         setScale(unit, sSmall);
 
-        place(nextRow, area, w, 1 + b0 + b1, b2, sSmall, "下次   " + nextMins + " 分钟", false);
+        nextRow.clippingArea.set(area);
+        nextRow.text.set(TextUtils.text("下次   " + nextMins + " 分钟"));
+        nextRow.preferredWidth.set((float) Math.max(1, w - 3));
+        nextRow.position.set(Point.of(2, CtdLayout.baseline(1 + b0 + b1, b2, sSmall)));
+        setScale(nextRow, sSmall);
 
-        place(footer, area, w, 1 + b0 + b1 + b2, b3, CtdLayout.fit(b3, 0.52f),
-            "下一站 " + dest + "  ·  " + contentLabel(settings.content()) + "  ·  请站在安全线以内候车", false);
-        footer.position.set(Point.of(2, base3));
+        // 底栏：3x2 及以上缩放显示，2x2 及更矮改为滚动。
+        boolean marquee = h < 32f;
+        footer.horizontalScrollMode.set(marquee ? EScrollMode.ALWAYS : EScrollMode.FLEX_FIT);
+        footer.clippingArea.set(area);
+        footer.text.set(TextUtils.text("下一站 " + dest + "  ·  "
+            + contentLabel(settings.content()) + "  ·  请站在安全线以内候车"));
+        footer.preferredWidth.set((float) Math.max(1, w - 4));
+        footer.position.set(Point.of(2, CtdLayout.baseline(1 + b0 + b1 + b2, b3, CtdLayout.fit(b3, 0.55f))));
+        setScale(footer, CtdLayout.fit(b3, 0.55f));
+    }
+
+    /** 线路色：用户设了就用用户的，否则按代号自动挑一个地铁常见的色。 */
+    static DLColor lineColor(CtdPlatformSettings settings) {
+        if (settings.lineColor() != 0) return DLColor.fromInt(settings.lineColor());
+        String key = settings.lineName();
+        int hash = key == null ? 0 : key.hashCode();
+        int[] palette = {
+            0xFFE53935, 0xFF1E88E5, 0xFFFDD835, 0xFF43A047,
+            0xFF8E24AA, 0xFFFB8C00, 0xFF00ACC1, 0xFF6D4C41
+        };
+        int idx = Math.floorMod(hash, palette.length);
+        return DLColor.fromInt(palette[idx]);
     }
 
     private static void setScale(BERLabel label, float s) {
@@ -180,15 +241,6 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         label.horizontalMaxScale.set(s);
         label.verticalMinScale.set(s);
         label.verticalMaxScale.set(s);
-    }
-
-    private static void place(BERLabel label, Rectangle area, float w,
-                              float bandTop, float bandHeight, float scale, String text, boolean unused) {
-        label.clippingArea.set(area);
-        label.text.set(TextUtils.text(text));
-        label.preferredWidth.set((float) Math.max(1, w - 3));
-        label.position.set(Point.of(2, CtdLayout.baseline(bandTop, bandHeight, scale)));
-        setScale(label, scale);
     }
 
     static String contentLabel(CtdPlatformSettings.Content content) {
