@@ -55,6 +55,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final BERLabel headLabel = new BERLabel();
     private final BERLabel headLabel2 = new BERLabel();
     private final BERLabel headDest = new BERLabel();
+    private String headLine2Text = "车开往";
     private final BERLabel status = new BERLabel();
     private final BERLabel nextLabel = new BERLabel();
     private final BERLabel nextDest = new BERLabel();
@@ -123,6 +124,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         boolean waiting = blockEntity.isWaitingAtStation();
         boolean noBoard = blockEntity instanceof CtdHoldAccess acc && acc.ctdgetNoBoarding();
         String noticeText = blockEntity instanceof CtdHoldAccess acc2 ? acc2.ctdgetNotice() : "";
+        boolean loopExit = blockEntity instanceof CtdHoldAccess acc3 && acc3.ctdgetLoopExit();
 
         clear();
 
@@ -133,15 +135,23 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         String min2 = minutesOf(stops, now, 2);
         String headDestText = settings.lineMode() == CtdPlatformSettings.LineMode.NORMAL
             ? dest0 : settings.lineMode().zh();
+        boolean loop = settings.lineMode() != CtdPlatformSettings.LineMode.NORMAL;
+        if (loop) {
+            headDestText = loopExit ? dest0 : settings.lineMode().zh();
+        }
+        String headLabelText = loop && !loopExit ? "本次列车方向" : "本次列车开往";
+        headLine2Text = loop && !loopExit ? "车方向" : "车开往";
+        String nextLabelText = loop && !loopExit ? "下一趟方向" : "下一趟开往";
+        String thirdLabelText = loop && !loopExit ? "第三趟方向" : "第三趟开往";
 
         if (bw >= 3 && bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 19f, 46f, 1.0f, stops, now, noBoard, noticeText);
+                currentClock(lvl), 19f, 46f, 1.0f, stops, now, noBoard, noticeText, headLabelText, nextLabelText, thirdLabelText);
             return;
         }
         if (bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 13f, 30f, 0.84f, stops, now, noBoard, noticeText);
+                currentClock(lvl), 13f, 30f, 0.84f, stops, now, noBoard, noticeText, headLabelText, nextLabelText, thirdLabelText);
             return;
         }
 
@@ -160,7 +170,8 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
                            String min1, String min2, String time,
                            float leftRightEdge, float panelRightEdge, float k,
                            java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops, long now,
-                           boolean noBoard, String noticeText) {
+                           boolean noBoard, String noticeText,
+                           String headLabelText, String nextLabelText, String thirdLabelText) {
 
         DLColor accent = lineColor(settings);
         DLColor blue = DLColor.fromInt(0xFF1E4FA3);
@@ -189,8 +200,8 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         float headLineH = 8f * 0.18f;
         float headTop = 2 + (bandH - headLineH * 2f) / 2f;
         put(headLabel, clip, leftX, headTop, leftW * 0.52f, headLineH + 0.4f, 0.18f, "本次列", onAccent);
-        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.52f, headLineH + 0.4f, 0.18f, "车开往", onAccent);
-
+        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.52f, headLineH + 0.4f, 0.18f,
+            headLine2Text, onAccent);
         headDest.horizontalAlign.set(ETextAlignment.CENTER);
         put(headDest, clip, leftX + leftW * 0.52f, 2 + (bandH - 8f * 0.23f) / 2f,
             leftW * 0.48f - 1f, 8f * 0.23f + 0.4f, 0.23f, headDestText, onAccent);
@@ -211,7 +222,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         float row1 = divTop;
         nextLabel.horizontalAlign.set(ETextAlignment.LEFT);
         nextDest.horizontalAlign.set(ETextAlignment.LEFT);
-        put(nextLabel, clip, leftX + 1f, row1 + 0.8f, leftW - 2f, 3f, 0.18f * k, "下一趟开往", 0xFF9AA5AD);
+        put(nextLabel, clip, leftX + 1f, row1 + 0.8f, leftW - 2f, 3f, 0.18f * k, nextLabelText, 0xFF9AA5AD);
         put(nextDest, clip, leftX + 2f, row1 + 4.6f, leftW * 0.5f, 3f, 0.19f * k,
             dest1, 0xFFFFFFFF);
 
@@ -223,7 +234,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         rects.add(new Rect(leftX, divMid, 0.01f, leftW, 0.3f, divider));
 
         float row2 = divMid;
-        put(thirdLabel, clip, leftX + 1f, row2 + 0.8f, leftW - 2f, 3f, 0.18f * k, "第三趟开往", 0xFF9AA5AD);
+        put(thirdLabel, clip, leftX + 1f, row2 + 0.8f, leftW - 2f, 3f, 0.18f * k, thirdLabelText, 0xFF9AA5AD);
         put(thirdDest, clip, leftX + 2f, row2 + 4.6f, leftW * 0.5f, 3f, 0.19f * k,
             dest2, 0xFF66BB6A);
 

@@ -35,6 +35,10 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
     @Unique
     private String ctdNotice = "";
 
+    /** 环线车即将退出运营（调度指示）。 */
+    @Unique
+    private boolean ctdLoopExit = false;
+
     @Override
     public String ctdgetHold() {
         return ctdHold;
@@ -58,6 +62,14 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
     @Override
     public void ctdsetNoBoarding(boolean v) {
         ctdNoBoarding = v;
+    }
+
+    @Override
+    public boolean ctdgetLoopExit() {
+        return ctdLoopExit;
+    }
+    public void ctdsetLoopExit(boolean v) {
+        ctdLoopExit = v;
     }
 
     @Override
@@ -85,6 +97,7 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
         tag.putString("CtdSignalSystems", ctdSignalSystems);
         tag.putBoolean("CtdNoBoarding", ctdNoBoarding);
         tag.putString("CtdNotice", ctdNotice);
+        tag.putBoolean("CtdLoopExit", ctdLoopExit);
     }
 
     @Inject(method = "loadAdditional", at = @At("TAIL"), require = 0)
@@ -93,6 +106,7 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
         ctdSignalSystems = tag.getString("CtdSignalSystems");
         ctdNoBoarding = tag.getBoolean("CtdNoBoarding");
         ctdNotice = tag.getString("CtdNotice");
+        ctdLoopExit = tag.getBoolean("CtdLoopExit");
     }
 
     @Inject(method = "getUpdateTag", at = @At("RETURN"), require = 0)
@@ -104,6 +118,7 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
             tag.putString("CtdSignalSystems", ctdSignalSystems);
         tag.putBoolean("CtdNoBoarding", ctdNoBoarding);
         tag.putString("CtdNotice", ctdNotice);
+        tag.putBoolean("CtdLoopExit", ctdLoopExit);
         }
     }
 
@@ -114,6 +129,7 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
         ctdSignalSystems = tag.getString("CtdSignalSystems");
         ctdNoBoarding = tag.getBoolean("CtdNoBoarding");
         ctdNotice = tag.getString("CtdNotice");
+        ctdLoopExit = tag.getBoolean("CtdLoopExit");
 
         AdvancedDisplayBlockEntity self = (AdvancedDisplayBlockEntity) (Object) this;
         if (self.getLevel() != null && self.getLevel().isClientSide && !ctdSignalSystems.isEmpty()) {
@@ -141,6 +157,14 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
         String wantSys = sb.toString();
         if (!wantSys.equals(ctdSignalSystems)) {
             ctdSignalSystems = wantSys;
+            self.setChanged();
+            level.sendBlockUpdated(self.getBlockPos(), self.getBlockState(), self.getBlockState(), 3);
+        }
+
+        boolean loopExit = top.hibermod.ctdapi.status.LoopExits
+            .isExiting(s.station(), s.platform());
+        if (loopExit != ctdLoopExit) {
+            ctdLoopExit = loopExit;
             self.setChanged();
             level.sendBlockUpdated(self.getBlockPos(), self.getBlockState(), self.getBlockState(), 3);
         }
