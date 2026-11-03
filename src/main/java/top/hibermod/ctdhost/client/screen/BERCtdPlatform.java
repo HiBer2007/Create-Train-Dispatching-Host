@@ -338,7 +338,6 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         put(thirdMin, clip, leftX + leftW * 0.5f, row2 + 3.4f, leftW * 0.5f - 2f, 3f, 0.19f,
             min2 + " 分钟", 0xFFECE682);
 
-        clock.text.set(null);
         notice.text.set(null);
         marquee.text.set(null);
     }
