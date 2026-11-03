@@ -18,30 +18,38 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * 站台 PIDS。左右两栏，照参考图：
+ * 站台 PIDS：左右两栏 + 分割线，全部组件独立绘制。
  *
  * <pre>
- * +----------------+------------------------+
- * | 本次列车开往 海傍| 12:34                  |  左：黄带；右：蓝带时间
- * | 列车进站        |                        |
- * | 下一趟开往 海傍  |     通知与提示区        |
- * | 2 分钟          |                        |
- * | 第三趟开往 番禺  |                        |
- * | 5 分钟          | 滚动固定提示区          |  右下：蓝带滚动
- * +----------------+------------------------+
+ * +------------------+---------------------------+
+ * | 本次列车开往 海傍 |                    12:34 |  左黄带 / 右蓝带
+ * +------------------+---------------------------+
+ * | 列车进站                                     |
+ * +------------------+---------------------------+
+ * | 下一趟开往                                   |
+ * | 海傍     2 分钟    |      通知与提示区         |
+ * +------------------+---------------------------+
+ * | 第三趟开往                                   |
+ * | 番禺广场 5 分钟    |                           |
+ * +------------------+---------------------------+
+ * |                   滚动固定提示区             |  底部蓝带
+ * +----------------------------------------------+
  * </pre>
  *
- * 环线（{@code LineMode != NORMAL}）时左带显示「内环 / 外环」而不是终点站；
- * 若该趟车终点站与环别的默认终点不同（小交路、回库车），仍显示「开往 终点站」。
- *
- * <p>坐标：{@code BERLabel.position} 是方框左上角，字向下画，行高 8×scale。
- * 字号按参考富文本标定：0.30 ≈ 正常小字（汉字 9px×0.30 = 2.7px）。
+ * 坐标系：{@code position} 是方框左上角，字向下画，行高 8×scale；
+ * 分割线用高度 0.6px 的实心条绘制。
  */
 public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatformSettings> {
 
-    private final BERLabel leftStrip = new BERLabel();
-    private final BERLabel leftHead = new BERLabel();
-    private final BERLabel leftDest = new BERLabel();
+    private final BERLabel stripLeft = new BERLabel();
+    private final BERLabel stripTopRight = new BERLabel();
+    private final BERLabel stripBottom = new BERLabel();
+    private final BERLabel div1 = new BERLabel();
+    private final BERLabel div2 = new BERLabel();
+    private final BERLabel div3 = new BERLabel();
+
+    private final BERLabel headLabel = new BERLabel();
+    private final BERLabel headDest = new BERLabel();
     private final BERLabel status = new BERLabel();
     private final BERLabel nextLabel = new BERLabel();
     private final BERLabel nextDest = new BERLabel();
@@ -50,28 +58,28 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final BERLabel thirdDest = new BERLabel();
     private final BERLabel thirdMin = new BERLabel();
 
-    private final BERLabel rightStripTop = new BERLabel();
     private final BERLabel clock = new BERLabel();
     private final BERLabel notice = new BERLabel();
-    private final BERLabel rightStripBottom = new BERLabel();
     private final BERLabel marquee = new BERLabel();
 
+    private static final BERLabel[] ALL_STRIPS = new BERLabel[6];
+
     public BERCtdPlatform() {
-        setup(leftHead, ETextAlignment.LEFT, 0xFFFFFFFF);
-        setup(leftDest, ETextAlignment.RIGHT, 0xFFFFFFFF);
+        setup(headLabel, ETextAlignment.LEFT, 0xFFFFFFFF);
+        setup(headDest, ETextAlignment.RIGHT, 0xFFFFFFFF);
         setup(status, ETextAlignment.LEFT, 0xFFFFFFFF);
-        setup(nextLabel, ETextAlignment.LEFT, 0xFFCFD8DC);
+        setup(nextLabel, ETextAlignment.LEFT, 0xFF9AA5AD);
         setup(nextDest, ETextAlignment.LEFT, 0xFFFFFFFF);
         setup(nextMin, ETextAlignment.LEFT, 0xFFECEFF1);
-        setup(thirdLabel, ETextAlignment.LEFT, 0xFFCFD8DC);
+        setup(thirdLabel, ETextAlignment.LEFT, 0xFF9AA5AD);
         setup(thirdDest, ETextAlignment.LEFT, 0xFF66BB6A);
         setup(thirdMin, ETextAlignment.LEFT, 0xFFECEFF1);
-        setup(clock, ETextAlignment.LEFT, 0xFFFFFFFF);
-        setup(notice, ETextAlignment.LEFT, 0xFFB0BEC5);
+        setup(clock, ETextAlignment.RIGHT, 0xFFFFFFFF);
+        setup(notice, ETextAlignment.LEFT, 0xFF9AA5AD);
         setup(marquee, ETextAlignment.LEFT, 0xFFFFFFFF);
         marquee.horizontalScrollMode.set(EScrollMode.ALWAYS);
 
-        for (BERLabel l : new BERLabel[]{leftStrip, rightStripTop, rightStripBottom}) {
+        for (BERLabel l : new BERLabel[]{stripLeft, stripTopRight, stripBottom, div1, div2, div3}) {
             l.fullBackground.set(true);
             l.verticalScrollMode.set(EScrollMode.NEVER);
         }
@@ -88,12 +96,15 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     public void render(BERGraphics<AdvancedDisplayBlockEntity> graphics, float partialTicks,
                        AdvancedDisplayRenderInstance parent, int light, boolean backSide) {
         top.hibermod.ctdhost.client.CtdHeadRenderers.ensureRegistered();
-
-        for (BERLabel l : new BERLabel[]{leftStrip, rightStripTop, rightStripBottom,
-                leftHead, leftDest, status, nextLabel, nextDest, nextMin,
-                thirdLabel, thirdDest, thirdMin, clock, notice, marquee}) {
+        for (BERLabel l : all()) {
             if (l.text.get() != null) l.render(graphics, light);
         }
+    }
+
+    private BERLabel[] all() {
+        return new BERLabel[]{stripLeft, stripTopRight, stripBottom, div1, div2, div3,
+            headLabel, headDest, status, nextLabel, nextDest, nextMin,
+            thirdLabel, thirdDest, thirdMin, clock, notice, marquee};
     }
 
     @Override
@@ -111,8 +122,6 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         Rectangle area = Rectangle.withSize(0, 0, bw * 16, bh * 16);
 
         var stops = blockEntity.getStops();
-        DLColor accent = lineColor(settings);
-        DLColor blue = DLColor.fromInt(0xFF1E4FA3);
         boolean waiting = blockEntity.isWaitingAtStation();
 
         clear();
@@ -120,82 +129,94 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         String dest0 = nameOf(stops, 0);
         String dest1 = nameOf(stops, 1);
         String dest2 = nameOf(stops, 2);
-        String min0 = minutesOf(stops, now, 0);
         String min1 = minutesOf(stops, now, 1);
         String min2 = minutesOf(stops, now, 2);
-
-        // 环线：默认显示环别；小交路/回库（终点站与环别不符）仍显示终点站
-        String headDest = dest0;
-        if (settings.lineMode() != CtdPlatformSettings.LineMode.NORMAL && !isShortRouting(stops)) {
-            headDest = settings.lineMode().zh();
-        }
-
-        String time = currentClock(lvl);
+        String headDestText = settings.lineMode() == CtdPlatformSettings.LineMode.NORMAL
+            ? dest0 : settings.lineMode().zh();
 
         if (bw >= 3 && bh >= 2) {
-            layout(area, 20f, 48f,
-                accent, blue, time, waiting, headDest, dest1, dest2, min1, min2, 0.30f);
+            twoColumn(area, 20f, 48f, settings, waiting, headDestText, dest1, dest2, min1, min2,
+                currentClock(lvl));
             return;
         }
-
         if (bh >= 2) {
-            layout(area, 14f, 32f,
-                accent, blue, time, waiting, headDest, dest1, dest2, min1, min2, 0.24f);
+            twoColumn(area, 14f, 32f, settings, waiting, headDestText, dest1, dest2, min1, min2,
+                currentClock(lvl));
             return;
         }
 
-        // 1 格高：暂为简版（屏蔽门上方版式稍后另做）
-        paintStrip(leftStrip, area, 0, 0, bw * 16, 5, accent);
-        put(leftHead, area, 2, 1f, bw * 16 - 4, 3, 0.24f, headDest, 0xFFFFFFFF);
-        put(status, area, 2, 6f, bw * 16 - 4, 6, 0.46f, min0 + " 分钟", 0xFFFF5252);
+        // 单格高：屏蔽门上方简版（后续按实拍另做）
+        paint(stripLeft, area, 0, 0, bw * 16f, 5f, lineColor(settings));
+        put(headLabel, area, 1.5f, 1f, bw * 16f - 3f, 3f, 0.22f, headDestText, 0xFFFFFFFF);
+        put(status, area, 1.5f, 6.5f, bw * 16f - 3f, 5f, 0.36f,
+            minutesOf(stops, now, 0) + " 分钟", 0xFFFF5252);
     }
 
-    /** 左右两栏布局。leftW 为左栏宽，全部坐标按参考图比例写死。 */
-    private void layout(Rectangle area, float leftW, float panelW,
-                        DLColor accent, DLColor blue, String time, boolean waiting,
-                        String headDest, String dest1, String dest2,
-                        String min1, String min2, float base) {
+    /** 左右两栏，所有坐标写死。 */
+    private void twoColumn(Rectangle area, float leftW, float panelW,
+                           CtdPlatformSettings settings, boolean waiting,
+                           String headDestText, String dest1, String dest2,
+                           String min1, String min2, String time) {
 
-        float band = 6f;
+        DLColor accent = lineColor(settings);
+        DLColor blue = DLColor.fromInt(0xFF1E4FA3);
+        DLColor divider = DLColor.fromInt(0xFF3A3F44);
+
         float rightX = leftW + 1f;
         float rightW = panelW - rightX - 1f;
+        float bandH = 5f;
+        float s = panelW >= 48 ? 1.0f : 0.86f;   // 2x2 相对 3x2 略小
 
-        // ── 左栏 ──
-        paintStrip(leftStrip, area, 0, 0, leftW, band, accent);
-        put(leftHead, area, 1.5f, 1f, leftW * 0.55f, 4, base * 0.72f, "本次列车开往", 0xFFFFFFFF);
-        put(leftDest, area, leftW * 0.5f, 1f, leftW * 0.5f - 2f, 4, base * 0.80f, headDest, 0xFFFFFFFF);
+        // 顶部两条带
+        paint(stripLeft, area, 0, 0, leftW, bandH, accent);
+        paint(stripTopRight, area, rightX, 0, rightW, bandH, blue);
 
-        put(status, area, 1.5f, band + 1f, leftW - 3f, 6, base * 1.55f,
+        // 左栏
+        put(headLabel, area, 1.2f, 1f, leftW * 0.52f, 3f, 0.15f * s + 0.02f, "本次列车开往", 0xFFFFFFFF);
+        put(headDest, area, leftW * 0.52f, 1f, leftW * 0.48f - 1.5f, 3f, 0.17f * s + 0.02f,
+            headDestText, 0xFFFFFFFF);
+
+        put(status, area, 1.2f, bandH + 1.5f, leftW - 2.4f, 5f, 0.32f * s,
             waiting ? "列车进站" : "本次列车", 0xFFFFFFFF);
 
-        put(nextLabel, area, 1.5f, band + 8f, leftW - 3f, 3, base * 0.70f, "下一趟开往", 0xFFCFD8DC);
-        put(nextDest, area, 1.5f, band + 12f, leftW - 3f, 4, base * 0.90f, dest1, 0xFFFFFFFF);
-        put(nextMin, area, 1.5f, band + 16f, leftW - 3f, 4, base * 0.85f, min1 + " 分钟", 0xFFECEFF1);
+        paint(div1, area, 0, bandH + 7.5f, leftW, 0.6f, divider);
 
-        put(thirdLabel, area, 1.5f, band + 20f, leftW - 3f, 3, base * 0.70f, "第三趟开往", 0xFFCFD8DC);
-        put(thirdDest, area, 1.5f, band + 24f, leftW - 3f, 4, base * 0.90f, dest2, 0xFF66BB6A);
-        put(thirdMin, area, 1.5f, band + 28f, leftW - 3f, 4, base * 0.85f, min2 + " 分钟", 0xFFECEFF1);
+        put(nextLabel, area, 1.2f, bandH + 8.5f, leftW - 2.4f, 3f, 0.14f * s + 0.02f,
+            "下一趟开往", 0xFF9AA5AD);
+        put(nextDest, area, 1.2f, bandH + 11.5f, leftW - 2.4f, 3f, 0.17f * s + 0.02f,
+            dest1, 0xFFFFFFFF);
+        put(nextMin, area, 1.2f, bandH + 14.5f, leftW - 2.4f, 3f, 0.16f * s + 0.02f,
+            min1 + " 分钟", 0xFFECEFF1);
 
-        // ── 右栏 ──
-        paintStrip(rightStripTop, area, rightX, 0, rightW, band, blue);
-        put(clock, area, rightX + 1.5f, 1f, rightW - 3f, 4, base * 0.75f, time, 0xFFFFFFFF);
+        paint(div2, area, 0, bandH + 18f, leftW, 0.6f, divider);
 
-        put(notice, area, rightX + 1.5f, band + 8f, rightW - 3f, 8, base * 0.70f,
-            "通知与提示区", 0xFFB0BEC5);
+        put(thirdLabel, area, 1.2f, bandH + 19f, leftW - 2.4f, 3f, 0.14f * s + 0.02f,
+            "第三趟开往", 0xFF9AA5AD);
+        put(thirdDest, area, 1.2f, bandH + 22f, leftW - 2.4f, 3f, 0.17f * s + 0.02f,
+            dest2, 0xFF66BB6A);
+        put(thirdMin, area, 1.2f, bandH + 25f, leftW - 2.4f, 3f, 0.16f * s + 0.02f,
+            min2 + " 分钟", 0xFFECEFF1);
 
-        paintStrip(rightStripBottom, area, rightX, 28f, rightW, 4f, blue);
-        put(marquee, area, rightX + 1.5f, 28.5f, rightW - 3f, 3f, base * 0.60f,
+        // 右栏
+        put(clock, area, rightX + 1.2f, 1f, rightW - 2.4f, 3f, 0.16f * s + 0.02f, time, 0xFFFFFFFF);
+        put(notice, area, rightX + 1.2f, 12f, rightW - 2.4f, 4f, 0.14f * s + 0.02f,
+            "通知与提示区", 0xFF9AA5AD);
+
+        paint(stripBottom, area, rightX, 28f, rightW, 4f, blue);
+        put(marquee, area, rightX + 1.2f, 28.5f, rightW - 2.4f, 3f, 0.13f * s + 0.02f,
             "感谢您的配合，尊敬的乘客。", 0xFFFFFFFF);
+
+        paint(div3, area, rightX, bandH, rightW, 0.6f, divider);
     }
 
     // ── 原语 ──────────────────────────────────────────────────────────
 
-    private static void paintStrip(BERLabel strip, Rectangle area, float x, float y,
-                                   float w, float h, DLColor color) {
+    private static void paint(BERLabel strip, Rectangle area, float x, float y,
+                              float w, float h, DLColor color) {
         strip.clippingArea.set(area);
         strip.text.set(TextUtils.text(" "));
         strip.preferredWidth.set(Math.max(1f, w));
-        strip.preferredHeight.set(Math.max(1f, h));
+        strip.preferredHeight.set(Math.max(0.2f, h));
         strip.position.set(Point.of(x, y));
         strip.horizontalMinScale.set(0.1f);
         strip.horizontalMaxScale.set(0.1f);
@@ -210,7 +231,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         label.clippingArea.set(area);
         label.text.set(TextUtils.text(content));
         label.preferredWidth.set(Math.max(1f, w));
-        label.preferredHeight.set(Math.max(1f, h));
+        label.preferredHeight.set(Math.max(0.2f, h));
         label.position.set(Point.of(x, y));
         label.horizontalMinScale.set(s);
         label.horizontalMaxScale.set(s);
@@ -220,27 +241,6 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     }
 
     // ── 数据 ──────────────────────────────────────────────────────────
-
-    /** 小交路/回库：该趟车终点站与环线默认终点不同。 */
-    private static boolean isShortRouting(java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops) {
-        return stops.isEmpty() || stops.get(0).terminus();
-    }
-
-    private static String currentClock(Level level) {
-        if (level == null) return "--:--";
-        long dayTime = level.getDayTime() % 24000L;
-        long hours = (dayTime / 1000L + 6L) % 24L;
-        long minutes = (dayTime % 1000L) * 60L / 1000L;
-        return String.format("%02d:%02d", hours, minutes);
-    }
-
-    private void clear() {
-        for (BERLabel l : new BERLabel[]{leftStrip, rightStripTop, rightStripBottom,
-                leftHead, leftDest, status, nextLabel, nextDest, nextMin,
-                thirdLabel, thirdDest, thirdMin, clock, notice, marquee}) {
-            l.text.set(null);
-        }
-    }
 
     private static String nameOf(java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops, int i) {
         if (i >= stops.size()) return "—";
@@ -255,6 +255,18 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             ? e.realtime().departureIn(now)
             : e.scheduled().departureIn(now);
         return String.valueOf(Math.max(0, ticks / 20 / 60));
+    }
+
+    private static String currentClock(Level level) {
+        if (level == null) return "--:--";
+        long dayTime = level.getDayTime() % 24000L;
+        long hours = (dayTime / 1000L + 6L) % 24L;
+        long minutes = (dayTime % 1000L) * 60L / 1000L;
+        return String.format("%02d:%02d", hours, minutes);
+    }
+
+    private void clear() {
+        for (BERLabel l : all()) l.text.set(null);
     }
 
     static DLColor lineColor(CtdPlatformSettings settings) {
