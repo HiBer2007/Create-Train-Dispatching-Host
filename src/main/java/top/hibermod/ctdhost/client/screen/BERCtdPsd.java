@@ -119,7 +119,7 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         if (bw >= 4 || (bw == 3 && s.showMap())) {
             drawMap(clip, s, line, w, h);
             // 底部色带
-            rects.add(new Rect(0, h - 3f, 0f, w, 3f, line));
+            rects.add(new Rect(0, h - 3f, 0.01f, w, 3f, line));
             return;
         }
 
@@ -153,13 +153,13 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         float bx = w - badgeSize - 2.5f;
         float by = 1.6f;
         // 用三层矩形拼出圆角块
-        rects.add(new Rect(bx, by + badgeSize * 0.18f, 0.01f, badgeSize, badgeSize * 0.64f, line));
-        rects.add(new Rect(bx + badgeSize * 0.12f, by, 0.01f, badgeSize * 0.76f, badgeSize, line));
+        rects.add(new Rect(bx, by + badgeSize * 0.18f, 0.02f, badgeSize, badgeSize * 0.64f, line));
+        rects.add(new Rect(bx + badgeSize * 0.12f, by, 0.02f, badgeSize * 0.76f, badgeSize, line));
 
         float noScale = Math.min(0.34f, badgeSize / (2f * 9f) * 1.6f);
         doorNo.horizontalAlign.set(ETextAlignment.CENTER);
         put(doorNo, clip, bx - 0.4f, by + (badgeSize - 8f * noScale) / 2f, badgeSize + 0.8f,
-            8f * noScale + 0.4f, noScale, s.doorNumber(), onLine);
+            8f * noScale + 0.4f, noScale, s.doorNumber().isBlank() ? "1" : s.doorNumber(), onLine);
 
         doorUnit.horizontalAlign.set(ETextAlignment.CENTER);
         put(doorUnit, clip, bx - 1f, by + badgeSize + 0.6f, badgeSize + 2f, 2.4f, 0.16f,
@@ -170,7 +170,7 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
             s.stationId().isBlank() ? "--" : s.stationId(), 0xFF000000);
 
         // 底部色带（先画带，再画带上的指示灯，避免被盖）
-        rects.add(new Rect(0, contentBottom, 0f, w, bottomBar, line));
+        rects.add(new Rect(0, contentBottom, 0.01f, w, bottomBar, line));
 
         // 指示灯：无线路图时才显示；两枚并排居中于色带
         if (!s.showMap()) {

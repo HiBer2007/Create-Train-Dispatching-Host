@@ -94,6 +94,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         nextStation = nbt.getString(NBT_NEXT);
         stationId = nbt.getString(NBT_STATION_ID);
         doorNumber = nbt.getString(NBT_DOOR);
+        if (doorNumber == null || doorNumber.isEmpty()) doorNumber = "1";
         if (doorNumber.isEmpty()) doorNumber = "1";
         showMap = nbt.getBoolean(NBT_MAP);
         arrowRight = nbt.getBoolean(NBT_ARROW_RIGHT);
