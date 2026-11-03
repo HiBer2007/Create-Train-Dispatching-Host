@@ -55,6 +55,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     private static final String NBT_LINE_COLOR = "CtdLineColor";
     private static final String NBT_ROUTE_MAP = "CtdRouteMap";
     private static final String NBT_DOOR_LIGHT = "CtdDoorLight";
+    private static final String NBT_LINE_MODE = "CtdLineMode";
     private static final String NBT_CONTENT = "CtdContent";
 
     private String signalSystem = "";
@@ -68,6 +69,23 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     private boolean showRouteMap = true;
     /** 1 格高时是否显示屏蔽门开关指示（2/3 宽建议开）。 */
     private boolean showDoorLight = true;
+
+    /** 线路形态：普通线路显示「开往 终点站」；环线显示「内环/外环」。 */
+    public enum LineMode { NORMAL, LOOP_INNER, LOOP_OUTER;
+        public static LineMode byId(String id) {
+            for (LineMode m : values()) if (m.name().equals(id)) return m;
+            return NORMAL;
+        }
+        public String zh() {
+            return switch (this) {
+                case LOOP_INNER -> "内环";
+                case LOOP_OUTER -> "外环";
+                default -> "普通";
+            };
+        }
+    }
+
+    private LineMode lineMode = LineMode.NORMAL;
     private Content content = Content.DEPARTURES;
 
     public CtdPlatformSettings() {
@@ -107,6 +125,9 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     public boolean showRouteMap() { return showRouteMap; }
     public void setShowRouteMap(boolean v) { showRouteMap = v; }
 
+    public LineMode lineMode() { return lineMode; }
+    public void setLineMode(LineMode v) { lineMode = v == null ? LineMode.NORMAL : v; }
+
     public boolean showDoorLight() { return showDoorLight; }
     public void setShowDoorLight(boolean v) { showDoorLight = v; }
 
@@ -145,6 +166,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         lineColor = nbt.getInt(NBT_LINE_COLOR);
         showRouteMap = !nbt.contains(NBT_ROUTE_MAP) || nbt.getBoolean(NBT_ROUTE_MAP);
         showDoorLight = !nbt.contains(NBT_DOOR_LIGHT) || nbt.getBoolean(NBT_DOOR_LIGHT);
+        lineMode = LineMode.byId(nbt.getString(NBT_LINE_MODE));
         content = Content.byId(nbt.getString(NBT_CONTENT));
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings loaded station=[{}] platform=[{}] sys=[{}]",
@@ -161,6 +183,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         nbt.putInt(NBT_LINE_COLOR, lineColor);
         nbt.putBoolean(NBT_ROUTE_MAP, showRouteMap);
         nbt.putBoolean(NBT_DOOR_LIGHT, showDoorLight);
+        nbt.putString(NBT_LINE_MODE, lineMode.name());
         nbt.putString(NBT_CONTENT, content.id());
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings saved station=[{}] platform=[{}] sys=[{}]",
@@ -177,6 +200,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         buildTextLine(context, "gui.ctdhost.platform", platform(), this::setPlatform);
         buildTextLine(context, "gui.ctdhost.line", lineName(), this::setLineName);
         buildColorPickerLine(context, "gui.ctdhost.line_color", lineColor(), this::setLineColor);
+        buildModeLine(context);
         buildCheckLine(context, "gui.ctdhost.route_map", showRouteMap(), this::setShowRouteMap);
         buildCheckLine(context, "gui.ctdhost.door_light", showDoorLight(), this::setShowDoorLight);
         // 信号系统：用下拉选择（数据来自宿主同步过来的列表）。
@@ -196,6 +220,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
             lineColor = old.lineColor;
             showRouteMap = old.showRouteMap;
             showDoorLight = old.showDoorLight;
+            lineMode = old.lineMode;
             content = old.content;
         }
     }
@@ -369,6 +394,39 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
             de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLToggleButton.CheckedChangedEvent.class,
             (s, e) -> { setter.accept(e.checked()); return false; });
         line.addComponent(box);
+    }
+
+    /** 线路形态选择：普通 / 环线内环 / 环线外环。 */
+    private void buildModeLine(GuiBuilderContext context) {
+        String langKey = "gui.ctdhost.line_mode";
+        de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLPanel line =
+            context.container().addLine(langKey);
+
+        de.mrjulsen.crn.client.gui.widgets.IconSlotWidget icon =
+            line.addComponent(new de.mrjulsen.crn.client.gui.widgets.IconSlotWidget(0, 0));
+        icon.icon.set(de.mrjulsen.crn.client.gui.ModGuiIcons.PLATFORM_INFORMATION.getAsSprite(16, 16));
+        icon.tooltip.set(new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLTooltip(
+            java.util.List.of(
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey),
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey + ".description")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY)),
+            200));
+
+        de.mrjulsen.crn.client.gui.widgets.create.CreateItemPicker<LineMode> picker =
+            new de.mrjulsen.crn.client.gui.widgets.create.CreateItemPicker<>(0, 0, 0);
+        picker.renderArrow.set(true);
+        picker.layoutContraint.set(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.layout.FlowLayout.FlowConstraint.FILL);
+        picker.formatter.set(m -> de.mrjulsen.mcdragonlib.util.TextUtils.text(m == null ? "普通" : m.zh()));
+        picker.items.addAll(java.util.List.of(LineMode.values()));
+        picker.selectedItem.set(java.util.Optional.of(lineMode()));
+        picker.addEventListener(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLCycleButton.SelectedItemChanged.class,
+            (s, e) -> {
+                e.item().ifPresent(x -> setLineMode((LineMode) x));
+                return false;
+            });
+        line.addComponent(picker);
     }
 
 }

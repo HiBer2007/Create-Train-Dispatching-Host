@@ -33,5 +33,7 @@
   "gui.ctdhost.route_map": "显示线路图",
   "gui.ctdhost.route_map.description": "1 格高时在底部显示后续站名",
   "gui.ctdhost.door_light": "显示门灯",
-  "gui.ctdhost.door_light.description": "1 格高时在右侧显示屏蔽门开关指示"
+  "gui.ctdhost.door_light.description": "1 格高时在右侧显示屏蔽门开关指示",
+  "gui.ctdhost.line_mode": "线路形态",
+  "gui.ctdhost.line_mode.description": "环线选内环/外环，屏上显示环别而不是终点站"
 }

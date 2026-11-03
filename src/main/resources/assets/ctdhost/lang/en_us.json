@@ -33,5 +33,7 @@
   "gui.ctdhost.route_map": "Route map",
   "gui.ctdhost.route_map.description": "Show upcoming stations on a single-block-tall display",
   "gui.ctdhost.door_light": "Door light",
-  "gui.ctdhost.door_light.description": "Show the platform screen door indicator on the right"
+  "gui.ctdhost.door_light.description": "Show the platform screen door indicator on the right",
+  "gui.ctdhost.line_mode": "Line mode",
+  "gui.ctdhost.line_mode.description": "Loop lines show inner/outer circle instead of a terminus"
 }
