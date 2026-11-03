@@ -142,9 +142,6 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         super.buildGui(context);
         buildTextLine(context, "gui.ctdhost.station", station(), this::setStation);
         buildTextLine(context, "gui.ctdhost.platform", platform(), this::setPlatform);
-        buildTextLine(context, "gui.ctdhost.psd_name", stationName(), this::setStationName);
-        buildTextLine(context, "gui.ctdhost.psd_next", nextStation(), this::setNextStation);
-        buildTextLine(context, "gui.ctdhost.psd_station_id", stationId(), this::setStationId);
         buildTextLine(context, "gui.ctdhost.psd_door", doorNumber(), this::setDoorNumber);
         buildTextLine(context, "gui.ctdhost.line", lineName(), this::setLineName);
         buildCheckLine(context, "gui.ctdhost.psd_map", showMap(), this::setShowMap);

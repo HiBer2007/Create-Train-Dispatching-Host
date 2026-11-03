@@ -47,6 +47,7 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
     private final BERLabel next = new BERLabel();
     private final BERLabel doorNo = new BERLabel();
     private final BERLabel doorUnit = new BERLabel();
+    private final BERLabel doorUnit2 = new BERLabel();
     private final BERLabel stationId = new BERLabel();
     private final BERLabel[] mapLabels = new BERLabel[24];
 
@@ -55,6 +56,7 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         setup(next, ETextAlignment.LEFT, 0xFF000000);
         setup(doorNo, ETextAlignment.CENTER, 0xFF000000);
         setup(doorUnit, ETextAlignment.CENTER, 0xFF000000);
+        setup(doorUnit2, ETextAlignment.LEFT, 0xFF000000);
         setup(stationId, ETextAlignment.CENTER, 0xFF000000);
     }
 
@@ -81,13 +83,14 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
     }
 
     private BERLabel[] labels() {
-        BERLabel[] all = new BERLabel[5 + mapLabels.length];
+        BERLabel[] all = new BERLabel[6 + mapLabels.length];
         all[0] = name;
         all[1] = next;
         all[2] = doorNo;
         all[3] = doorUnit;
         all[4] = stationId;
-        System.arraycopy(mapLabels, 0, all, 5, mapLabels.length);
+        all[5] = doorUnit2;
+        System.arraycopy(mapLabels, 0, all, 6, mapLabels.length);
         return all;
     }
 
@@ -148,18 +151,18 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         put(next, clip, 1.5f, 3.4f + nameH + 1.2f, leftW, 8f * nextScale + 0.4f, nextScale,
             "下一站：" + nextText + " " + arrow, 0xFF000000);
 
-        // 右栏：线路色圆章（门号）+「站台」+ 车站号
+        // 右栏：线路色圆章 = 站台号；下面「站台」；再下面是车站号
         float badgeSize = bw >= 3 ? 6.5f : 5.5f;
         float bx = w - badgeSize - 2.5f;
         float by = 1.6f;
-        // 用三层矩形拼出圆角块
         rects.add(new Rect(bx, by + badgeSize * 0.18f, 0.02f, badgeSize, badgeSize * 0.64f, line));
         rects.add(new Rect(bx + badgeSize * 0.12f, by, 0.02f, badgeSize * 0.76f, badgeSize, line));
 
+        String platformText = s.platform().isBlank() ? "--" : s.platform();
         float noScale = Math.min(0.34f, badgeSize / (2f * 9f) * 1.6f);
         doorNo.horizontalAlign.set(ETextAlignment.CENTER);
         put(doorNo, clip, bx - 0.4f, by + (badgeSize - 8f * noScale) / 2f, badgeSize + 0.8f,
-            8f * noScale + 0.4f, noScale, s.doorNumber().isBlank() ? "1" : s.doorNumber(), onLine);
+            8f * noScale + 0.4f, noScale, platformText, onLine);
 
         doorUnit.horizontalAlign.set(ETextAlignment.CENTER);
         put(doorUnit, clip, bx - 1f, by + badgeSize + 0.6f, badgeSize + 2f, 2.4f, 0.16f,
@@ -167,7 +170,12 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
 
         stationId.horizontalAlign.set(ETextAlignment.CENTER);
         put(stationId, clip, bx - 1.5f, by + badgeSize + 3.4f, badgeSize + 3f, 2.4f, 0.14f,
-            s.stationId().isBlank() ? "--" : s.stationId(), 0xFF000000);
+            s.station().isBlank() ? "--" : s.station(), 0xFF000000);
+
+        // 屏蔽门号：左下角
+        doorUnit2.horizontalAlign.set(ETextAlignment.LEFT);
+        put(doorUnit2, clip, 1.5f, contentBottom - 3.2f, leftW * 0.6f, 2.6f, 0.14f,
+            "屏蔽门 " + (s.doorNumber().isBlank() ? "1" : s.doorNumber()), 0xFF000000);
 
         // 底部色带（先画带，再画带上的指示灯，避免被盖）
         rects.add(new Rect(0, contentBottom, 0.01f, w, bottomBar, line));
@@ -267,6 +275,7 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         next.text.set(null);
         doorNo.text.set(null);
         doorUnit.text.set(null);
+        doorUnit2.text.set(null);
         stationId.text.set(null);
         for (BERLabel l : mapLabels) if (l != null) l.text.set(null);
     }
