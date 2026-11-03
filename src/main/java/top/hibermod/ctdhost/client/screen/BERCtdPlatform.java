@@ -204,10 +204,17 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             int idx = dual ? i : 0;
             int base = i * 9;
 
-            // 上方色带：左半线路色；右半固定蓝底（4x1 的站台号另有一小块线路色底）
+            // 上方色带：左半线路色；右半蓝底；4x1 时蓝底最左侧再切出一小块线路色放站台号
             float yellowW = halfW * 0.50f;
+            float segX0 = hx + yellowW + 0.4f;
+            float segW0 = halfW - yellowW - 0.4f;
+            float idBoxW = dual ? Math.max(5f, segW0 * 0.42f) : 0f;
+
             rects.add(new Rect(hx, 2f, 0f, yellowW, 4f, accent));
-            rects.add(new Rect(hx + yellowW + 0.4f, 2f, 0f, halfW - yellowW - 0.4f, 4f, blue));
+            if (dual) {
+                rects.add(new Rect(segX0, 2f, 0f, idBoxW, 4f, accent));
+            }
+            rects.add(new Rect(segX0 + idBoxW, 2f, 0f, segW0 - idBoxW, 4f, blue));
 
             // 黄带：两行三字靠左 + 终点站居中于剩余空间
             BERLabel line1 = lab(base);
@@ -233,15 +240,12 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
             // 右段：4x1 = 线路色底 + [站台号]（对比色）+ 「站台」（白色）；2x1 = 蓝底时钟
             float idScale = dual ? 0.28f : 0.24f;
-            float segX = hx + yellowW + 0.4f;
-            float segW = halfW - yellowW - 0.8f;
+            float segX = segX0;
+            float segW = segW0;
             float segY = 2 + (4f - 8f * idScale) / 2f;
 
             if (dual) {
                 String id = i == 0 ? settings.platform() : settings.platform2();
-                // 只有「站台号」那一小块用线路色底，数字用对比色；「站台」二字留在蓝底上、白色
-                float idBoxW = Math.max(4.5f, segW * 0.42f);
-                rects.add(new Rect(segX, 2f, 0.02f, idBoxW, 4f, accent));
 
                 clockLab.horizontalAlign.set(ETextAlignment.CENTER);
                 put(clockLab, clip, segX, segY, idBoxW, 3f, idScale, id, contrastText(accent));
