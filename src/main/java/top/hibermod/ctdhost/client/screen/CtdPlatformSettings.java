@@ -53,6 +53,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     private static final String NBT_PLATFORM = "CtdPlatform";
     private static final String NBT_LINE = "CtdLineName";
     private static final String NBT_LINE_COLOR = "CtdLineColor";
+    private static final String NBT_ROUTE_MAP = "CtdRouteMap";
+    private static final String NBT_DOOR_LIGHT = "CtdDoorLight";
     private static final String NBT_CONTENT = "CtdContent";
 
     private String signalSystem = "";
@@ -62,6 +64,10 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     private String lineName = "";
     /** 线路颜色（ARGB）；0 表示按代号自动取色。 */
     private int lineColor = 0;
+    /** 1 格高时是否显示线路图（3/4 宽建议开）。 */
+    private boolean showRouteMap = true;
+    /** 1 格高时是否显示屏蔽门开关指示（2/3 宽建议开）。 */
+    private boolean showDoorLight = true;
     private Content content = Content.DEPARTURES;
 
     public CtdPlatformSettings() {
@@ -98,6 +104,12 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         return lineColor;
     }
 
+    public boolean showRouteMap() { return showRouteMap; }
+    public void setShowRouteMap(boolean v) { showRouteMap = v; }
+
+    public boolean showDoorLight() { return showDoorLight; }
+    public void setShowDoorLight(boolean v) { showDoorLight = v; }
+
     public void setLineColor(int value) {
         lineColor = value;
     }
@@ -131,6 +143,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         platform = nbt.getString(NBT_PLATFORM);
         lineName = nbt.getString(NBT_LINE);
         lineColor = nbt.getInt(NBT_LINE_COLOR);
+        showRouteMap = !nbt.contains(NBT_ROUTE_MAP) || nbt.getBoolean(NBT_ROUTE_MAP);
+        showDoorLight = !nbt.contains(NBT_DOOR_LIGHT) || nbt.getBoolean(NBT_DOOR_LIGHT);
         content = Content.byId(nbt.getString(NBT_CONTENT));
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings loaded station=[{}] platform=[{}] sys=[{}]",
@@ -145,6 +159,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         nbt.putString(NBT_PLATFORM, platform);
         nbt.putString(NBT_LINE, lineName);
         nbt.putInt(NBT_LINE_COLOR, lineColor);
+        nbt.putBoolean(NBT_ROUTE_MAP, showRouteMap);
+        nbt.putBoolean(NBT_DOOR_LIGHT, showDoorLight);
         nbt.putString(NBT_CONTENT, content.id());
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings saved station=[{}] platform=[{}] sys=[{}]",
@@ -161,6 +177,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         buildTextLine(context, "gui.ctdhost.platform", platform(), this::setPlatform);
         buildTextLine(context, "gui.ctdhost.line", lineName(), this::setLineName);
         buildColorPickerLine(context, "gui.ctdhost.line_color", lineColor(), this::setLineColor);
+        buildCheckLine(context, "gui.ctdhost.route_map", showRouteMap(), this::setShowRouteMap);
+        buildCheckLine(context, "gui.ctdhost.door_light", showDoorLight(), this::setShowDoorLight);
         // 信号系统：用下拉选择（数据来自宿主同步过来的列表）。
         buildPickerLine(context, "gui.ctdhost.signal_system", signalSystem(), this::setSignalSystem);
         // 第一版不做自定义控件：先让类型能被选中、能渲染。
@@ -176,6 +194,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
             platform = old.platform;
             lineName = old.lineName;
             lineColor = old.lineColor;
+            showRouteMap = old.showRouteMap;
+            showDoorLight = old.showDoorLight;
             content = old.content;
         }
     }
@@ -320,6 +340,35 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
                 return false;
             });
         line.addComponent(picker);
+    }
+
+    /** 布尔项：复选框 + 悬浮说明。 */
+    private void buildCheckLine(GuiBuilderContext context, String langKey, boolean value,
+                                java.util.function.Consumer<Boolean> setter) {
+        de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLPanel line =
+            context.container().addLine(langKey);
+
+        de.mrjulsen.crn.client.gui.widgets.IconSlotWidget icon =
+            line.addComponent(new de.mrjulsen.crn.client.gui.widgets.IconSlotWidget(0, 0));
+        icon.icon.set(de.mrjulsen.crn.client.gui.ModGuiIcons.PLATFORM_INFORMATION.getAsSprite(16, 16));
+        icon.tooltip.set(new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLTooltip(
+            java.util.List.of(
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey),
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey + ".description")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY)),
+            200));
+
+        de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLCheckBox box =
+            new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLCheckBox(
+                0, 0, 100, de.mrjulsen.crn.client.gui.widgets.create.CreateButton.HEIGHT);
+        box.checked.set(value);
+        box.text.set(de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey));
+        box.layoutContraint.set(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.layout.FlowLayout.FlowConstraint.FILL);
+        box.addEventListener(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLToggleButton.CheckedChangedEvent.class,
+            (s, e) -> { setter.accept(e.checked()); return false; });
+        line.addComponent(box);
     }
 
 }

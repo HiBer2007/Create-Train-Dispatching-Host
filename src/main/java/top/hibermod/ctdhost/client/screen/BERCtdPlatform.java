@@ -38,6 +38,9 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final BERLabel head = new BERLabel();
     private final BERLabel[] rows = new BERLabel[3];
     private final BERLabel footer = new BERLabel();
+    private final BERLabel minutes = new BERLabel();
+    private final BERLabel route = new BERLabel();
+    private final BERLabel door = new BERLabel();
 
     private static final String[] ROW_NAMES = {"本趟", "下一趟", "第三趟"};
 
@@ -53,6 +56,13 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         footer.horizontalAlign.set(ETextAlignment.LEFT);
         footer.color.set(DLColor.fromInt(0xFF9E9E9E));
         footer.horizontalScrollMode.set(EScrollMode.ALWAYS);
+        minutes.horizontalAlign.set(ETextAlignment.LEFT);
+        minutes.color.set(DLColor.fromInt(0xFFFF5252));
+        route.horizontalAlign.set(ETextAlignment.LEFT);
+        route.color.set(DLColor.fromInt(0xFFB0BEC5));
+        route.horizontalScrollMode.set(EScrollMode.ALWAYS);
+        door.horizontalAlign.set(ETextAlignment.LEFT);
+        door.color.set(DLColor.fromInt(0xFF66BB6A));
     }
 
     @Override
@@ -64,6 +74,9 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             if (row.text.get() != null) row.render(graphics, light);
         }
         footer.render(graphics, light);
+        if (minutes.text.get() != null) minutes.render(graphics, light);
+        if (route.text.get() != null) route.render(graphics, light);
+        if (door.text.get() != null) door.render(graphics, light);
     }
 
     @Override
@@ -87,6 +100,65 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         String dest = stops.isEmpty() ? "—"
             : stops.get(0).displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
         if (dest.length() > 7) dest = dest.substring(0, 7);
+
+        // ── 1 格高：横排，可带线路图与门灯 ──
+        if (bh == 1) {
+            minutes.text.set(null); route.text.set(null); door.text.set(null);
+            String mins = "--";
+            if (!stops.isEmpty()) {
+                var e = stops.get(0);
+                long t = e.realtime().isKnown() ? e.realtime().departureIn(now) : e.scheduled().departureIn(now);
+                mins = String.valueOf(Math.max(0, t / 20 / 60));
+            }
+
+            if (bw >= 3) {
+                StringBuilder sb = new StringBuilder();
+                if (!line.isEmpty()) sb.append("【").append(line).append("】");
+                sb.append("开往 ").append(dest);
+                head.clippingArea.set(area);
+                head.text.set(TextUtils.text(sb.toString()));
+                head.preferredWidth.set(w * 0.55f);
+                head.position.set(Point.of(2, 6.5f));
+                scale(head, bw == 4 ? 0.42f : 0.38f);
+                head.color.set(lineColor(settings));
+            } else {
+                head.text.set(null);
+            }
+
+            minutes.clippingArea.set(area);
+            minutes.text.set(TextUtils.text(mins + " 分钟"));
+            minutes.preferredWidth.set(w * 0.45f);
+            minutes.position.set(Point.of(bw >= 3 ? w * 0.52f : 2, bw >= 3 ? 13.5f : 11f));
+            scale(minutes, bw >= 3 ? 0.55f : 0.62f);
+
+            if (settings.showDoorLight()) {
+                door.clippingArea.set(area);
+                door.text.set(TextUtils.text(blockEntity.isWaitingAtStation() ? "\u25C0 \u25CF \u25B6" : "\u25C0 \u25CB \u25B6"));
+                door.preferredWidth.set(14f);
+                door.position.set(Point.of(w - 15, 6.5f));
+                scale(door, 0.45f);
+                door.color.set(DLColor.fromInt(blockEntity.isWaitingAtStation() ? 0xFF66BB6A : 0xFF546E7A));
+            }
+
+            if (settings.showRouteMap() && bw >= 3) {
+                StringBuilder map = new StringBuilder();
+                var remaining = blockEntity.getRemainingStops();
+                int shown = 0;
+                for (var s : remaining) {
+                    if (shown++ >= 6) break;
+                    if (map.length() > 0) map.append(" \u2014 ");
+                    map.append(s.title());
+                }
+                route.clippingArea.set(area);
+                route.text.set(TextUtils.text(map.length() == 0 ? "" : map.toString()));
+                route.preferredWidth.set((float) Math.max(1, w - 4));
+                route.position.set(Point.of(2, 15.5f));
+                scale(route, 0.26f);
+            }
+
+            footer.text.set(null);
+            return;
+        }
 
         // ── 手动排版表 ──
         int rowCount;
