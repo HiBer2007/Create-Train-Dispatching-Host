@@ -17,4 +17,8 @@ public interface CtdHoldAccess {
 
     void ctdsetNoBoarding(boolean v);
 
+    String ctdgetNotice();
+
+    void ctdsetNotice(String v);
+
 }

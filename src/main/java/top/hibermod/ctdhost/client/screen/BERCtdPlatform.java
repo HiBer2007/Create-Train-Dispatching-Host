@@ -122,6 +122,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         var stops = blockEntity.getStops();
         boolean waiting = blockEntity.isWaitingAtStation();
         boolean noBoard = blockEntity instanceof CtdHoldAccess acc && acc.ctdgetNoBoarding();
+        String noticeText = blockEntity instanceof CtdHoldAccess acc2 ? acc2.ctdgetNotice() : "";
 
         clear();
 
@@ -135,12 +136,12 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         if (bw >= 3 && bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 19f, 46f, 1.0f, stops, now, noBoard);
+                currentClock(lvl), 19f, 46f, 1.0f, stops, now, noBoard, noticeText);
             return;
         }
         if (bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 13f, 30f, 0.84f, stops, now, noBoard);
+                currentClock(lvl), 13f, 30f, 0.84f, stops, now, noBoard, noticeText);
             return;
         }
 
@@ -159,7 +160,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
                            String min1, String min2, String time,
                            float leftRightEdge, float panelRightEdge, float k,
                            java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops, long now,
-                           boolean noBoard) {
+                           boolean noBoard, String noticeText) {
 
         DLColor accent = lineColor(settings);
         DLColor blue = DLColor.fromInt(0xFF1E4FA3);
@@ -225,7 +226,13 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         // 右栏
         put(clock, clip, rightX + 1f, 2.6f, rightW - 2f, 3f, 0.22f * k, time, 0xFFFFFFFF);
-        put(notice, clip, rightX + 1f, 10f, rightW - 2f, 4f, 0.12f * k, "通知与提示区", 0xFF9AA5AD);
+        // 公告：调度没发布就留空，不显示占位
+        if (noticeText != null && !noticeText.isBlank()) {
+            notice.horizontalScrollMode.set(EScrollMode.ALWAYS);
+            put(notice, clip, rightX + 1f, 10f, rightW - 2f, 4f, 0.12f * k, noticeText, 0xFFECEFF1);
+        } else {
+            notice.text.set(null);
+        }
 
         float bottomY = be.getYSizeScaled() * 16 - 6f;
         rects.add(new Rect(rightX, bottomY, 0f, rightW, 4f, blue));
