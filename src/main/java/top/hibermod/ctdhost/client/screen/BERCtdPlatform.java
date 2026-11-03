@@ -111,7 +111,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         direction.position.set(Point.of(2, baseHead));
         setScale(direction, sHead);
         direction.color.set(DLColor.fromInt(0xFFECEFF1));
-        direction.horizontalScrollMode.set(EScrollMode.FLEX_FIT);
+        direction.horizontalScrollMode.set(EScrollMode.NEVER);
         direction.verticalMinScale.set(0.2f);
 
         lineLabel.text.set(null);
@@ -127,8 +127,18 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         for (int i = 0; i < rows.length; i++) {
             BERLabel row = rows[i];
-            if (i >= count || i >= stops.size()) {
+            if (i >= count) {
                 row.text.set(null);
+                continue;
+            }
+            if (i >= stops.size()) {
+                // 没车也占住这条带，排版不塌。
+                row.clippingArea.set(area);
+                row.text.set(TextUtils.text(ROW_NAMES[i] + "     -- 分钟"));
+                row.preferredWidth.set((float) Math.max(1, w - 4));
+                row.position.set(Point.of(2, CtdLayout.baseline(bodyTop + rowH * i, rowH, sRow)));
+                setScale(row, sRow);
+                row.color.set(DLColor.fromInt(0xFF757575));
                 continue;
             }
             var e = stops.get(i);
@@ -147,6 +157,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         // ── 底部提示（滚动，短句）──
         float sFoot = CtdLayout.fit(footH, 0.55f);
         footer.clippingArea.set(area);
+        footer.horizontalScrollMode.set(h < 30f ? EScrollMode.ALWAYS : EScrollMode.NEVER);
         footer.text.set(TextUtils.text("请注意站台间隙，小心慢行。"));
         footer.preferredWidth.set((float) Math.max(1, w - 4));
         footer.horizontalMinScale.set(0.22f);
