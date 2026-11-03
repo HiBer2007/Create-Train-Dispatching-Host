@@ -210,13 +210,13 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         float valH = 8f * 0.17f * k;
         float row1 = divTop;
         nextLabel.horizontalAlign.set(ETextAlignment.LEFT);
-        nextDest.horizontalAlign.set(ETextAlignment.RIGHT);
+        nextDest.horizontalAlign.set(ETextAlignment.LEFT);
         put(nextLabel, clip, leftX + 1f, row1 + 0.8f, leftW - 2f, 3f, 0.18f * k, "下一趟开往", 0xFF9AA5AD);
-        put(nextDest, clip, leftX + 1f, row1 + 4.6f, leftW * 0.6f, 3f, 0.19f * k,
+        put(nextDest, clip, leftX + 2f, row1 + 4.6f, leftW * 0.5f, 3f, 0.19f * k,
             dest1, 0xFFFFFFFF);
 
         nextMin.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(nextMin, clip, leftX + leftW * 0.6f, row1 + 4.6f, leftW * 0.4f - 1f, 3f, 0.19f * k,
+        put(nextMin, clip, leftX + leftW * 0.5f, row1 + 4.6f, leftW * 0.5f - 2f, 3f, 0.19f * k,
             min1 + " 分钟", 0xFFECEFF1);
 
         float divMid = divTop + rowBand;
@@ -224,11 +224,11 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         float row2 = divMid;
         put(thirdLabel, clip, leftX + 1f, row2 + 0.8f, leftW - 2f, 3f, 0.18f * k, "第三趟开往", 0xFF9AA5AD);
-        put(thirdDest, clip, leftX + 1f, row2 + 4.6f, leftW * 0.6f, 3f, 0.19f * k,
+        put(thirdDest, clip, leftX + 2f, row2 + 4.6f, leftW * 0.5f, 3f, 0.19f * k,
             dest2, 0xFF66BB6A);
 
         thirdMin.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(thirdMin, clip, leftX + leftW * 0.6f, row2 + 4.6f, leftW * 0.4f - 1f, 3f, 0.19f * k,
+        put(thirdMin, clip, leftX + leftW * 0.5f, row2 + 4.6f, leftW * 0.5f - 2f, 3f, 0.19f * k,
             min2 + " 分钟", 0xFFFFE082);
 
 
