@@ -54,6 +54,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
     private final BERLabel headLabel = new BERLabel();
     private final BERLabel headLabel2 = new BERLabel();
+    private final BERLabel headDest = new BERLabel();
     private final BERLabel status = new BERLabel();
     private final BERLabel nextLabel = new BERLabel();
     private final BERLabel nextDest = new BERLabel();
@@ -68,6 +69,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     public BERCtdPlatform() {
         setup(headLabel, ETextAlignment.LEFT, 0xFFFFFFFF);
         setup(headLabel2, ETextAlignment.LEFT, 0xFFFFFFFF);
+        setup(headDest, ETextAlignment.CENTER, 0xFFFFFFFF);
         setup(status, ETextAlignment.LEFT, 0xFFFFFFFF);
         setup(nextLabel, ETextAlignment.LEFT, 0xFF9AA5AD);
         setup(nextDest, ETextAlignment.LEFT, 0xFFFFFFFF);
@@ -180,11 +182,15 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         rects.add(new Rect(leftX, 2, 0f, leftW, bandH, accent));
         rects.add(new Rect(rightX, 2, 0f, rightW, bandH, blue));
 
-        // 左带：两行三字「本次列 / 车开往」，整段水平居中；右侧终点站居中
+        // 左带：两行三字「本次列 / 车开往」，在左半格内居中；右半格放终点站
         headLabel.horizontalAlign.set(ETextAlignment.CENTER);
         headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headLabel, clip, leftX, 2.1f, leftW, 2f, 0.13f, "本次列", onAccent);
-        put(headLabel2, clip, leftX, 3.9f, leftW, 2f, 0.13f, "车开往", onAccent);
+        put(headLabel, clip, leftX, 1.9f, leftW * 0.52f, 2f, 0.16f, "本次列", onAccent);
+        put(headLabel2, clip, leftX, 3.7f, leftW * 0.52f, 2f, 0.16f, "车开往", onAccent);
+
+        headDest.horizontalAlign.set(ETextAlignment.CENTER);
+        put(headDest, clip, leftX + leftW * 0.52f, 2.3f, leftW * 0.48f - 1f, 3f, 0.20f,
+            headDestText, onAccent);
 
         float divTop = 2 + bandH + 6f;    // 第一条分割线
         rects.add(new Rect(leftX, divTop, 0.01f, leftW, 0.3f, divider));
@@ -197,17 +203,26 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             noBoard ? 0xFFFF9800 : 0xFFFFFFFF);
         status.horizontalAlign.set(ETextAlignment.CENTER);
 
-        float y = divTop + 1f;
-        put(nextLabel, clip, leftX + 1f, y, leftW - 2f, 3f, 0.12f * k, "下一趟开往", 0xFF9AA5AD);
-        put(nextDest, clip, leftX + 1f, y + 3.2f, leftW - 2f, 3f, 0.15f * k, dest1, 0xFFFFFFFF);
-        put(nextMin, clip, leftX + 1f, y + 6.4f, leftW - 2f, 3f, 0.14f * k, min1 + " 分钟", 0xFFECEFF1);
+        // 两趟车：每趟一行，左「X趟开往」右「站名 N 分钟」
+        float row1 = divTop + 1.5f;
+        nextLabel.horizontalAlign.set(ETextAlignment.LEFT);
+        nextDest.horizontalAlign.set(ETextAlignment.RIGHT);
+        put(nextLabel, clip, leftX + 1f, row1, leftW * 0.55f, 3f, 0.115f * k, "下一趟开往", 0xFF9AA5AD);
+        put(nextDest, clip, leftX + leftW * 0.4f, row1, leftW * 0.6f - 1f, 3f, 0.13f * k,
+            dest1 + "  " + min1 + " 分钟", 0xFFFFFFFF);
 
-        float y2 = y + 9.6f;
-        rects.add(new Rect(leftX, y2, 0.01f, leftW, 0.3f, divider));
+        float divMid = row1 + 4.5f;
+        rects.add(new Rect(leftX, divMid, 0.01f, leftW, 0.3f, divider));
 
-        put(thirdLabel, clip, leftX + 1f, y2 + 1f, leftW - 2f, 3f, 0.12f * k, "第三趟开往", 0xFF9AA5AD);
-        put(thirdDest, clip, leftX + 1f, y2 + 4.2f, leftW - 2f, 3f, 0.15f * k, dest2, 0xFF66BB6A);
-        put(thirdMin, clip, leftX + 1f, y2 + 7.4f, leftW - 2f, 3f, 0.14f * k, min2 + " 分钟", 0xFFECEFF1);
+        float row2 = divMid + 1.5f;
+        thirdLabel.horizontalAlign.set(ETextAlignment.LEFT);
+        thirdDest.horizontalAlign.set(ETextAlignment.RIGHT);
+        put(thirdLabel, clip, leftX + 1f, row2, leftW * 0.55f, 3f, 0.115f * k, "第三趟开往", 0xFF9AA5AD);
+        put(thirdDest, clip, leftX + leftW * 0.4f, row2, leftW * 0.6f - 1f, 3f, 0.13f * k,
+            dest2 + "  " + min2 + " 分钟", 0xFF66BB6A);
+
+        nextMin.text.set(null);
+        thirdMin.text.set(null);
 
         // 右栏
         put(clock, clip, rightX + 1f, 2.6f, rightW - 2f, 3f, 0.22f * k, time, 0xFFFFFFFF);
@@ -236,7 +251,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     }
 
     private BERLabel[] labels() {
-        return new BERLabel[]{headLabel, headLabel2, status, nextLabel, nextDest, nextMin,
+        return new BERLabel[]{headLabel, headLabel2, headDest, status, nextLabel, nextDest, nextMin,
             thirdLabel, thirdDest, thirdMin, clock, notice, marquee};
     }
 
