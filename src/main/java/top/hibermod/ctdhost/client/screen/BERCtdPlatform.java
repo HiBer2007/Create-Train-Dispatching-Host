@@ -200,7 +200,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             int idx = dual ? i : 0;
 
             // 上方色带：线路色占 41%（与 3x2 同比例），其余蓝
-            float yellowW = halfW * 0.41f;
+            float yellowW = halfW * 0.50f;
             rects.add(new Rect(hx, 2f, 0f, yellowW, 4f, accent));
             rects.add(new Rect(hx + yellowW + 0.4f, 2f, 0f, halfW - yellowW - 0.4f, 4f, blue));
 
