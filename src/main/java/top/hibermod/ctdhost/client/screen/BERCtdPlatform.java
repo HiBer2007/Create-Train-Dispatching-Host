@@ -186,8 +186,8 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         float halfW = dual ? (totalW - 1f) / 2f : totalW;
 
         String time = be.getLevel() == null ? "--:--" : currentClock(be.getLevel());
-        String statusStr = noBoard ? "请勿上车" : (waiting ? "列车进站"
-            : (minutesOf(stops, now, 0) + " 分钟"));
+        String statusStr = noBoard ? "请勿上车"
+            : (waiting ? "列车进站" : statusText(waiting, minutesOf(stops, now, 0), now, stops));
 
         boolean loop = settings.lineMode() != CtdPlatformSettings.LineMode.NORMAL;
         boolean loopExit = be instanceof CtdHoldAccess acc && acc.ctdgetLoopExit();
@@ -202,34 +202,39 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         for (int i = 0; i < (dual ? 2 : 1); i++) {
             float hx = 2f + i * (halfW + 1f);
             int idx = dual ? i : 0;
+            int base = i * 8;
 
-            // 上方色带：线路色占 41%（与 3x2 同比例），其余蓝
+            // 上方色带：线路色与蓝色各半
             float yellowW = halfW * 0.50f;
             rects.add(new Rect(hx, 2f, 0f, yellowW, 4f, accent));
             rects.add(new Rect(hx + yellowW + 0.4f, 2f, 0f, halfW - yellowW - 0.4f, 4f, blue));
 
-            BERLabel small = lab(i * 7);
-            BERLabel dest = lab(i * 7 + 1);
-            BERLabel right = lab(i * 7 + 2);
+            // 黄带：两行三字靠左 + 终点站居中于剩余空间
+            BERLabel line1 = lab(base);
+            BERLabel line2 = lab(base + 1);
+            BERLabel dest = lab(base + 3);
+            BERLabel clockLab = lab(base + 2);
 
-            // 带内的字全部在 4px 带子里垂直居中
-            small.horizontalAlign.set(ETextAlignment.LEFT);
-            put(small, clip, hx + 0.8f, 2 + (4f - 8f * 0.14f) / 2f, yellowW * 0.52f, 3f, 0.14f,
-                smallText, contrastText(accent));
+            line1.horizontalAlign.set(ETextAlignment.LEFT);
+            line2.horizontalAlign.set(ETextAlignment.LEFT);
+            put(line1, clip, hx + 0.6f, 2.15f, 7f, 2f, 0.11f, smallText.substring(0, 3),
+                contrastText(accent));
+            put(line2, clip, hx + 0.6f, 3.35f, 7f, 2f, 0.11f, headLine2Text, contrastText(accent));
 
             dest.horizontalAlign.set(ETextAlignment.CENTER);
             String destText = loop && !loopExit ? settings.lineMode().zh() : nameOf(stops, idx);
-            put(dest, clip, hx + yellowW * 0.50f, 2 + (4f - 8f * 0.20f) / 2f,
-                yellowW * 0.50f - 0.5f, 3f, 0.20f, destText, contrastText(accent));
+            put(dest, clip, hx + 7.4f, 2 + (4f - 8f * 0.18f) / 2f, yellowW - 7.8f, 3f, 0.18f,
+                destText, contrastText(accent));
 
-            right.horizontalAlign.set(dual ? ETextAlignment.CENTER : ETextAlignment.RIGHT);
+            // 蓝带：4x1 站台 ID（线路色） / 2x1 时钟（右对齐）
+            clockLab.horizontalAlign.set(dual ? ETextAlignment.CENTER : ETextAlignment.RIGHT);
             String rightText = dual ? (i == 0 ? settings.platform() : settings.platform2()) : time;
-            put(right, clip, hx + yellowW + 0.4f, 2 + (4f - 8f * 0.20f) / 2f,
-                halfW - yellowW - 0.8f, 3f, 0.20f, rightText,
+            put(clockLab, clip, hx + yellowW + 0.4f, 2 + (4f - 8f * 0.18f) / 2f,
+                halfW - yellowW - 0.8f, 3f, 0.18f, rightText,
                 dual ? accent.getAsARGB() : 0xFFFFFFFF);
 
-            // 中部左：大字状态（在 6..12.4 之间垂直居中）
-            BERLabel state = lab(i * 7 + 3);
+            // 中部左：大字状态
+            BERLabel state = lab(base + 4);
             state.horizontalAlign.set(ETextAlignment.CENTER);
             float stateScale = 0.32f;
             put(state, clip, hx, 6f + (6.4f - 8f * stateScale) / 2f, halfW * 0.46f,
@@ -238,17 +243,17 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
             // 中部右：两行（标签 / 终点站 + 倒计时同行），整体垂直居中
             float rowTop = 6f + (6.4f - 2f * 2.1f) / 2f;
-            BERLabel nextLbl = lab(i * 7 + 4);
+            BERLabel nextLbl = lab(base + 5);
             nextLbl.horizontalAlign.set(ETextAlignment.LEFT);
             put(nextLbl, clip, hx + halfW * 0.5f, rowTop, halfW * 0.5f, 2f, 0.15f, "下一趟开往",
                 0xFF9AA5AD);
 
-            BERLabel nextD = lab(i * 7 + 5);
+            BERLabel nextD = lab(base + 6);
             nextD.horizontalAlign.set(ETextAlignment.LEFT);
             put(nextD, clip, hx + halfW * 0.5f, rowTop + 2.1f, halfW * 0.32f, 2f, 0.19f,
                 nameOf(stops, idx + 1), 0xFFFFFFFF);
 
-            BERLabel nextM = lab(i * 7 + 6);
+            BERLabel nextM = lab(base + 7);
             nextM.horizontalAlign.set(ETextAlignment.RIGHT);
             put(nextM, clip, hx + halfW * 0.5f + halfW * 0.28f, rowTop + 2.1f, halfW * 0.22f, 2f,
                 0.19f, minutesOf(stops, now, idx + 1) + " 分钟", 0xFFFFE082);
@@ -305,17 +310,21 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         rects.add(new Rect(leftX, 2, 0f, leftW, bandH, accent));
         rects.add(new Rect(rightX, 2, 0f, rightW, bandH, blue));
 
-        // 左带：两行三字「本次列 / 车开往」，左半格内居中且在带内纵向居中
-        headLabel.horizontalAlign.set(ETextAlignment.CENTER);
-        headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
+        // 左带：两行三字靠左，剩余宽度全部给终点站（在剩余区间内居中）
+        headLabel.horizontalAlign.set(ETextAlignment.LEFT);
+        headLabel2.horizontalAlign.set(ETextAlignment.LEFT);
         float headLineH = 8f * 0.18f;
         float headTop = 2 + (bandH - headLineH * 2f) / 2f;
-        put(headLabel, clip, leftX, headTop, leftW * 0.52f, headLineH + 0.4f, 0.18f, "本次列", onAccent);
-        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.52f, headLineH + 0.4f, 0.18f,
+        float headTextW = 8f * 3f;                 // 三个汉字宽 ≈ 24px 封顶
+        float headBoxW = Math.min(leftW * 0.46f, headTextW);
+        put(headLabel, clip, leftX + 0.8f, headTop, headBoxW, headLineH + 0.4f, 0.16f, "本次列", onAccent);
+        put(headLabel2, clip, leftX + 0.8f, headTop + headLineH, headBoxW, headLineH + 0.4f, 0.16f,
             headLine2Text, onAccent);
+
         headDest.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headDest, clip, leftX + leftW * 0.52f, 2 + (bandH - 8f * 0.23f) / 2f,
-            leftW * 0.48f - 1f, 8f * 0.23f + 0.4f, 0.23f, headDestText, onAccent);
+        float destX = leftX + headBoxW + 1.2f;
+        put(headDest, clip, destX, 2 + (bandH - 8f * 0.23f) / 2f,
+            leftW - headBoxW - 1.2f, 8f * 0.23f + 0.4f, 0.23f, headDestText, onAccent);
         float divTop = 2 + bandH + 6f;    // 第一条分割线
         rects.add(new Rect(leftX, divTop, 0.01f, leftW, 0.3f, divider));
 
@@ -397,19 +406,20 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         rects.add(new Rect(leftX + yellowW + 0.5f, 2, 0f, leftW - yellowW - 0.5f, bandH,
             DLColor.fromInt(0xFF1E4FA3)));
 
-        // 两行三字 + 终点站（右）
-        float headLineH = 8f * 0.18f;
+        // 两行三字靠左 + 终点站居中于剩余空间
+        float headLineH = 8f * 0.16f;
         float headTop = 2 + (bandH - headLineH * 2f) / 2f;
-        headLabel.horizontalAlign.set(ETextAlignment.CENTER);
-        headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headLabel, clip, leftX, headTop, yellowW * 0.45f, headLineH + 0.3f, 0.18f,
+        headLabel.horizontalAlign.set(ETextAlignment.LEFT);
+        headLabel2.horizontalAlign.set(ETextAlignment.LEFT);
+        float headBoxW = Math.min(yellowW * 0.42f, 26f);
+        put(headLabel, clip, leftX + 0.6f, headTop, headBoxW, headLineH + 0.3f, 0.16f,
             headLabelText.substring(0, 3), onAccent);
-        put(headLabel2, clip, leftX, headTop + headLineH, yellowW * 0.45f, headLineH + 0.3f, 0.18f,
+        put(headLabel2, clip, leftX + 0.6f, headTop + headLineH, headBoxW, headLineH + 0.3f, 0.16f,
             headLine2Text, onAccent);
 
         headDest.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headDest, clip, leftX + yellowW * 0.45f, 2 + (bandH - 8f * 0.20f) / 2f,
-            yellowW * 0.55f - 1f, 8f * 0.20f + 0.3f, 0.20f, headDestText, onAccent);
+        put(headDest, clip, leftX + headBoxW + 1f, 2 + (bandH - 8f * 0.20f) / 2f,
+            yellowW - headBoxW - 1.2f, 8f * 0.20f + 0.3f, 0.20f, headDestText, onAccent);
 
         // 蓝带里的游戏内时钟，垂直居中
         clock.horizontalAlign.set(ETextAlignment.RIGHT);
