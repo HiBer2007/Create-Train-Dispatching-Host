@@ -189,6 +189,10 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         String statusStr = noBoard ? "请勿上车" : (waiting ? "列车进站"
             : (minutesOf(stops, now, 0) + " 分钟"));
 
+        boolean loop = settings.lineMode() != CtdPlatformSettings.LineMode.NORMAL;
+        boolean loopExit = be instanceof CtdHoldAccess acc && acc.ctdgetLoopExit();
+        String smallText = loop && !loopExit ? "本次列车方向" : "本次列车开往";
+
         // 4x1 两半之间的竖分割条
         if (dual) {
             rects.add(new Rect(2f + halfW - 0.2f, 2f, 0.02f, 0.4f, 10.2f,
@@ -211,13 +215,14 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             // 带内的字全部在 4px 带子里垂直居中
             small.horizontalAlign.set(ETextAlignment.LEFT);
             put(small, clip, hx + 0.8f, 2 + (4f - 8f * 0.14f) / 2f, yellowW * 0.52f, 3f, 0.14f,
-                "本次列车开往", contrastText(accent));
+                smallText, contrastText(accent));
 
             dest.horizontalAlign.set(ETextAlignment.CENTER);
+            String destText = loop && !loopExit ? settings.lineMode().zh() : nameOf(stops, idx);
             put(dest, clip, hx + yellowW * 0.50f, 2 + (4f - 8f * 0.20f) / 2f,
-                yellowW * 0.50f - 0.5f, 3f, 0.20f, nameOf(stops, idx), contrastText(accent));
+                yellowW * 0.50f - 0.5f, 3f, 0.20f, destText, contrastText(accent));
 
-            right.horizontalAlign.set(ETextAlignment.CENTER);
+            right.horizontalAlign.set(dual ? ETextAlignment.CENTER : ETextAlignment.RIGHT);
             String rightText = dual ? (i == 0 ? settings.platform() : settings.platform2()) : time;
             put(right, clip, hx + yellowW + 0.4f, 2 + (4f - 8f * 0.20f) / 2f,
                 halfW - yellowW - 0.8f, 3f, 0.20f, rightText,
@@ -231,8 +236,8 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
                 8f * stateScale + 0.3f, stateScale, statusStr,
                 noBoard ? 0xFFFF9800 : 0xFFFFFFFF);
 
-            // 中部右：下一趟三行，整体在 6..12.4 内垂直居中（三行共 3×1.7px）
-            float rowTop = 6f + (6.4f - 3f * 1.7f) / 2f;
+            // 中部右：两行（标签 / 终点站 + 倒计时同行），整体垂直居中
+            float rowTop = 6f + (6.4f - 2f * 2.1f) / 2f;
             BERLabel nextLbl = lab(i * 7 + 4);
             nextLbl.horizontalAlign.set(ETextAlignment.LEFT);
             put(nextLbl, clip, hx + halfW * 0.5f, rowTop, halfW * 0.5f, 2f, 0.15f, "下一趟开往",
@@ -240,17 +245,20 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
             BERLabel nextD = lab(i * 7 + 5);
             nextD.horizontalAlign.set(ETextAlignment.LEFT);
-            put(nextD, clip, hx + halfW * 0.5f, rowTop + 1.7f, halfW * 0.5f, 2f, 0.19f,
+            put(nextD, clip, hx + halfW * 0.5f, rowTop + 2.1f, halfW * 0.32f, 2f, 0.19f,
                 nameOf(stops, idx + 1), 0xFFFFFFFF);
 
             BERLabel nextM = lab(i * 7 + 6);
-            nextM.horizontalAlign.set(ETextAlignment.LEFT);
-            put(nextM, clip, hx + halfW * 0.5f, rowTop + 3.4f, halfW * 0.5f, 2f, 0.19f,
-                minutesOf(stops, now, idx + 1) + " 分钟", 0xFFFFE082);
+            nextM.horizontalAlign.set(ETextAlignment.RIGHT);
+            put(nextM, clip, hx + halfW * 0.5f + halfW * 0.28f, rowTop + 2.1f, halfW * 0.22f, 2f,
+                0.19f, minutesOf(stops, now, idx + 1) + " 分钟", 0xFFFFE082);
         }
 
         // 底部蓝带（整条）
         rects.add(new Rect(2f, 12.2f, 0f, totalW, 2.8f, blue));
+
+        lab(14).horizontalScrollMode.set(EScrollMode.ALWAYS);
+        lab(15).horizontalScrollMode.set(EScrollMode.ALWAYS);
 
         var barL = Rectangle.withSize(3f, 12.2f,
             dual ? totalW * 0.5f - 4f : totalW - 2f, 3f);
