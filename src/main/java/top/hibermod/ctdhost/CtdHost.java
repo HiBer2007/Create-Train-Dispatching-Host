@@ -69,6 +69,9 @@ public final class CtdHost {
         // 只注册客户端会让服务端退回 EmptyDisplaySettings，字段在存档往返时全丢。
         top.hibermod.ctdhost.client.screen.CtdDisplayTypes.registerAll();
 
+        // 内置线路色号：显示件顶部色条用。
+        top.hibermod.ctdhost.block.CtdLineColorDefaults.register();
+
         top.hibermod.ctdhost.item.CtdItems.ITEMS.register(modBus);
         // 方块与方块实体：自动道岔机（只有装了它的岔口才允许信号系统自动扳动）。
         top.hibermod.ctdhost.block.CtdBlocks.BLOCKS.register(modBus);

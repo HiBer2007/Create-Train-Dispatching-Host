@@ -1,6 +1,8 @@
 {
-  "gui.ctdhost.line": "线路代号",
-  "gui.ctdhost.line.description": "显示在顶部色条上，例如 1号线、11号线、广佛城际",
+  "gui.ctdhost.line_color": "线路颜色",
+  "gui.ctdhost.line_color.description": "色号来自 CTD 注册表；选「无」则按线路代号自动取色",
+"gui.ctdhost.line": "线路代号",
+  "gui.ctdhost.line.description": "显示在顶部色条上，例如 1号线、11号线",
 "display.createrailwaysnavigator.departure_board.ctd_board": "CTD 发车信息板",
   "display.createrailwaysnavigator.passenger_information.ctd_car_lcd": "CTD 车厢 LCD 动态地图",
   "display.createrailwaysnavigator.passenger_information.ctd_car_scroll": "CTD 车厢走字屏",

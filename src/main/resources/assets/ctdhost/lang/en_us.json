@@ -1,5 +1,7 @@
 {
-  "gui.ctdhost.line": "Line code",
+  "gui.ctdhost.line_color": "Line colour",
+  "gui.ctdhost.line_color.description": "Colours come from the CTD registry; leave unset to derive from the code",
+"gui.ctdhost.line": "Line code",
   "gui.ctdhost.line.description": "Shown in the top colour bar, e.g. Line 1, Line 11",
 "display.createrailwaysnavigator.departure_board.ctd_board": "CTD Departure Board (CR style)",
   "display.createrailwaysnavigator.passenger_information.ctd_car_lcd": "CTD Car LCD Map",
