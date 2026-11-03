@@ -146,7 +146,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         if (bw >= 3 && bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                realClockText() + "   " + currentClock(lvl), 19f, 46f, 1.0f, stops, now, noBoard, noticeText, headLabelText, nextLabelText, thirdLabelText);
+                realClockText() + " " + currentClock(lvl), 19f, 46f, 1.0f, stops, now, noBoard, noticeText, headLabelText, nextLabelText, thirdLabelText);
             return;
         }
         if (bh >= 2) {
@@ -244,7 +244,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
 
         // 右栏
-        float clockScale = 0.26f * k;
+        float clockScale = 0.18f * k;
         float clockH = 8f * clockScale;
         put(clock, clip, rightX + 1f, 2 + (bandH - clockH) / 2f, rightW - 2f, clockH + 0.3f,
             clockScale, realClockText(), 0xFFFFFFFF);
