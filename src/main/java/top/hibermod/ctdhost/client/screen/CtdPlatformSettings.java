@@ -182,8 +182,8 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         lineMode = LineMode.byId(nbt.getString(NBT_LINE_MODE));
         platform2 = nbt.getString(NBT_PLATFORM_2);
         org.slf4j.LoggerFactory.getLogger("ctdhost").warn(
-            "ctdhost: [PIDS-LOAD] platform2=[{}] keys={} this={}",
-            platform2, nbt.getAllKeys(), System.identityHashCode(this));
+            "ctdhost: [PIDS-LOAD] hasKey={} platform2=[{}] allKeys={} this={}",
+            nbt.contains(NBT_PLATFORM_2), platform2, nbt.getAllKeys(), System.identityHashCode(this));
         content = Content.byId(nbt.getString(NBT_CONTENT));
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings loaded station=[{}] platform=[{}] sys=[{}]",
