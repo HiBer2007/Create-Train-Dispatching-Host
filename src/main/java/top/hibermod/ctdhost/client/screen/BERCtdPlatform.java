@@ -9,7 +9,6 @@ import de.mrjulsen.mcdragonlib.client.ber.BERLabel;
 import de.mrjulsen.mcdragonlib.client.ber.BERLabel.EScrollMode;
 import de.mrjulsen.mcdragonlib.data.ETextAlignment;
 import de.mrjulsen.mcdragonlib.util.DLColor;
-import de.mrjulsen.mcdragonlib.util.Pair;
 import de.mrjulsen.mcdragonlib.util.TextUtils;
 import de.mrjulsen.mcdragonlib.util.math.Point;
 import de.mrjulsen.mcdragonlib.util.math.Rectangle;
@@ -19,64 +18,70 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * 站台 PIDS。**手动排版**：只针对五种格数分别写死坐标与字号。
+ * 站台 PIDS，按格数**手写**五套版式。
+ *
+ * <p>坐标一律是**基线**：{@code BERLabel} 的字从 y 向上长，高度约 {@code 8 × scale}。
+ * 所以「带 [top, top+height)」里的基线约为 {@code top + height - 1}。
+ * 字号直接写死，靠 min = max 固定住。
  *
  * <table>
  *   <tr><th>格数</th><th>用途</th><th>版式</th></tr>
- *   <tr><td>3x2</td><td>普通站台悬挂屏</td><td>方向条 + 三趟 + 提示</td></tr>
+ *   <tr><td>3x2</td><td>普通站台悬挂屏</td><td>方向条 + 三趟 + 滚动提示</td></tr>
  *   <tr><td>2x2</td><td>小尺寸悬挂屏</td><td>方向条 + 两趟</td></tr>
- *   <tr><td>4x1</td><td>大尺寸屏蔽门上屏</td><td>方向条 + 一趟</td></tr>
- *   <tr><td>3x1</td><td>中尺寸屏蔽门上屏</td><td>方向条 + 一趟（更小）</td></tr>
- *   <tr><td>2x1</td><td>小尺寸屏蔽门上屏</td><td>仅一趟倒计时</td></tr>
+ *   <tr><td>4x1</td><td>大尺寸屏蔽门上屏</td><td>横排：方向 + 倒计时 + 门灯 + 线路图</td></tr>
+ *   <tr><td>3x1</td><td>中尺寸屏蔽门上屏</td><td>横排：方向 + 倒计时 + 门灯</td></tr>
+ *   <tr><td>2x1</td><td>小尺寸屏蔽门上屏</td><td>只有倒计时 + 门灯</td></tr>
  * </table>
- *
- * <p>坐标是**基线**（{@code BERLabel} 的字从 y 向上长，占 9×scale 高），
- * 字号直接写死，不参与任何自动缩放。
  */
 public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatformSettings> {
 
+    private static final String[] ROW_NAMES = {"本趟", "下一趟", "第三趟"};
+
     private final BERLabel head = new BERLabel();
     private final BERLabel[] rows = new BERLabel[3];
-    private final BERLabel footer = new BERLabel();
     private final BERLabel minutes = new BERLabel();
     private final BERLabel route = new BERLabel();
     private final BERLabel door = new BERLabel();
-
-    private static final String[] ROW_NAMES = {"本趟", "下一趟", "第三趟"};
+    private final BERLabel footer = new BERLabel();
 
     public BERCtdPlatform() {
         head.horizontalAlign.set(ETextAlignment.LEFT);
         head.color.set(DLColor.fromInt(0xFFECEFF1));
         head.horizontalScrollMode.set(EScrollMode.NEVER);
+
         for (int i = 0; i < rows.length; i++) {
             rows[i] = new BERLabel();
             rows[i].horizontalAlign.set(ETextAlignment.LEFT);
             rows[i].horizontalScrollMode.set(EScrollMode.NEVER);
         }
-        footer.horizontalAlign.set(ETextAlignment.LEFT);
-        footer.color.set(DLColor.fromInt(0xFF9E9E9E));
-        footer.horizontalScrollMode.set(EScrollMode.ALWAYS);
+
         minutes.horizontalAlign.set(ETextAlignment.LEFT);
         minutes.color.set(DLColor.fromInt(0xFFFF5252));
+
         route.horizontalAlign.set(ETextAlignment.LEFT);
         route.color.set(DLColor.fromInt(0xFFB0BEC5));
         route.horizontalScrollMode.set(EScrollMode.ALWAYS);
+
         door.horizontalAlign.set(ETextAlignment.LEFT);
-        door.color.set(DLColor.fromInt(0xFF66BB6A));
+
+        footer.horizontalAlign.set(ETextAlignment.LEFT);
+        footer.color.set(DLColor.fromInt(0xFF9E9E9E));
+        footer.horizontalScrollMode.set(EScrollMode.ALWAYS);
     }
 
     @Override
     public void render(BERGraphics<AdvancedDisplayBlockEntity> graphics, float partialTicks,
                        AdvancedDisplayRenderInstance parent, int light, boolean backSide) {
         top.hibermod.ctdhost.client.CtdHeadRenderers.ensureRegistered();
+
         head.render(graphics, light);
         for (BERLabel row : rows) {
             if (row.text.get() != null) row.render(graphics, light);
         }
-        footer.render(graphics, light);
         if (minutes.text.get() != null) minutes.render(graphics, light);
         if (route.text.get() != null) route.render(graphics, light);
         if (door.text.get() != null) door.render(graphics, light);
+        if (footer.text.get() != null) footer.render(graphics, light);
     }
 
     @Override
@@ -99,151 +104,177 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         String line = settings.lineName();
         String dest = stops.isEmpty() ? "—"
             : stops.get(0).displayName(de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
-        if (dest.length() > 7) dest = dest.substring(0, 7);
 
-        // ── 1 格高：横排，可带线路图与门灯 ──
+        clearAll();
+
         if (bh == 1) {
-            minutes.text.set(null); route.text.set(null); door.text.set(null);
-            String mins = "--";
-            if (!stops.isEmpty()) {
-                var e = stops.get(0);
-                long t = e.realtime().isKnown() ? e.realtime().departureIn(now) : e.scheduled().departureIn(now);
-                mins = String.valueOf(Math.max(0, t / 20 / 60));
-            }
-
-            if (bw >= 3) {
-                StringBuilder sb = new StringBuilder();
-                if (!line.isEmpty()) sb.append("【").append(line).append("】");
-                sb.append("开往 ").append(dest);
-                head.clippingArea.set(area);
-                head.text.set(TextUtils.text(sb.toString()));
-                head.preferredWidth.set(w * 0.55f);
-                head.position.set(Point.of(2, 6.5f));
-                scale(head, bw == 4 ? 0.42f : 0.38f);
-                head.color.set(lineColor(settings));
-            } else {
-                head.text.set(null);
-            }
-
-            minutes.clippingArea.set(area);
-            minutes.text.set(TextUtils.text(mins + " 分钟"));
-            minutes.preferredWidth.set(w * 0.45f);
-            minutes.position.set(Point.of(bw >= 3 ? w * 0.52f : 2, bw >= 3 ? 13.5f : 11f));
-            scale(minutes, bw >= 3 ? 0.55f : 0.62f);
-
-            if (settings.showDoorLight()) {
-                door.clippingArea.set(area);
-                door.text.set(TextUtils.text(blockEntity.isWaitingAtStation() ? "\u25C0 \u25CF \u25B6" : "\u25C0 \u25CB \u25B6"));
-                door.preferredWidth.set(14f);
-                door.position.set(Point.of(w - 15, 6.5f));
-                scale(door, 0.45f);
-                door.color.set(DLColor.fromInt(blockEntity.isWaitingAtStation() ? 0xFF66BB6A : 0xFF546E7A));
-            }
-
-            if (settings.showRouteMap() && bw >= 3) {
-                StringBuilder map = new StringBuilder();
-                var remaining = blockEntity.getRemainingStops();
-                int shown = 0;
-                for (var s : remaining) {
-                    if (shown++ >= 6) break;
-                    if (map.length() > 0) map.append(" \u2014 ");
-                    map.append(s.title());
-                }
-                route.clippingArea.set(area);
-                route.text.set(TextUtils.text(map.length() == 0 ? "" : map.toString()));
-                route.preferredWidth.set((float) Math.max(1, w - 4));
-                route.position.set(Point.of(2, 15.5f));
-                scale(route, 0.26f);
-            }
-
-            footer.text.set(null);
+            layoutSingleLine(settings, blockEntity, stops, now, area, w, bw, line, dest);
             return;
         }
 
-        // ── 手动排版表 ──
-        int rowCount;
-        float headY, headScale;
-        float[] rowY;
-        float rowScale;
-        float footY = -1, footScale = 0;
-
-        if (bw == 3 && bh == 2) {                 // 普通站台悬挂屏
-            headY = 8; headScale = 0.50f;
-            rowY = new float[]{15, 22, 28}; rowScale = 0.55f; rowCount = 3;
-            footY = 31.5f; footScale = 0.30f;
-        } else if (bw == 2 && bh == 2) {          // 小尺寸悬挂屏
-            headY = 8; headScale = 0.45f;
-            rowY = new float[]{18, 28, 0}; rowScale = 0.55f; rowCount = 2;
-        } else if (bw == 4 && bh == 1) {          // 大尺寸屏蔽门上屏
-            headY = 6.5f; headScale = 0.42f;
-            rowY = new float[]{14, 0, 0}; rowScale = 0.55f; rowCount = 1;
-        } else if (bw == 3 && bh == 1) {          // 中尺寸屏蔽门上屏
-            headY = 6.5f; headScale = 0.38f;
-            rowY = new float[]{14, 0, 0}; rowScale = 0.50f; rowCount = 1;
-        } else if (bw == 2 && bh == 1) {          // 小尺寸屏蔽门上屏
-            headY = -1; headScale = 0;
-            rowY = new float[]{10.5f, 0, 0}; rowScale = 0.50f; rowCount = 1;
-        } else {                                   // 其它尺寸：按格数粗略兜底
-            headY = Math.max(6, h * 0.25f); headScale = 0.45f;
-            int n = bh >= 2 ? 3 : 1;
-            rowY = new float[3];
-            for (int i = 0; i < 3; i++) rowY[i] = Math.min(h - 2, h * (0.45f + i * 0.22f));
-            rowScale = 0.5f; rowCount = n;
-        }
-
-        // 头：线路色 + 开往
-        if (headY > 0) {
-            StringBuilder sb = new StringBuilder();
-            if (!line.isEmpty()) sb.append("【").append(line).append("】");
-            sb.append("开往 ").append(dest);
-            head.clippingArea.set(area);
-            head.text.set(TextUtils.text(sb.toString()));
-            head.preferredWidth.set((float) Math.max(1, w - 4));
-            head.position.set(Point.of(2, headY));
-            scale(head, headScale);
-            head.color.set(lineColor(settings));
+        if (bw == 3 && bh == 2) {
+            // 普通站台悬挂屏：48×32。头 8px，三行各 8px，底 6px。
+            layoutBoard(settings, area, w, line, dest, stops, now,
+                8f, 0.42f, new float[]{16f, 24f, 31f}, 0.45f, 3, 33f, 0.26f);
+        } else if (bw == 2 && bh == 2) {
+            // 小尺寸悬挂屏：32×32。头 9px，两行各 12px。
+            layoutBoard(settings, area, w, line, dest, stops, now,
+                9f, 0.38f, new float[]{21f, 31f, 0f}, 0.45f, 2, -1f, 0f);
         } else {
-            head.text.set(null);
+            // 其它尺寸：按格数铺开，行数随高度。
+            int n = Math.min(3, Math.max(1, bh - 1));
+            float headY = Math.max(7f, h * 0.26f);
+            float step = (h - headY) / (n + 1);
+            float[] ys = new float[3];
+            for (int i = 0; i < 3; i++) ys[i] = headY + step * (i + 1);
+            layoutBoard(settings, area, w, line, dest, stops, now,
+                headY, 0.40f, ys, 0.44f, n, -1f, 0f);
         }
+    }
 
-        // 三趟
+    /** 多行版式：方向条 + N 趟 + 可选底部提示。 */
+    private void layoutBoard(CtdPlatformSettings settings, Rectangle area, float w,
+                             String line, String dest,
+                             java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops,
+                             long now, float headY, float headScale, float[] rowY, float rowScale,
+                             int rowCount, float footY, float footScale) {
+
+        place(head, area, w, 2, headY, headScale, headText(line, dest, w), lineColor(settings).getAsARGB());
+
         for (int i = 0; i < rows.length; i++) {
             BERLabel row = rows[i];
             if (i >= rowCount) { row.text.set(null); continue; }
 
-            String minutes = "--";
+            String minutesText = "--";
             int color = 0xFF757575;
             if (i < stops.size()) {
-                var e = stops.get(i);
-                long ticks = e.realtime().isKnown()
-                    ? e.realtime().departureIn(now)
-                    : e.scheduled().departureIn(now);
-                minutes = String.valueOf(Math.max(0, ticks / 20 / 60));
+                minutesText = minutesTo(stops.get(i), now);
                 color = i == 0 ? 0xFFFF5252 : 0xFFECEFF1;
             }
-            row.clippingArea.set(area);
-            row.text.set(TextUtils.text(ROW_NAMES[i] + "   " + minutes + " 分钟"));
-            row.preferredWidth.set((float) Math.max(1, w - 4));
-            row.position.set(Point.of(2, rowY[i]));
-            scale(row, rowScale);
-            row.color.set(DLColor.fromInt(color));
+            place(row, area, w, 2, rowY[i], rowScale,
+                ROW_NAMES[i] + "   " + minutesText + " 分钟", color);
         }
 
-        // 底部提示
         if (footY > 0) {
             footer.clippingArea.set(area);
             footer.text.set(TextUtils.text("请注意站台间隙，小心慢行。"));
             footer.preferredWidth.set((float) Math.max(1, w - 4));
             footer.position.set(Point.of(2, footY));
-            scale(footer, footScale);
+            setScale(footer, footScale);
         } else {
             footer.text.set(null);
         }
     }
 
-    private static void scale(BERLabel label, float s) {
-        label.horizontalScale.set(Pair.of(s, s));
-        label.verticalScale.set(Pair.of(s, s));
+    /** 单格高：横排。3/4 宽带方向与线路图，2/3 宽带门灯。 */
+    private void layoutSingleLine(CtdPlatformSettings settings, AdvancedDisplayBlockEntity be,
+                                  java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops,
+                                  long now, Rectangle area, float w, int bw, String line, String dest) {
+
+        String minutesText = stops.isEmpty() ? "--" : minutesTo(stops.get(0), now);
+
+        if (bw >= 3) {
+            place(head, area, w * 0.55f, 2, 6.5f, bw == 4 ? 0.38f : 0.34f,
+                headText(line, dest, w * 0.5f), lineColor(settings).getAsARGB());
+
+            minutes.clippingArea.set(area);
+            minutes.text.set(TextUtils.text(minutesText + " 分钟"));
+            minutes.preferredWidth.set(w * 0.42f);
+            minutes.position.set(Point.of(w * 0.55f, 13.5f));
+            setScale(minutes, 0.45f);
+
+            if (settings.showDoorLight()) {
+                boolean open = be.isWaitingAtStation();
+                door.clippingArea.set(area);
+                door.text.set(TextUtils.text(open ? "◀ ● ▶" : "◀ ○ ▶"));
+                door.preferredWidth.set(16f);
+                door.position.set(Point.of(w - 17f, 6.5f));
+                setScale(door, 0.40f);
+                door.color.set(DLColor.fromInt(open ? 0xFF66BB6A : 0xFF546E7A));
+            }
+
+            if (settings.showRouteMap() && bw >= 3) {
+                StringBuilder map = new StringBuilder();
+                int shown = 0;
+                for (var s : be.getRemainingStops()) {
+                    if (shown++ >= 6) break;
+                    if (map.length() > 0) map.append(" — ");
+                    map.append(s.title());
+                }
+                if (map.length() > 0) {
+                    route.clippingArea.set(area);
+                    route.text.set(TextUtils.text(map.toString()));
+                    route.preferredWidth.set((float) Math.max(1, w - 4));
+                    route.position.set(Point.of(2, 15.5f));
+                    setScale(route, 0.24f);
+                }
+            }
+            return;
+        }
+
+        // 2 格宽：只剩倒计时 + 门灯
+        minutes.clippingArea.set(area);
+        minutes.text.set(TextUtils.text(minutesText + " 分钟"));
+        minutes.preferredWidth.set(w - 18f);
+        minutes.position.set(Point.of(2, 11f));
+        setScale(minutes, 0.50f);
+
+        if (settings.showDoorLight()) {
+            boolean open = be.isWaitingAtStation();
+            door.clippingArea.set(area);
+            door.text.set(TextUtils.text(open ? "◀●" : "◀○"));
+            door.preferredWidth.set(14f);
+            door.position.set(Point.of(w - 14f, 11f));
+            setScale(door, 0.42f);
+            door.color.set(DLColor.fromInt(open ? 0xFF66BB6A : 0xFF546E7A));
+        }
+    }
+
+    // ── 小工具 ──────────────────────────────────────────────────────────
+
+    private void clearAll() {
+        head.text.set(null);
+        for (BERLabel row : rows) row.text.set(null);
+        minutes.text.set(null);
+        route.text.set(null);
+        door.text.set(null);
+        footer.text.set(null);
+    }
+
+    private static String headText(String line, String dest, float maxWidthPx) {
+        // 中文约 8px/字（scale=1），按最坏情况截断，避免撑破。
+        int budget = (int) Math.max(4, maxWidthPx / 8f);
+        StringBuilder sb = new StringBuilder();
+        if (!line.isEmpty()) sb.append("【").append(line).append("】");
+        sb.append("开往 ");
+        int room = Math.max(2, budget - sb.length());
+        sb.append(dest.length() > room ? dest.substring(0, room) : dest);
+        return sb.toString();
+    }
+
+    private static String minutesTo(de.mrjulsen.crn.api.core.snapshot.BoardEntry e, long now) {
+        long ticks = e.realtime().isKnown()
+            ? e.realtime().departureIn(now)
+            : e.scheduled().departureIn(now);
+        return String.valueOf(Math.max(0, ticks / 20 / 60));
+    }
+
+    private static void place(BERLabel label, Rectangle area, float width,
+                              float x, float baselineY, float scale, String text, int color) {
+        label.clippingArea.set(area);
+        label.text.set(TextUtils.text(text));
+        label.preferredWidth.set((float) Math.max(1, width - x - 1));
+        label.position.set(Point.of(x, baselineY));
+        setScale(label, scale);
+        label.color.set(DLColor.fromInt(color));
+    }
+
+    private static void setScale(BERLabel label, float s) {
+        // min = max = s：calculateFinalScales() 里 clamp(1, min, max) 得到 s。
+        label.horizontalMinScale.set(s);
+        label.horizontalMaxScale.set(s);
+        label.verticalMinScale.set(s);
+        label.verticalMaxScale.set(s);
     }
 
     /** 线路色：用户选的优先，其次按代号查 CTD 色号表，最后按名字哈希兜底。 */
@@ -252,8 +283,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         String key = settings.lineName();
         if (key != null) {
-            java.util.regex.Matcher m =
-                java.util.regex.Pattern.compile("([0-9]+)").matcher(key);
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("([0-9]+)").matcher(key);
             if (m.find()) {
                 var id = net.minecraft.resources.ResourceLocation.tryParse("ctd:line" + m.group(1));
                 int c = top.hibermod.ctdapi.display.LineColors.getOrDefault(id, 0);
@@ -267,18 +297,6 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             0xFF8E24AA, 0xFFFB8C00, 0xFF00ACC1, 0xFF6D4C41
         };
         return DLColor.fromInt(palette[Math.floorMod(hash, palette.length)]);
-    }
-
-    static String contentLabel(CtdPlatformSettings.Content content) {
-        return switch (content) {
-            case DEPARTURES -> "发车";
-            case ARRIVALS -> "到达";
-            case BOTH -> "到发";
-        };
-    }
-
-    static String shorten(String s) {
-        return s.length() > 18 ? s.substring(0, 18) : s;
     }
 
     static CtdPlatformSettings safeSettings(AdvancedDisplayBlockEntity blockEntity) {
