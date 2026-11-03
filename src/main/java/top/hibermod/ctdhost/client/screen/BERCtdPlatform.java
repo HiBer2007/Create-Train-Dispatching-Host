@@ -186,39 +186,41 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         // 左带：两行三字「本次列 / 车开往」，左半格内居中且在带内纵向居中
         headLabel.horizontalAlign.set(ETextAlignment.CENTER);
         headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
-        float headLineH = 8f * 0.16f;
+        float headLineH = 8f * 0.18f;
         float headTop = 2 + (bandH - headLineH * 2f) / 2f;
-        put(headLabel, clip, leftX, headTop, leftW * 0.52f, headLineH + 0.4f, 0.16f, "本次列", onAccent);
-        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.52f, headLineH + 0.4f, 0.16f, "车开往", onAccent);
+        put(headLabel, clip, leftX, headTop, leftW * 0.52f, headLineH + 0.4f, 0.18f, "本次列", onAccent);
+        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.52f, headLineH + 0.4f, 0.18f, "车开往", onAccent);
 
         headDest.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headDest, clip, leftX + leftW * 0.52f, 2 + (bandH - 8f * 0.20f) / 2f,
-            leftW * 0.48f - 1f, 8f * 0.20f + 0.4f, 0.20f, headDestText, onAccent);
+        put(headDest, clip, leftX + leftW * 0.52f, 2 + (bandH - 8f * 0.23f) / 2f,
+            leftW * 0.48f - 1f, 8f * 0.23f + 0.4f, 0.23f, headDestText, onAccent);
         float divTop = 2 + bandH + 6f;    // 第一条分割线
         rects.add(new Rect(leftX, divTop, 0.01f, leftW, 0.3f, divider));
 
         // 状态行：在色带与分割线之间垂直居中
         float statusBand = divTop - (2 + bandH);
-        float statusTextH = 8f * 0.30f * k;
+        float statusTextH = 8f * 0.32f * k;
         put(status, clip, leftX, 2 + bandH + (statusBand - statusTextH) / 2f, leftW, statusTextH + 0.5f,
-            0.30f * k, noBoard ? "请勿上车" : statusText(waiting, min1, now, stops),
+            0.32f * k, noBoard ? "请勿上车" : statusText(waiting, min1, now, stops),
             noBoard ? 0xFFFF9800 : 0xFFFFFFFF);
         status.horizontalAlign.set(ETextAlignment.CENTER);
 
-        // 两趟车：每趟一行，左「X趟开往」右「站名 N 分钟」
-        float row1 = divTop + 1.5f;
+        // 两趟车：每趟一行（左标签 / 右值），各自在自己的分割线区间内垂直居中
+        float rowBand = 6f;
+        float valH = 8f * 0.19f * k;
+        float row1 = divTop + (rowBand - valH) / 2f;
         nextLabel.horizontalAlign.set(ETextAlignment.LEFT);
         nextDest.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(nextLabel, clip, leftX + 1f, row1, leftW * 0.55f, 4f, 0.15f * k, "下一趟开往", 0xFF9AA5AD);
-        put(nextDest, clip, leftX + leftW * 0.4f, row1, leftW * 0.6f - 1f, 4f, 0.21f * k,
+        put(nextLabel, clip, leftX + 1f, row1, leftW * 0.36f, 4f, 0.15f * k, "下一趟开往", 0xFF9AA5AD);
+        put(nextDest, clip, leftX + leftW * 0.36f, row1, leftW * 0.64f - 1f, 4f, 0.19f * k,
             dest1 + "  " + min1 + " 分钟", 0xFFFFFFFF);
 
-        float divMid = row1 + 4.5f;
+        float divMid = divTop + rowBand;
         rects.add(new Rect(leftX, divMid, 0.01f, leftW, 0.3f, divider));
 
-        float row2 = divMid + 1.5f;
-        put(thirdLabel, clip, leftX + 1f, row2, leftW * 0.55f, 4f, 0.15f * k, "第三趟开往", 0xFF9AA5AD);
-        put(thirdDest, clip, leftX + leftW * 0.4f, row2, leftW * 0.6f - 1f, 4f, 0.21f * k,
+        float row2 = divMid + (rowBand - valH) / 2f;
+        put(thirdLabel, clip, leftX + 1f, row2, leftW * 0.36f, 4f, 0.15f * k, "第三趟开往", 0xFF9AA5AD);
+        put(thirdDest, clip, leftX + leftW * 0.36f, row2, leftW * 0.64f - 1f, 4f, 0.19f * k,
             dest2 + "  " + min2 + " 分钟", 0xFF66BB6A);
 
         nextMin.text.set(null);
