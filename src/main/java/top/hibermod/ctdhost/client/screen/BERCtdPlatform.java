@@ -244,7 +244,10 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
 
         // 右栏
-        put(clock, clip, rightX + 1f, 2.6f, rightW - 2f, 3f, 0.22f * k, time, 0xFFFFFFFF);
+        float clockScale = 0.26f * k;
+        float clockH = 8f * clockScale;
+        put(clock, clip, rightX + 1f, 2 + (bandH - clockH) / 2f, rightW - 2f, clockH + 0.3f,
+            clockScale, realClockText(), 0xFFFFFFFF);
         // 公告：调度没发布就留空，不显示占位
         if (noticeText != null && !noticeText.isBlank()) {
             notice.horizontalScrollMode.set(EScrollMode.ALWAYS);
@@ -277,21 +280,31 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         float leftW = be.getXSizeScaled() * 16 - 4f;
         float bandH = 7f;
 
-        rects.add(new Rect(leftX, 2, 0f, leftW, bandH, accent));
+        // 色带拆两段：黄（线路色）一格多一点，其余蓝（时钟）
+        float yellowW = Math.min(leftW - 9f, 18f);
+        rects.add(new Rect(leftX, 2, 0f, yellowW, bandH, accent));
+        rects.add(new Rect(leftX + yellowW + 0.5f, 2, 0f, leftW - yellowW - 0.5f, bandH,
+            DLColor.fromInt(0xFF1E4FA3)));
 
         // 两行三字 + 终点站（右）
-        float headLineH = 8f * 0.18f;
+        float headLineH = 8f * 0.16f;
         float headTop = 2 + (bandH - headLineH * 2f) / 2f;
         headLabel.horizontalAlign.set(ETextAlignment.CENTER);
         headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headLabel, clip, leftX, headTop, leftW * 0.45f, headLineH + 0.3f, 0.18f,
+        put(headLabel, clip, leftX, headTop, yellowW * 0.45f, headLineH + 0.3f, 0.16f,
             headLabelText.substring(0, 3), onAccent);
-        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.45f, headLineH + 0.3f, 0.18f,
+        put(headLabel2, clip, leftX, headTop + headLineH, yellowW * 0.45f, headLineH + 0.3f, 0.16f,
             headLine2Text, onAccent);
 
         headDest.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headDest, clip, leftX + leftW * 0.45f, 2 + (bandH - 8f * 0.23f) / 2f,
-            leftW * 0.55f - 1f, 8f * 0.18f + 0.3f, 0.18f, headDestText, onAccent);
+        put(headDest, clip, leftX + yellowW * 0.45f, 2 + (bandH - 8f * 0.20f) / 2f,
+            yellowW * 0.55f - 1f, 8f * 0.20f + 0.3f, 0.20f, headDestText, onAccent);
+
+        // 蓝带里的游戏内时钟，垂直居中
+        clock.horizontalAlign.set(ETextAlignment.RIGHT);
+        float gameClock = 0.20f;
+        put(clock, clip, leftX + yellowW + 1f, 2 + (bandH - 8f * gameClock) / 2f,
+            leftW - yellowW - 2f, 8f * gameClock + 0.3f, gameClock, time, 0xFFFFFFFF);
 
         float divTop = 2 + bandH + 5f;
         rects.add(new Rect(leftX, divTop, 0.01f, leftW, 0.3f, divider));
@@ -387,6 +400,13 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             ? e.realtime().departureIn(now)
             : e.scheduled().departureIn(now);
         return String.valueOf(Math.max(0, ticks / 20 / 60));
+    }
+
+    /** 现实日期 + 时间（3x2 的蓝带用）。 */
+    private static String realClockText() {
+        var now = java.time.LocalDateTime.now();
+        return now.getMonthValue() + "月" + now.getDayOfMonth() + "日 "
+            + String.format("%02d:%02d", now.getHour(), now.getMinute());
     }
 
     private static String currentClock(Level level) {
