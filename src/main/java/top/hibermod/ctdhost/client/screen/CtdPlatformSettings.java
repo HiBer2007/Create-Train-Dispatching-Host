@@ -208,6 +208,13 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
                 setter.accept(e.text().getPlainText());
                 return false;
             });
+        // 输入框本身也挂一份悬浮文本：只挂图标时鼠标停在框里看不到。
+        box.tooltip.set(new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLTooltip(
+            java.util.List.of(
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey),
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey + ".description")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY)),
+            200));
         line.addComponent(box);
     }
     private void buildPickerLine(GuiBuilderContext context, String langKey,
@@ -248,6 +255,12 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
                 e.item().ifPresent(x -> setter.accept(String.valueOf(x)));
                 return false;
             });
+        picker.tooltip.set(new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLTooltip(
+            java.util.List.of(
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey),
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey + ".description")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY)),
+            200));
         line.addComponent(picker);
     }
 

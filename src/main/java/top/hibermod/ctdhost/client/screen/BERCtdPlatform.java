@@ -212,13 +212,14 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         nextRow.position.set(Point.of(2, CtdLayout.baseline(1 + b0 + b1, b2, sSmall)));
         setScale(nextRow, sSmall);
 
-        // 底栏：3x2 及以上缩放显示，2x2 及更矮改为滚动。
-        boolean marquee = h < 32f;
+        // 2x2（32px 高）及更矮才滚动；3x2 用缩放，保证整句可见。
+        boolean marquee = h < 30f;
         footer.horizontalScrollMode.set(marquee ? EScrollMode.ALWAYS : EScrollMode.FLEX_FIT);
         footer.clippingArea.set(area);
-        footer.text.set(TextUtils.text("下一站 " + dest + "  ·  "
-            + contentLabel(settings.content()) + "  ·  请站在安全线以内候车"));
+        // 底栏只放一句短提示：3x2（48×32）宽度下刚好放得下，不再写「下一站 …」。
+        footer.text.set(TextUtils.text("请站在安全线以内候车"));
         footer.preferredWidth.set((float) Math.max(1, w - 4));
+        footer.horizontalMinScale.set(0.22f);
         footer.position.set(Point.of(2, CtdLayout.baseline(1 + b0 + b1 + b2, b3, CtdLayout.fit(b3, 0.55f))));
         setScale(footer, CtdLayout.fit(b3, 0.55f));
     }

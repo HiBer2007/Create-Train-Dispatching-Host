@@ -1,6 +1,6 @@
 package top.hibermod.ctdhost.client;
 
-import com.simibubi.create.content.trains.signal.SignalRenderer;
+
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 
@@ -43,7 +43,7 @@ public final class CtdHeadRenderers {
             // 复用 Create 的信号机渲染器，让 ctd_signal 在轨道上也显示信号板。
             BlockEntityRenderers.register(
                 top.hibermod.ctdhost.block.CtdBlocks.CTD_SIGNAL_BE.get(),
-                SignalRenderer::new);
+                CtdSignalRenderer::new);
             log.info("ctdhost: signal block renderer registered");
         } catch (Throwable t) {
             log.warn("ctdhost: signal block renderer failed: {}", t.toString());
