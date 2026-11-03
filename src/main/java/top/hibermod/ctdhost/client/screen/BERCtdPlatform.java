@@ -233,7 +233,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         String key = settings.lineName();
         if (key != null) {
             java.util.regex.Matcher m =
-                java.util.regex.Pattern.compile("[0-9]+").matcher(key);
+                java.util.regex.Pattern.compile("([0-9]+)").matcher(key);
             if (m.find()) {
                 var id = net.minecraft.resources.ResourceLocation.tryParse(
                     "ctd:line" + m.group(1));
