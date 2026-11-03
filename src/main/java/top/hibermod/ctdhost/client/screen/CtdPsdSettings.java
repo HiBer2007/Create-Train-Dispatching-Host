@@ -148,6 +148,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         buildTextLine(context, "gui.ctdhost.line", lineName(), this::setLineName);
         buildCheckLine(context, "gui.ctdhost.psd_map", showMap(), this::setShowMap);
         buildCheckLine(context, "gui.ctdhost.psd_arrow_right", arrowRight(), this::setArrowRight);
+        buildColorPickerLine(context, "gui.ctdhost.line_color", lineColor(), this::setLineColor);
     }
 
     // ── 复用 CtdPlatformSettings 的两种控件 ───────────────────────────
@@ -188,8 +189,56 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         line.addComponent(box);
     }
 
-    private void buildCheckLine(GuiBuilderContext context, String langKey,
-                                boolean value, java.util.function.Consumer<Boolean> setter) {
+    /** 线路颜色：从 CTD 颜色注册表里选。 */
+    private void buildColorPickerLine(GuiBuilderContext context, String langKey, int value,
+                                      java.util.function.IntConsumer setter) {
+        de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLPanel line =
+            context.container().addLine(langKey);
+
+        de.mrjulsen.crn.client.gui.widgets.IconSlotWidget icon =
+            line.addComponent(new de.mrjulsen.crn.client.gui.widgets.IconSlotWidget(0, 0));
+        icon.icon.set(de.mrjulsen.crn.client.gui.ModGuiIcons.VERY_DETAILED.getAsSprite(16, 16));
+        icon.tooltip.set(new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLTooltip(
+            java.util.List.of(
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey),
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey + ".description")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY)),
+            200));
+
+        java.util.List<Integer> colors = new java.util.ArrayList<>(
+            top.hibermod.ctdapi.display.LineColors.all().values());
+        if (colors.isEmpty()) colors.add(0xFFFFFFFF);
+
+        de.mrjulsen.crn.client.gui.widgets.create.CreateItemPicker<Integer> picker =
+            new de.mrjulsen.crn.client.gui.widgets.create.CreateItemPicker<>(0, 0, 0);
+        picker.renderArrow.set(true);
+        picker.layoutContraint.set(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.layout.FlowLayout.FlowConstraint.FILL);
+        picker.formatter.set(c -> c == null
+            ? de.mrjulsen.mcdragonlib.util.TextUtils.empty()
+            : net.minecraft.network.chat.Component.literal(
+                    "\u25A0  #" + String.format("%08X", c))
+                .withStyle(st -> st.withColor(c & 0xFFFFFF)));
+        picker.items.addAll(colors);
+        picker.selectedItem.set(value == 0
+            ? java.util.Optional.empty()
+            : java.util.Optional.of(value));
+        picker.tooltip.set(new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLTooltip(
+            java.util.List.of(
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey),
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey + ".description")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY)),
+            200));
+        picker.addEventListener(
+            de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLCycleButton.SelectedItemChanged.class,
+            (s, e) -> {
+                e.item().ifPresent(x -> setter.accept((Integer) x));
+                return false;
+            });
+        line.addComponent(picker);
+    }
+
+    private void buildCheckLine(GuiBuilderContext context, String langKey,                                boolean value, java.util.function.Consumer<Boolean> setter) {
         de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLPanel line =
             context.container().addLine(langKey);
 

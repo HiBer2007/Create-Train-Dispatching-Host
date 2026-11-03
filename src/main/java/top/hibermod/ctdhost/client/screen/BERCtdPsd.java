@@ -124,7 +124,7 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         }
 
         // 站名版式（2x1 / 3x1 无图）
-        float bottomBar = 3f;
+        float bottomBar = 2.8f;
         float contentBottom = h - bottomBar;
 
         boolean known = !s.stationId().isBlank() && !s.stationName().isBlank();
@@ -132,41 +132,56 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         String nextText = s.nextStation().isBlank() ? "未知下一站" : s.nextStation();
         String arrow = s.arrowRight() ? "→" : "←";
 
+        // 右栏留给圆章，左栏放站名与下一站
+        float rightW = bw >= 3 ? 13f : 10.5f;
+        float leftW = w - rightW - 2f;
+
+        // 站名：左栏居中，字号按「4 个汉字刚好放进左栏」算
+        float nameScale = Math.min(0.52f, leftW / (4f * 9f) * 0.95f);
+        float nameH = 8f * nameScale;
         name.horizontalAlign.set(ETextAlignment.CENTER);
-        put(name, clip, w * 0.06f, 2.2f, w * 0.68f, 6f, bw >= 3 ? 0.62f : 0.52f,
-            nameText, 0xFF000000);
+        put(name, clip, 1f, 3.4f, leftW, nameH + 0.4f, nameScale, nameText, 0xFF000000);
 
+        // 下一站：站名下方，左对齐
+        float nextScale = Math.min(0.20f, leftW / (9f * 9f) * 0.95f);
         next.horizontalAlign.set(ETextAlignment.LEFT);
-        put(next, clip, 2f, contentBottom - 5.2f, w * 0.62f, 4f, 0.22f,
-            "下一站：" + nextText + "  " + arrow, 0xFF000000);
+        put(next, clip, 1.5f, 3.4f + nameH + 1.2f, leftW, 8f * nextScale + 0.4f, nextScale,
+            "下一站：" + nextText + " " + arrow, 0xFF000000);
 
-        // 右侧：线路色圆章 + 门号 + 「站台」 + 车站ID
-        float badge = bw >= 3 ? 6f : 5.5f;
-        float bx = w - badge - 2.5f;
-        rects.add(new Rect(bx, 1.5f, 0.01f, badge, badge * 0.6f, line));
-        rects.add(new Rect(bx - 0.6f, 2.3f, 0.01f, badge + 1.2f, badge * 0.35f, line));
+        // 右栏：线路色圆章（门号）+「站台」+ 车站号
+        float badgeSize = bw >= 3 ? 6.5f : 5.5f;
+        float bx = w - badgeSize - 2.5f;
+        float by = 1.6f;
+        // 用三层矩形拼出圆角块
+        rects.add(new Rect(bx, by + badgeSize * 0.18f, 0.01f, badgeSize, badgeSize * 0.64f, line));
+        rects.add(new Rect(bx + badgeSize * 0.12f, by, 0.01f, badgeSize * 0.76f, badgeSize, line));
 
-        put(doorNo, clip, bx - 0.6f, 1.8f, badge + 1.2f, badge * 0.7f, 0.34f, s.doorNumber(), onLine);
+        float noScale = Math.min(0.34f, badgeSize / (2f * 9f) * 1.6f);
+        doorNo.horizontalAlign.set(ETextAlignment.CENTER);
+        put(doorNo, clip, bx - 0.4f, by + (badgeSize - 8f * noScale) / 2f, badgeSize + 0.8f,
+            8f * noScale + 0.4f, noScale, s.doorNumber(), onLine);
 
         doorUnit.horizontalAlign.set(ETextAlignment.CENTER);
-        put(doorUnit, clip, bx - 1f, 1.5f + badge * 0.6f + 0.3f, badge + 2f, 3f, 0.16f,
+        put(doorUnit, clip, bx - 1f, by + badgeSize + 0.6f, badgeSize + 2f, 2.4f, 0.16f,
             "站台", 0xFF000000);
 
         stationId.horizontalAlign.set(ETextAlignment.CENTER);
-        put(stationId, clip, bx - 1f, contentBottom - 3f, badge + 2f, 3f, 0.14f,
-            s.stationId(), 0xFF000000);
+        put(stationId, clip, bx - 1.5f, by + badgeSize + 3.4f, badgeSize + 3f, 2.4f, 0.14f,
+            s.stationId().isBlank() ? "--" : s.stationId(), 0xFF000000);
 
-        // 指示灯：仅在无线路图时显示；两枚方块，左「开启」右「关闭」
+        // 底部色带（先画带，再画带上的指示灯，避免被盖）
+        rects.add(new Rect(0, contentBottom, 0f, w, bottomBar, line));
+
+        // 指示灯：无线路图时才显示；两枚并排居中于色带
         if (!s.showMap()) {
-            float cx = w * 0.5f - 3f;
-            float cy = h - 2.6f;
-            rects.add(new Rect(cx, cy, 0.02f, 2f, 2f,
-                DLColor.fromInt(open ? 0xFF2ECC40 : 0xFF3A3A3A)));
-            rects.add(new Rect(cx + 3f, cy, 0.02f, 2f, 2f,
-                DLColor.fromInt(open ? 0xFF3A3A3A : 0xFFD32F2F)));
+            float sq = 1.6f;
+            float cx = w * 0.5f - sq - 0.7f;
+            float cy = contentBottom + (bottomBar - sq) / 2f;
+            rects.add(new Rect(cx, cy, 0.03f, sq, sq,
+                DLColor.fromInt(open ? 0xFF2ECC40 : 0xFF555555)));
+            rects.add(new Rect(cx + sq + 1.4f, cy, 0.03f, sq, sq,
+                DLColor.fromInt(open ? 0xFF555555 : 0xFFD32F2F)));
         }
-
-        rects.add(new Rect(0, h - bottomBar, 0f, w, bottomBar, line));
     }
 
     /** 线路图：一条横向线 + 站点圆点 + 站名（环线上下两排）。 */
