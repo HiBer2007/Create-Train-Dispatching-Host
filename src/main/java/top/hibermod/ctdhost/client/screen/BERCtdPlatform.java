@@ -67,6 +67,9 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final BERLabel notice = new BERLabel();
     private final BERLabel marquee = new BERLabel();
 
+    /** 1 格高版式专用的标签池，避免复用导致互相覆盖。 */
+    private final BERLabel[] pool = new BERLabel[16];
+
     public BERCtdPlatform() {
         setup(headLabel, ETextAlignment.LEFT, 0xFFFFFFFF);
         setup(headLabel2, ETextAlignment.LEFT, 0xFFFFFFFF);
@@ -157,53 +160,91 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         // 1 格高：4x1 两方向拼接，2x1 单方向
         if (bw >= 4) {
-            dualRow(blockEntity, settings, stops, now, waiting, noBoard);
+            rowLayout(blockEntity, settings, stops, now, waiting, noBoard, true);
         } else {
-            miniRow(blockEntity, settings, stops, now, waiting, noBoard);
+            rowLayout(blockEntity, settings, stops, now, waiting, noBoard, false);
         }
     }
 
-    /** 4x1：左右两个方向拼接，中间竖分割线；站台号用线路色。 */
-    private void dualRow(AdvancedDisplayBlockEntity be, CtdPlatformSettings settings,
-                         java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops,
-                         long now, boolean waiting, boolean noBoard) {
+    /**
+     * 1 格高的版式（2x1 / 4x1），照参考图：
+     * 左半上方是线路色带（本次列车开往 + 终点站），右上蓝带是站台 ID 或时钟，
+     * 中间左侧大字「列车进站」，右侧「下一趟开往 / 站名 / N 分钟」，底部整条蓝带。
+     */
+    private void rowLayout(AdvancedDisplayBlockEntity be, CtdPlatformSettings settings,
+                           java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops,
+                           long now, boolean waiting, boolean noBoard, boolean dual) {
 
         DLColor accent = lineColor(settings);
-        DLColor divider = DLColor.fromInt(0xFF9AA5AD);
+        DLColor blue = DLColor.fromInt(0xFF1E4FA3);
         var clip = Rectangle.withSize(2, 2, be.getXSizeScaled() * 16 - 4, be.getYSizeScaled() * 16 - 4);
 
-        float half = (be.getXSizeScaled() * 16 - 4f) / 2f;
-        float x1 = 2f;
-        float x2 = 2f + half + 1f;
-        float w = half - 2f;
+        float totalW = be.getXSizeScaled() * 16 - 4f;
+        float halfW = dual ? (totalW - 1f) / 2f : totalW;
 
-        rects.add(new Rect(2f + half, 2f, 0.01f, 0.4f, 12f, divider));
+        String time = be.getLevel() == null ? "--:--" : currentClock(be.getLevel());
+        String statusStr = noBoard ? "请勿上车" : (waiting ? "列车进站"
+            : (minutesOf(stops, now, 0) + " 分钟"));
 
-        put(headLabel, clip, x1, 2.5f, w * 0.4f, 3f, 0.30f, settings.platform(), accent.getAsARGB());
-        put(headDest, clip, x1 + w * 0.35f, 2.5f, w * 0.65f, 3f, 0.26f, nameOf(stops, 0), 0xFFFFFFFF);
-        put(status, clip, x1, 8f, w, 4f, 0.30f,
-            noBoard ? "请勿上车" : (waiting ? "进站" : minutesOf(stops, now, 0) + " 分"),
-            noBoard ? 0xFFFF9800 : 0xFFFF5252);
+        for (int i = 0; i < (dual ? 2 : 1); i++) {
+            float hx = 2f + i * (halfW + 1f);
+            int idx = dual ? i : 0;
 
-        put(headLabel2, clip, x2, 2.5f, w * 0.4f, 3f, 0.30f, settings.platform2(), accent.getAsARGB());
-        put(thirdDest, clip, x2 + w * 0.35f, 2.5f, w * 0.65f, 3f, 0.26f, nameOf(stops, 1), 0xFFFFFFFF);
-        put(thirdMin, clip, x2, 8f, w, 4f, 0.30f, minutesOf(stops, now, 1) + " 分", 0xFFFF5252);
-    }
+            // 上方色带：线路色（左 62%）+ 蓝（右 38%）
+            float yellowW = halfW * 0.62f;
+            rects.add(new Rect(hx, 2f, 0f, yellowW, 4f, accent));
+            rects.add(new Rect(hx + yellowW + 0.4f, 2f, 0f, halfW - yellowW - 0.4f, 4f, blue));
 
-    /** 2x1：单方向，站台号（线路色）+ 终点站 + 分钟。 */
-    private void miniRow(AdvancedDisplayBlockEntity be, CtdPlatformSettings settings,
-                         java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops,
-                         long now, boolean waiting, boolean noBoard) {
+            BERLabel small = lab(i * 7);
+            BERLabel dest = lab(i * 7 + 1);
+            BERLabel right = lab(i * 7 + 2);
 
-        DLColor accent = lineColor(settings);
-        var clip = Rectangle.withSize(2, 2, be.getXSizeScaled() * 16 - 4, be.getYSizeScaled() * 16 - 4);
-        float leftW = be.getXSizeScaled() * 16 - 4f;
+            small.horizontalAlign.set(ETextAlignment.LEFT);
+            put(small, clip, hx + 0.8f, 2.4f, yellowW * 0.5f, 3f, 0.10f, "本次列车开往",
+                contrastText(accent));
 
-        put(headLabel, clip, 2f, 2.5f, leftW * 0.3f, 3f, 0.32f, settings.platform(), accent.getAsARGB());
-        put(headDest, clip, 2f + leftW * 0.28f, 2.5f, leftW * 0.72f, 3f, 0.28f, nameOf(stops, 0), 0xFFFFFFFF);
-        put(status, clip, 2f, 8f, leftW, 4f, 0.32f,
-            noBoard ? "请勿上车" : (waiting ? "列车进站" : minutesOf(stops, now, 0) + " 分钟"),
-            noBoard ? 0xFFFF9800 : 0xFFFF5252);
+            dest.horizontalAlign.set(ETextAlignment.CENTER);
+            put(dest, clip, hx + yellowW * 0.48f, 2.3f, yellowW * 0.52f - 0.5f, 3f, 0.15f,
+                nameOf(stops, idx), contrastText(accent));
+
+            right.horizontalAlign.set(ETextAlignment.CENTER);
+            String rightText = dual ? (i == 0 ? settings.platform() : settings.platform2()) : time;
+            put(right, clip, hx + yellowW + 0.4f, 2.3f, halfW - yellowW - 0.8f, 3f, 0.14f,
+                rightText, dual ? accent.getAsARGB() : 0xFFFFFFFF);
+
+            // 中部：左侧大字状态，右侧下一趟
+            BERLabel state = lab(i * 7 + 3);
+            state.horizontalAlign.set(ETextAlignment.CENTER);
+            put(state, clip, hx, 6.3f, halfW * 0.46f, 4f, 0.26f, statusStr,
+                noBoard ? 0xFFFF9800 : 0xFFFFFFFF);
+
+            BERLabel nextLbl = lab(i * 7 + 4);
+            nextLbl.horizontalAlign.set(ETextAlignment.LEFT);
+            put(nextLbl, clip, hx + halfW * 0.5f, 6.4f, halfW * 0.5f, 2f, 0.09f, "下一趟开往",
+                0xFF9AA5AD);
+
+            BERLabel nextD = lab(i * 7 + 5);
+            nextD.horizontalAlign.set(ETextAlignment.LEFT);
+            put(nextD, clip, hx + halfW * 0.5f, 8.2f, halfW * 0.5f, 2f, 0.13f, nameOf(stops, idx + 1),
+                0xFFFFFFFF);
+
+            BERLabel nextM = lab(i * 7 + 6);
+            nextM.horizontalAlign.set(ETextAlignment.LEFT);
+            put(nextM, clip, hx + halfW * 0.5f, 10.2f, halfW * 0.5f, 2f, 0.12f,
+                minutesOf(stops, now, idx + 1) + " 分钟", 0xFFFFE082);
+        }
+
+        // 底部蓝带（整条）
+        rects.add(new Rect(2f, 12.2f, 0f, totalW, 2.6f, blue));
+        clock.horizontalAlign.set(ETextAlignment.LEFT);
+        if (dual) {
+            put(marquee, clip, 3f, 12.6f, totalW * 0.48f, 2f, 0.11f, realClockText(), 0xFFFFFFFF);
+            put(notice, clip, 3f + totalW * 0.5f, 12.6f, totalW * 0.48f, 2f, 0.11f,
+                "感谢您的配合", 0xFFFFFFFF);
+        } else {
+            put(marquee, clip, 3f, 12.6f, totalW - 2f, 2f, 0.11f, "感谢您的配合，尊敬的乘客。",
+                0xFFFFFFFF);
+        }
     }
 
     /** 左右两栏主体。所有数字都是像素，已含 2px 边距。 */
@@ -399,6 +440,16 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         label.color.set(DLColor.fromInt(argb));
     }
 
+    private BERLabel lab(int i) {
+        BERLabel l = pool[i];
+        if (l == null) {
+            l = new BERLabel();
+            setup(l, ETextAlignment.LEFT, 0xFFFFFFFF);
+            pool[i] = l;
+        }
+        return l;
+    }
+
     private BERLabel[] labels() {
         return new BERLabel[]{headLabel, headLabel2, headDest, status, nextLabel, nextDest, nextMin,
             thirdLabel, thirdDest, thirdMin, clock, notice, marquee};
@@ -407,6 +458,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private void clear() {
         rects.clear();
         for (BERLabel l : labels()) l.text.set(null);
+        for (BERLabel l : pool) if (l != null) l.text.set(null);
     }
 
     // ── 数据 ──────────────────────────────────────────────────────────
