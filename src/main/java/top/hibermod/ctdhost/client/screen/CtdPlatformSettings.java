@@ -131,7 +131,12 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
 
     public String platform2() { return platform2 == null ? "" : platform2; }
 
-    public void setPlatform2(String v) { platform2 = v == null ? "" : v; }
+    public void setPlatform2(String v) {
+        platform2 = v == null ? "" : v;
+        // 临时诊断：确认 GUI 的输入真的写到了对象上
+        org.slf4j.LoggerFactory.getLogger("ctdhost").warn(
+            "ctdhost: [PIDS-SET] platform2 set to [{}] (this={})", platform2, System.identityHashCode(this));
+    }
 
     public LineMode lineMode() { return lineMode; }
     public void setLineMode(LineMode v) { lineMode = v == null ? LineMode.NORMAL : v; }
@@ -176,6 +181,9 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         showDoorLight = !nbt.contains(NBT_DOOR_LIGHT) || nbt.getBoolean(NBT_DOOR_LIGHT);
         lineMode = LineMode.byId(nbt.getString(NBT_LINE_MODE));
         platform2 = nbt.getString(NBT_PLATFORM_2);
+        org.slf4j.LoggerFactory.getLogger("ctdhost").warn(
+            "ctdhost: [PIDS-LOAD] platform2=[{}] keys={} this={}",
+            platform2, nbt.getAllKeys(), System.identityHashCode(this));
         content = Content.byId(nbt.getString(NBT_CONTENT));
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings loaded station=[{}] platform=[{}] sys=[{}]",
@@ -194,6 +202,9 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         nbt.putBoolean(NBT_DOOR_LIGHT, showDoorLight);
         nbt.putString(NBT_LINE_MODE, lineMode.name());
         nbt.putString(NBT_PLATFORM_2, platform2());
+        org.slf4j.LoggerFactory.getLogger("ctdhost").warn(
+            "ctdhost: [PIDS-SAVE] platform2=[{}] station=[{}] platform=[{}] this={}",
+            platform2(), station(), platform(), System.identityHashCode(this));
         nbt.putString(NBT_CONTENT, content.id());
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings saved station=[{}] platform=[{}] sys=[{}]",

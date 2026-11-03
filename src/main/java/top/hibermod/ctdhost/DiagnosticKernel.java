@@ -42,6 +42,9 @@ public final class DiagnosticKernel implements DispatchKernel {
     private long frames;
     private long lastReport;
 
+    /** 只有 -Dctdhost.verbose=true 时才刷每帧诊断日志。 */
+    private static final boolean VERBOSE = Boolean.getBoolean("ctdhost.verbose");
+
     /** 在模组构造期调用。默认不注册，避免生产环境多一个内核。 */
     public static void registerIfEnabled() {
         if (!ENABLED) return;
@@ -116,9 +119,9 @@ public final class DiagnosticKernel implements DispatchKernel {
             HostRuntime.LOG.info("ctdhost: diagnostic queued assignment {} (registry now {})",
                 "T" + frames, Assignments.size());
         }
-        // 每 60 帧报一次：证明跨语言/跨层调用真的在持续发生，
-        // 而不是只在启动时凑巧调了一次。
-        if (frames - lastReport >= 60) {
+        // 默认不刷屏：只有显式打开 -Dctdhost.verbose=true 才每 60 帧报一次。
+        // 曾经的实现无条件打印，导致 latest.log 每秒三条，把真正的报错淹掉。
+        if (VERBOSE && frames - lastReport >= 60) {
             lastReport = frames;
             int trains = in.telemetry() == null ? -1 : in.telemetry().trains().size();
             int nodes = in.topology() == null ? -1 : in.topology().nodes().size();
