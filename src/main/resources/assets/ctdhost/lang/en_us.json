@@ -50,5 +50,7 @@
   "gui.ctdhost.psd_map": "Show line map",
   "gui.ctdhost.psd_map.description": "Always on 4x1, optional on 3x1",
   "gui.ctdhost.psd_indicator": "Show door indicator",
-  "gui.ctdhost.psd_indicator.description": "Driven by the dispatch door state"
+  "gui.ctdhost.psd_indicator.description": "Driven by the dispatch door state",
+  "gui.ctdhost.psd_arrow_right": "Train runs right",
+  "gui.ctdhost.psd_arrow_right.description": "Arrow direction in the next-station line: checked = right"
 }

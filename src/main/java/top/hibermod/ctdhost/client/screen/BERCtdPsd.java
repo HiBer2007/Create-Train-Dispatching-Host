@@ -127,13 +127,18 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         float bottomBar = 3f;
         float contentBottom = h - bottomBar;
 
+        boolean known = !s.stationId().isBlank() && !s.stationName().isBlank();
+        String nameText = known ? s.stationName() : "未知车站";
+        String nextText = s.nextStation().isBlank() ? "未知下一站" : s.nextStation();
+        String arrow = s.arrowRight() ? "→" : "←";
+
         name.horizontalAlign.set(ETextAlignment.CENTER);
         put(name, clip, w * 0.06f, 2.2f, w * 0.68f, 6f, bw >= 3 ? 0.62f : 0.52f,
-            s.stationName(), 0xFF000000);
+            nameText, 0xFF000000);
 
         next.horizontalAlign.set(ETextAlignment.LEFT);
         put(next, clip, 2f, contentBottom - 5.2f, w * 0.62f, 4f, 0.22f,
-            "下一站：" + s.nextStation() + "  ←", 0xFF000000);
+            "下一站：" + nextText + "  " + arrow, 0xFF000000);
 
         // 右侧：线路色圆章 + 门号 + 「站台」 + 车站ID
         float badge = bw >= 3 ? 6f : 5.5f;
@@ -151,8 +156,8 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         put(stationId, clip, bx - 1f, contentBottom - 3f, badge + 2f, 3f, 0.14f,
             s.stationId(), 0xFF000000);
 
-        // 指示灯：两枚方块，左「开启」右「关闭」，亮的那枚表示当前状态
-        if (s.showIndicator()) {
+        // 指示灯：仅在无线路图时显示；两枚方块，左「开启」右「关闭」
+        if (!s.showMap()) {
             float cx = w * 0.5f - 3f;
             float cy = h - 2.6f;
             rects.add(new Rect(cx, cy, 0.02f, 2f, 2f,

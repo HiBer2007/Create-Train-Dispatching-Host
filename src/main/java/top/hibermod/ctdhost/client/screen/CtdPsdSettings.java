@@ -27,7 +27,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
     private static final String NBT_STATION_ID = "CtdPsdStationId";
     private static final String NBT_DOOR = "CtdPsdDoor";
     private static final String NBT_MAP = "CtdPsdMap";
-    private static final String NBT_INDICATOR = "CtdPsdIndicator";
+    private static final String NBT_ARROW_RIGHT = "CtdPsdArrowRight";
     private static final String NBT_LINE = "CtdPsdLine";
     private static final String NBT_LINE_COLOR = "CtdPsdLineColor";
     private static final String NBT_STATIONS = "CtdPsdStations";
@@ -39,7 +39,8 @@ public class CtdPsdSettings extends BasicDisplaySettings {
     private String stationId = "";
     private String doorNumber = "1";
     private boolean showMap = false;
-    private boolean showIndicator = true;
+    /** 箭头方向 = 列车运行方向；true 表示向右（→），false 表示向左（←）。 */
+    private boolean arrowRight = false;
     private String lineName = "";
     private int lineColor = 0;
     /** 线路图车站，按顺序用逗号分隔；实际由运行图系统下发。 */
@@ -72,8 +73,8 @@ public class CtdPsdSettings extends BasicDisplaySettings {
     public boolean showMap() { return showMap; }
     public void setShowMap(boolean v) { showMap = v; }
 
-    public boolean showIndicator() { return showIndicator; }
-    public void setShowIndicator(boolean v) { showIndicator = v; }
+    public boolean arrowRight() { return arrowRight; }
+    public void setArrowRight(boolean v) { arrowRight = v; }
 
     public String lineName() { return lineName == null ? "" : lineName; }
     public void setLineName(String v) { lineName = v == null ? "" : v; }
@@ -95,7 +96,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         doorNumber = nbt.getString(NBT_DOOR);
         if (doorNumber.isEmpty()) doorNumber = "1";
         showMap = nbt.getBoolean(NBT_MAP);
-        showIndicator = !nbt.contains(NBT_INDICATOR) || nbt.getBoolean(NBT_INDICATOR);
+        arrowRight = nbt.getBoolean(NBT_ARROW_RIGHT);
         lineName = nbt.getString(NBT_LINE);
         lineColor = nbt.getInt(NBT_LINE_COLOR);
         mapStations = nbt.getString(NBT_STATIONS);
@@ -111,7 +112,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         nbt.putString(NBT_STATION_ID, stationId());
         nbt.putString(NBT_DOOR, doorNumber());
         nbt.putBoolean(NBT_MAP, showMap);
-        nbt.putBoolean(NBT_INDICATOR, showIndicator);
+        nbt.putBoolean(NBT_ARROW_RIGHT, arrowRight);
         nbt.putString(NBT_LINE, lineName());
         nbt.putInt(NBT_LINE_COLOR, lineColor);
         nbt.putString(NBT_STATIONS, mapStations());
@@ -128,7 +129,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
             stationId = old.stationId;
             doorNumber = old.doorNumber;
             showMap = old.showMap;
-            showIndicator = old.showIndicator;
+            arrowRight = old.arrowRight;
             lineName = old.lineName;
             lineColor = old.lineColor;
             mapStations = old.mapStations;
@@ -146,7 +147,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         buildTextLine(context, "gui.ctdhost.psd_door", doorNumber(), this::setDoorNumber);
         buildTextLine(context, "gui.ctdhost.line", lineName(), this::setLineName);
         buildCheckLine(context, "gui.ctdhost.psd_map", showMap(), this::setShowMap);
-        buildCheckLine(context, "gui.ctdhost.psd_indicator", showIndicator(), this::setShowIndicator);
+        buildCheckLine(context, "gui.ctdhost.psd_arrow_right", arrowRight(), this::setArrowRight);
     }
 
     // ── 复用 CtdPlatformSettings 的两种控件 ───────────────────────────
@@ -208,6 +209,14 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         box.layoutContraint.set(
             de.mrjulsen.mcdragonlib.client.gui.widgets.layout.FlowLayout.FlowConstraint.FILL);
         box.checked.set(value);
+        // 勾选框必须带文字，否则只剩一个空框
+        box.text.set(de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey));
+        box.tooltip.set(new de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLTooltip(
+            java.util.List.of(
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey),
+                de.mrjulsen.mcdragonlib.util.TextUtils.translate(langKey + ".description")
+                    .withStyle(net.minecraft.ChatFormatting.GRAY)),
+            200));
         box.addEventListener(
             de.mrjulsen.mcdragonlib.client.gui.widgets.components.DLToggleButton.CheckedChangedEvent.class,
             (s, e) -> {
