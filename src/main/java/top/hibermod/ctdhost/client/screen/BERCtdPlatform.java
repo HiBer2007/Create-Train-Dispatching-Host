@@ -226,17 +226,30 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
     /** 线路色：用户设了就用用户的，否则按代号自动挑一个地铁常见的色。 */
     static DLColor lineColor(CtdPlatformSettings settings) {
+        // 1) 用户在 GUI 里选的色号优先。
         if (settings.lineColor() != 0) return DLColor.fromInt(settings.lineColor());
+
+        // 2) 否则按线路代号到 CTD 色号注册表里查（「11号线」→ ctd:line11）。
         String key = settings.lineName();
+        if (key != null) {
+            java.util.regex.Matcher m =
+                java.util.regex.Pattern.compile("[0-9]+").matcher(key);
+            if (m.find()) {
+                var id = net.minecraft.resources.ResourceLocation.tryParse(
+                    "ctd:line" + m.group(1));
+                int c = top.hibermod.ctdapi.display.LineColors.getOrDefault(id, 0);
+                if (c != 0) return DLColor.fromInt(c);
+            }
+        }
+
+        // 3) 兜底：按名字哈希取一个地铁常见的色。
         int hash = key == null ? 0 : key.hashCode();
         int[] palette = {
             0xFFE53935, 0xFF1E88E5, 0xFFFDD835, 0xFF43A047,
             0xFF8E24AA, 0xFFFB8C00, 0xFF00ACC1, 0xFF6D4C41
         };
-        int idx = Math.floorMod(hash, palette.length);
-        return DLColor.fromInt(palette[idx]);
+        return DLColor.fromInt(palette[Math.floorMod(hash, palette.length)]);
     }
-
     private static void setScale(BERLabel label, float s) {
         label.horizontalMinScale.set(s);
         label.horizontalMaxScale.set(s);
