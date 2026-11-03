@@ -207,24 +207,30 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         // 两趟车：每趟一行（左标签 / 右值），各自在自己的分割线区间内垂直居中
         float rowBand = 6f;
-        float valH = 8f * 0.19f * k;
-        float row1 = divTop + (rowBand - valH) / 2f;
+        float valH = 8f * 0.17f * k;
+        float row1 = divTop;
         nextLabel.horizontalAlign.set(ETextAlignment.LEFT);
         nextDest.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(nextLabel, clip, leftX + 1f, row1, leftW * 0.36f, 4f, 0.15f * k, "下一趟开往", 0xFF9AA5AD);
-        put(nextDest, clip, leftX + leftW * 0.36f, row1, leftW * 0.64f - 1f, 4f, 0.19f * k,
-            dest1 + "  " + min1 + " 分钟", 0xFFFFFFFF);
+        put(nextLabel, clip, leftX + 1f, row1 + 0.3f, leftW - 2f, 2f, 0.13f * k, "下一趟开往", 0xFF9AA5AD);
+        put(nextDest, clip, leftX + 1f, row1 + 3.0f, leftW * 0.6f, 3f, 0.17f * k,
+            dest1, 0xFFFFFFFF);
+
+        nextMin.horizontalAlign.set(ETextAlignment.RIGHT);
+        put(nextMin, clip, leftX + leftW * 0.6f, row1 + 3.0f, leftW * 0.4f - 1f, 3f, 0.17f * k,
+            min1 + " 分钟", 0xFFECEFF1);
 
         float divMid = divTop + rowBand;
         rects.add(new Rect(leftX, divMid, 0.01f, leftW, 0.3f, divider));
 
-        float row2 = divMid + (rowBand - valH) / 2f;
-        put(thirdLabel, clip, leftX + 1f, row2, leftW * 0.36f, 4f, 0.15f * k, "第三趟开往", 0xFF9AA5AD);
-        put(thirdDest, clip, leftX + leftW * 0.36f, row2, leftW * 0.64f - 1f, 4f, 0.19f * k,
-            dest2 + "  " + min2 + " 分钟", 0xFF66BB6A);
+        float row2 = divMid;
+        put(thirdLabel, clip, leftX + 1f, row2 + 0.3f, leftW - 2f, 2f, 0.13f * k, "第三趟开往", 0xFF9AA5AD);
+        put(thirdDest, clip, leftX + 1f, row2 + 3.0f, leftW * 0.6f, 3f, 0.17f * k,
+            dest2, 0xFF66BB6A);
 
-        nextMin.text.set(null);
-        thirdMin.text.set(null);
+        thirdMin.horizontalAlign.set(ETextAlignment.RIGHT);
+        put(thirdMin, clip, leftX + leftW * 0.6f, row2 + 3.0f, leftW * 0.4f - 1f, 3f, 0.17f * k,
+            min2 + " 分钟", 0xFFFFE082);
+
 
         // 右栏
         put(clock, clip, rightX + 1f, 2.6f, rightW - 2f, 3f, 0.22f * k, time, 0xFFFFFFFF);
