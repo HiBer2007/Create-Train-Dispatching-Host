@@ -89,11 +89,14 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
             RenderUtils.fillColor(graphics, new Vector3f(r.x(), r.y(), r.z()),
                 r.w(), r.h(), r.color(), facing);
         }
+        // 文字整体抬到色块前面，否则圆章/色带会盖住字（原生发车板也是这么做的）
+        graphics.poseStack().pushPose();
+        graphics.poseStack().translate(0, 0, 0.08f);
         for (BERLabel l : labels()) {
             if (l != null && l.text.get() != null) l.render(graphics);
         }
+        graphics.poseStack().popPose();
     }
-
     private BERLabel[] labels() {
         BERLabel[] all = new BERLabel[6 + mapLabels.length];
         all[0] = name;
@@ -184,9 +187,9 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         put(stationId, clip, bx - 1.5f, by + badgeSize + 3.4f, badgeSize + 3f, 2.4f, 0.14f,
             s.station().isBlank() ? "--" : s.station(), 0xFF000000);
 
-        // 屏蔽门号：放在指示灯正上方、居中
+        // 屏蔽门号：紧贴指示灯上方
         doorUnit2.horizontalAlign.set(ETextAlignment.CENTER);
-        put(doorUnit2, clip, 0f, contentBottom - 3.4f, w, 2.6f, 0.14f,
+        put(doorUnit2, clip, 0f, contentBottom - 2.3f, w, 2.2f, 0.14f,
             "屏蔽门 " + (s.doorNumber().isBlank() ? "1" : s.doorNumber()), 0xFF000000);
 
         // 一次性打印实际取值，便于确认字段到底有没有存进来
