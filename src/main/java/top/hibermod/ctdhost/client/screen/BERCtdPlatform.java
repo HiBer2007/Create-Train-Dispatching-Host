@@ -146,7 +146,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         if (bw >= 3 && bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 19f, 46f, 1.0f, stops, now, noBoard, noticeText, headLabelText, nextLabelText, thirdLabelText);
+                realClockText() + "   " + currentClock(lvl), 19f, 46f, 1.0f, stops, now, noBoard, noticeText, headLabelText, nextLabelText, thirdLabelText);
             return;
         }
         if (bh >= 2) {
@@ -278,7 +278,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         float leftX = 2f;
         float leftW = be.getXSizeScaled() * 16 - 4f;
-        float bandH = 7f;
+        float bandH = 4f;
 
         // 色带拆两段：黄（线路色）一格多一点，其余蓝（时钟）
         float yellowW = Math.min(leftW - 9f, 18f);
@@ -287,13 +287,13 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             DLColor.fromInt(0xFF1E4FA3)));
 
         // 两行三字 + 终点站（右）
-        float headLineH = 8f * 0.16f;
+        float headLineH = 8f * 0.13f;
         float headTop = 2 + (bandH - headLineH * 2f) / 2f;
         headLabel.horizontalAlign.set(ETextAlignment.CENTER);
         headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headLabel, clip, leftX, headTop, yellowW * 0.45f, headLineH + 0.3f, 0.16f,
+        put(headLabel, clip, leftX, headTop, yellowW * 0.45f, headLineH + 0.3f, 0.13f,
             headLabelText.substring(0, 3), onAccent);
-        put(headLabel2, clip, leftX, headTop + headLineH, yellowW * 0.45f, headLineH + 0.3f, 0.16f,
+        put(headLabel2, clip, leftX, headTop + headLineH, yellowW * 0.45f, headLineH + 0.3f, 0.13f,
             headLine2Text, onAccent);
 
         headDest.horizontalAlign.set(ETextAlignment.CENTER);
@@ -302,7 +302,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         // 蓝带里的游戏内时钟，垂直居中
         clock.horizontalAlign.set(ETextAlignment.RIGHT);
-        float gameClock = 0.20f;
+        float gameClock = 0.16f;
         put(clock, clip, leftX + yellowW + 1f, 2 + (bandH - 8f * gameClock) / 2f,
             leftW - yellowW - 2f, 8f * gameClock + 0.3f, gameClock, time, 0xFFFFFFFF);
 
