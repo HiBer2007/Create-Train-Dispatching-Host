@@ -119,6 +119,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         var stops = blockEntity.getStops();
         boolean waiting = blockEntity.isWaitingAtStation();
+        boolean noBoard = blockEntity instanceof CtdHoldAccess acc && acc.ctdgetNoBoarding();
 
         clear();
 
@@ -132,12 +133,12 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         if (bw >= 3 && bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 19f, 46f, 1.0f, stops, now);
+                currentClock(lvl), 19f, 46f, 1.0f, stops, now, noBoard);
             return;
         }
         if (bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 13f, 30f, 0.84f, stops, now);
+                currentClock(lvl), 13f, 30f, 0.84f, stops, now, noBoard);
             return;
         }
 
@@ -155,7 +156,8 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
                            boolean waiting, String headDestText, String dest1, String dest2,
                            String min1, String min2, String time,
                            float leftRightEdge, float panelRightEdge, float k,
-                           java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops, long now) {
+                           java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops, long now,
+                           boolean noBoard) {
 
         DLColor accent = lineColor(settings);
         DLColor blue = DLColor.fromInt(0xFF1E4FA3);
@@ -178,11 +180,12 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         rects.add(new Rect(leftX, 2, 0f, leftW, bandH, accent));
         rects.add(new Rect(rightX, 2, 0f, rightW, bandH, blue));
 
-        // 左带：两行三字（本次列 / 车开往），水平居中
-        put(headLabel, clip, leftX, 2.2f, leftW, 3.5f, 0.30f * k, "本次列", onAccent);
-        put(headLabel2, clip, leftX, 5.4f, leftW, 3.5f, 0.30f * k, "车开往", onAccent);
-        headLabel.horizontalAlign.set(ETextAlignment.CENTER);
+        // 左带：左右布局。左侧「本次列车开往」，右侧终点站（居中），字号比 = 2:5
+        headLabel.horizontalAlign.set(ETextAlignment.LEFT);
         headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
+        put(headLabel, clip, leftX + 1.5f, 3.4f, leftW * 0.5f, 3f, 0.10f * k, "本次列车开往", onAccent);
+        put(headLabel2, clip, leftX + leftW * 0.5f, 2.4f, leftW * 0.5f - 1.5f, 5f, 0.25f * k,
+            headDestText, onAccent);
 
         put(status, clip, leftX, 2 + bandH + 1.5f, leftW, 5f, 0.30f * k,
             statusText(waiting, min1, now, stops), 0xFFFFFFFF);
@@ -203,7 +206,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         put(thirdMin, clip, leftX + 1f, y2 + 7f, leftW - 2f, 3f, 0.14f * k, min2 + " 分钟", 0xFFECEFF1);
 
         // 右栏
-        put(clock, clip, rightX + 1f, 2.6f, rightW - 2f, 4f, 0.42f * k, time, 0xFFFFFFFF);
+        put(clock, clip, rightX + 1f, 4f, rightW - 2f, 3.4f, 0.28f * k, time, 0xFFFFFFFF);
         put(notice, clip, rightX + 1f, 10f, rightW - 2f, 4f, 0.12f * k, "通知与提示区", 0xFF9AA5AD);
 
         float bottomY = be.getYSizeScaled() * 16 - 6f;

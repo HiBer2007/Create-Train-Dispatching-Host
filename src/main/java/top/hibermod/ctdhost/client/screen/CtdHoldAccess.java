@@ -12,4 +12,9 @@ public interface CtdHoldAccess {
     String ctdgetSignalSystems();
 
     void ctdsetSignalSystems(String ids);
+
+    boolean ctdgetNoBoarding();
+
+    void ctdsetNoBoarding(boolean v);
+
 }

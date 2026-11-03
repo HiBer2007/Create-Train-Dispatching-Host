@@ -27,6 +27,10 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
     @Unique
     private String ctdSignalSystems = "";
 
+    /** 调度给出的「请勿上车」标记。 */
+    @Unique
+    private boolean ctdNoBoarding = false;
+
     @Override
     public String ctdgetHold() {
         return ctdHold;
@@ -43,6 +47,16 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
     }
 
     @Override
+    public boolean ctdgetNoBoarding() {
+        return ctdNoBoarding;
+    }
+
+    @Override
+    public void ctdsetNoBoarding(boolean v) {
+        ctdNoBoarding = v;
+    }
+
+    @Override
     public void ctdsetSignalSystems(String ids) {
         ctdSignalSystems = ids == null ? "" : ids;
     }
@@ -51,12 +65,14 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
     private void ctd$save(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries, CallbackInfo ci) {
         tag.putString("CtdHold", ctdHold);
         tag.putString("CtdSignalSystems", ctdSignalSystems);
+        tag.putBoolean("CtdNoBoarding", ctdNoBoarding);
     }
 
     @Inject(method = "loadAdditional", at = @At("TAIL"), require = 0)
     private void ctd$load(CompoundTag tag, net.minecraft.core.HolderLookup.Provider registries, CallbackInfo ci) {
         ctdHold = tag.getString("CtdHold");
         ctdSignalSystems = tag.getString("CtdSignalSystems");
+        ctdNoBoarding = tag.getBoolean("CtdNoBoarding");
     }
 
     @Inject(method = "getUpdateTag", at = @At("RETURN"), require = 0)
@@ -66,6 +82,7 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
         if (tag != null) {
             tag.putString("CtdHold", ctdHold);
             tag.putString("CtdSignalSystems", ctdSignalSystems);
+        tag.putBoolean("CtdNoBoarding", ctdNoBoarding);
         }
     }
 
@@ -74,6 +91,7 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
                                         CallbackInfo ci) {
         ctdHold = tag.getString("CtdHold");
         ctdSignalSystems = tag.getString("CtdSignalSystems");
+        ctdNoBoarding = tag.getBoolean("CtdNoBoarding");
 
         AdvancedDisplayBlockEntity self = (AdvancedDisplayBlockEntity) (Object) this;
         if (self.getLevel() != null && self.getLevel().isClientSide && !ctdSignalSystems.isEmpty()) {
@@ -101,6 +119,14 @@ public abstract class AdvancedDisplayHoldMixin implements CtdHoldAccess {
         String wantSys = sb.toString();
         if (!wantSys.equals(ctdSignalSystems)) {
             ctdSignalSystems = wantSys;
+            self.setChanged();
+            level.sendBlockUpdated(self.getBlockPos(), self.getBlockState(), self.getBlockState(), 3);
+        }
+
+        boolean noBoard = top.hibermod.ctdapi.status.NotBoardingStates
+            .isBlocked(s.station(), s.platform());
+        if (noBoard != ctdNoBoarding) {
+            ctdNoBoarding = noBoard;
             self.setChanged();
             level.sendBlockUpdated(self.getBlockPos(), self.getBlockState(), self.getBlockState(), 3);
         }
