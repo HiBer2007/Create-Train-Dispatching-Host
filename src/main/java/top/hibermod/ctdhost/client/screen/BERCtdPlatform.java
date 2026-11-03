@@ -259,6 +259,76 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             "感谢您的配合，尊敬的乘客。", 0xFFFFFFFF);
     }
 
+    /** 2x2：单栏（无公告区），版式与 3x2 相同但顶到满宽。 */
+    private void singleColumn(AdvancedDisplayBlockEntity be, CtdPlatformSettings settings,
+                              boolean waiting, String headDestText,
+                              String dest1, String dest2, String min1, String min2,
+                              boolean noBoard, String headLabelText, String nextLabelText,
+                              String thirdLabelText,
+                              java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops,
+                              long now) {
+
+        DLColor accent = lineColor(settings);
+        DLColor divider = DLColor.fromInt(0xFF9AA5AD);
+        var clip = Rectangle.withSize(2, 2, be.getXSizeScaled() * 16 - 4, be.getYSizeScaled() * 16 - 4);
+        int onAccent = contrastText(accent);
+
+        float leftX = 2f;
+        float leftW = be.getXSizeScaled() * 16 - 4f;
+        float bandH = 6f;
+
+        rects.add(new Rect(leftX, 2, 0f, leftW, bandH, accent));
+
+        // 两行三字 + 终点站（右）
+        float headLineH = 8f * 0.14f;
+        float headTop = 2 + (bandH - headLineH * 2f) / 2f;
+        headLabel.horizontalAlign.set(ETextAlignment.CENTER);
+        headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
+        put(headLabel, clip, leftX, headTop, leftW * 0.45f, headLineH + 0.3f, 0.14f,
+            headLabelText.substring(0, 3), onAccent);
+        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.45f, headLineH + 0.3f, 0.14f,
+            headLine2Text, onAccent);
+
+        headDest.horizontalAlign.set(ETextAlignment.CENTER);
+        put(headDest, clip, leftX + leftW * 0.45f, 2 + (bandH - 8f * 0.18f) / 2f,
+            leftW * 0.55f - 1f, 8f * 0.18f + 0.3f, 0.18f, headDestText, onAccent);
+
+        float divTop = 2 + bandH + 5f;
+        rects.add(new Rect(leftX, divTop, 0.01f, leftW, 0.3f, divider));
+
+        float statusBand = divTop - (2 + bandH);
+        float statusH = 8f * 0.26f;
+        status.horizontalAlign.set(ETextAlignment.CENTER);
+        put(status, clip, leftX, 2 + bandH + (statusBand - statusH) / 2f, leftW, statusH + 0.4f, 0.26f,
+            noBoard ? "请勿上车" : statusText(waiting, min1, now, stops),
+            noBoard ? 0xFFFF9800 : 0xFFFFFFFF);
+
+        // 第一趟
+        float row1 = divTop + 0.8f;
+        nextLabel.horizontalAlign.set(ETextAlignment.LEFT);
+        put(nextLabel, clip, leftX + 1f, row1, leftW - 2f, 2f, 0.12f, nextLabelText, 0xFF9AA5AD);
+        nextDest.horizontalAlign.set(ETextAlignment.LEFT);
+        put(nextDest, clip, leftX + 2f, row1 + 2.6f, leftW * 0.5f, 3f, 0.16f, dest1, 0xFFFFFFFF);
+        nextMin.horizontalAlign.set(ETextAlignment.RIGHT);
+        put(nextMin, clip, leftX + leftW * 0.5f, row1 + 2.6f, leftW * 0.5f - 2f, 3f, 0.16f,
+            min1 + " 分钟", 0xFFECEFF1);
+
+        float divMid = divTop + 9f;
+        rects.add(new Rect(leftX, divMid, 0.01f, leftW, 0.3f, divider));
+
+        float row2 = divMid + 0.8f;
+        thirdLabel.horizontalAlign.set(ETextAlignment.LEFT);
+        put(thirdLabel, clip, leftX + 1f, row2, leftW - 2f, 2f, 0.12f, thirdLabelText, 0xFF9AA5AD);
+        thirdDest.horizontalAlign.set(ETextAlignment.LEFT);
+        put(thirdDest, clip, leftX + 2f, row2 + 2.6f, leftW * 0.5f, 3f, 0.16f, dest2, 0xFF66BB6A);
+        thirdMin.horizontalAlign.set(ETextAlignment.RIGHT);
+        put(thirdMin, clip, leftX + leftW * 0.5f, row2 + 2.6f, leftW * 0.5f - 2f, 3f, 0.16f,
+            min2 + " 分钟", 0xFFECE682);
+
+        clock.text.set(null);
+        notice.text.set(null);
+        marquee.text.set(null);
+    }
     // ── 原语 ──────────────────────────────────────────────────────────
 
     private static void put(BERLabel label, Rectangle clip, float x, float y,
