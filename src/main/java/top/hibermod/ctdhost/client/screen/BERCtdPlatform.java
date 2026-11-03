@@ -171,7 +171,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         float rightX = leftRightEdge + 1f;
         float rightW = panelRightEdge - rightX;
 
-        float bandH = 7f * k;
+        float bandH = 4f;                 // 色带只留 4px（原来 7px 太高）
 
         // 亮色线路用黑字，暗色线路用白字
         int onAccent = contrastText(accent);
@@ -180,33 +180,37 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         rects.add(new Rect(leftX, 2, 0f, leftW, bandH, accent));
         rects.add(new Rect(rightX, 2, 0f, rightW, bandH, blue));
 
-        // 左带：左右布局。左侧「本次列车开往」，右侧终点站（居中），字号比 = 2:5
-        headLabel.horizontalAlign.set(ETextAlignment.LEFT);
+        // 左带：两行三字「本次列 / 车开往」，整段水平居中；右侧终点站居中
+        headLabel.horizontalAlign.set(ETextAlignment.CENTER);
         headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headLabel, clip, leftX + 1.5f, 3.4f, leftW * 0.5f, 3f, 0.10f * k, "本次列车开往", onAccent);
-        put(headLabel2, clip, leftX + leftW * 0.5f, 2.4f, leftW * 0.5f - 1.5f, 5f, 0.25f * k,
-            headDestText, onAccent);
+        put(headLabel, clip, leftX, 2.1f, leftW, 2f, 0.13f, "本次列", onAccent);
+        put(headLabel2, clip, leftX, 3.9f, leftW, 2f, 0.13f, "车开往", onAccent);
 
-        put(status, clip, leftX, 2 + bandH + 1.5f, leftW, 5f, 0.30f * k,
-            statusText(waiting, min1, now, stops), 0xFFFFFFFF);
+        float divTop = 2 + bandH + 6f;    // 第一条分割线
+        rects.add(new Rect(leftX, divTop, 0.01f, leftW, 0.3f, divider));
+
+        // 状态行：在色带与分割线之间垂直居中
+        float statusBand = divTop - (2 + bandH);
+        float statusTextH = 8f * 0.30f * k;
+        put(status, clip, leftX, 2 + bandH + (statusBand - statusTextH) / 2f, leftW, statusTextH + 0.5f,
+            0.30f * k, noBoard ? "请勿上车" : statusText(waiting, min1, now, stops),
+            noBoard ? 0xFFFF9800 : 0xFFFFFFFF);
         status.horizontalAlign.set(ETextAlignment.CENTER);
 
-        float y = 2 + bandH + 8f * k;
-        rects.add(new Rect(leftX, y, 0.01f, leftW, 0.3f, divider));
+        float y = divTop + 1f;
+        put(nextLabel, clip, leftX + 1f, y, leftW - 2f, 3f, 0.12f * k, "下一趟开往", 0xFF9AA5AD);
+        put(nextDest, clip, leftX + 1f, y + 3.2f, leftW - 2f, 3f, 0.15f * k, dest1, 0xFFFFFFFF);
+        put(nextMin, clip, leftX + 1f, y + 6.4f, leftW - 2f, 3f, 0.14f * k, min1 + " 分钟", 0xFFECEFF1);
 
-        put(nextLabel, clip, leftX + 1f, y + 1f, leftW - 2f, 3f, 0.12f * k, "下一趟开往", 0xFF9AA5AD);
-        put(nextDest, clip, leftX + 1f, y + 4f, leftW - 2f, 3f, 0.15f * k, dest1, 0xFFFFFFFF);
-        put(nextMin, clip, leftX + 1f, y + 7f, leftW - 2f, 3f, 0.14f * k, min1 + " 分钟", 0xFFECEFF1);
-
-        float y2 = y + 10f * k;
+        float y2 = y + 9.6f;
         rects.add(new Rect(leftX, y2, 0.01f, leftW, 0.3f, divider));
 
         put(thirdLabel, clip, leftX + 1f, y2 + 1f, leftW - 2f, 3f, 0.12f * k, "第三趟开往", 0xFF9AA5AD);
-        put(thirdDest, clip, leftX + 1f, y2 + 4f, leftW - 2f, 3f, 0.15f * k, dest2, 0xFF66BB6A);
-        put(thirdMin, clip, leftX + 1f, y2 + 7f, leftW - 2f, 3f, 0.14f * k, min2 + " 分钟", 0xFFECEFF1);
+        put(thirdDest, clip, leftX + 1f, y2 + 4.2f, leftW - 2f, 3f, 0.15f * k, dest2, 0xFF66BB6A);
+        put(thirdMin, clip, leftX + 1f, y2 + 7.4f, leftW - 2f, 3f, 0.14f * k, min2 + " 分钟", 0xFFECEFF1);
 
         // 右栏
-        put(clock, clip, rightX + 1f, 4f, rightW - 2f, 3.4f, 0.28f * k, time, 0xFFFFFFFF);
+        put(clock, clip, rightX + 1f, 2.6f, rightW - 2f, 3f, 0.22f * k, time, 0xFFFFFFFF);
         put(notice, clip, rightX + 1f, 10f, rightW - 2f, 4f, 0.12f * k, "通知与提示区", 0xFF9AA5AD);
 
         float bottomY = be.getYSizeScaled() * 16 - 6f;
