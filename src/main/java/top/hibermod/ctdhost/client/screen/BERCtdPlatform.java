@@ -151,7 +151,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         }
         if (bh >= 2) {
             singleColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                noBoard, headLabelText, nextLabelText, thirdLabelText, stops, now);
+                noBoard, headLabelText, nextLabelText, thirdLabelText, stops, now, currentClock(lvl));
             return;
         }
 
@@ -266,7 +266,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
                               boolean noBoard, String headLabelText, String nextLabelText,
                               String thirdLabelText,
                               java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops,
-                              long now) {
+                              long now, String time) {
 
         DLColor accent = lineColor(settings);
         DLColor divider = DLColor.fromInt(0xFF9AA5AD);
@@ -275,42 +275,42 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         float leftX = 2f;
         float leftW = be.getXSizeScaled() * 16 - 4f;
-        float bandH = 6f;
+        float bandH = 7f;
 
         rects.add(new Rect(leftX, 2, 0f, leftW, bandH, accent));
 
         // 两行三字 + 终点站（右）
-        float headLineH = 8f * 0.14f;
+        float headLineH = 8f * 0.18f;
         float headTop = 2 + (bandH - headLineH * 2f) / 2f;
         headLabel.horizontalAlign.set(ETextAlignment.CENTER);
         headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headLabel, clip, leftX, headTop, leftW * 0.45f, headLineH + 0.3f, 0.14f,
+        put(headLabel, clip, leftX, headTop, leftW * 0.45f, headLineH + 0.3f, 0.18f,
             headLabelText.substring(0, 3), onAccent);
-        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.45f, headLineH + 0.3f, 0.14f,
+        put(headLabel2, clip, leftX, headTop + headLineH, leftW * 0.45f, headLineH + 0.3f, 0.18f,
             headLine2Text, onAccent);
 
         headDest.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headDest, clip, leftX + leftW * 0.45f, 2 + (bandH - 8f * 0.18f) / 2f,
+        put(headDest, clip, leftX + leftW * 0.45f, 2 + (bandH - 8f * 0.23f) / 2f,
             leftW * 0.55f - 1f, 8f * 0.18f + 0.3f, 0.18f, headDestText, onAccent);
 
         float divTop = 2 + bandH + 5f;
         rects.add(new Rect(leftX, divTop, 0.01f, leftW, 0.3f, divider));
 
         float statusBand = divTop - (2 + bandH);
-        float statusH = 8f * 0.26f;
+        float statusH = 8f * 0.32f;
         status.horizontalAlign.set(ETextAlignment.CENTER);
-        put(status, clip, leftX, 2 + bandH + (statusBand - statusH) / 2f, leftW, statusH + 0.4f, 0.26f,
+        put(status, clip, leftX, 2 + bandH + (statusBand - statusH) / 2f, leftW, statusH + 0.4f, 0.32f,
             noBoard ? "请勿上车" : statusText(waiting, min1, now, stops),
             noBoard ? 0xFFFF9800 : 0xFFFFFFFF);
 
         // 第一趟
         float row1 = divTop + 0.8f;
         nextLabel.horizontalAlign.set(ETextAlignment.LEFT);
-        put(nextLabel, clip, leftX + 1f, row1, leftW - 2f, 2f, 0.12f, nextLabelText, 0xFF9AA5AD);
+        put(nextLabel, clip, leftX + 1f, row1, leftW - 2f, 2f, 0.18f, nextLabelText, 0xFF9AA5AD);
         nextDest.horizontalAlign.set(ETextAlignment.LEFT);
-        put(nextDest, clip, leftX + 2f, row1 + 2.6f, leftW * 0.5f, 3f, 0.16f, dest1, 0xFFFFFFFF);
+        put(nextDest, clip, leftX + 2f, row1 + 3.4f, leftW * 0.5f, 3f, 0.19f, dest1, 0xFFFFFFFF);
         nextMin.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(nextMin, clip, leftX + leftW * 0.5f, row1 + 2.6f, leftW * 0.5f - 2f, 3f, 0.16f,
+        put(nextMin, clip, leftX + leftW * 0.5f, row1 + 3.4f, leftW * 0.5f - 2f, 3f, 0.19f,
             min1 + " 分钟", 0xFFECEFF1);
 
         float divMid = divTop + 9f;
@@ -318,11 +318,11 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         float row2 = divMid + 0.8f;
         thirdLabel.horizontalAlign.set(ETextAlignment.LEFT);
-        put(thirdLabel, clip, leftX + 1f, row2, leftW - 2f, 2f, 0.12f, thirdLabelText, 0xFF9AA5AD);
+        put(thirdLabel, clip, leftX + 1f, row2, leftW - 2f, 2f, 0.18f, thirdLabelText, 0xFF9AA5AD);
         thirdDest.horizontalAlign.set(ETextAlignment.LEFT);
-        put(thirdDest, clip, leftX + 2f, row2 + 2.6f, leftW * 0.5f, 3f, 0.16f, dest2, 0xFF66BB6A);
+        put(thirdDest, clip, leftX + 2f, row2 + 3.4f, leftW * 0.5f, 3f, 0.19f, dest2, 0xFF66BB6A);
         thirdMin.horizontalAlign.set(ETextAlignment.RIGHT);
-        put(thirdMin, clip, leftX + leftW * 0.5f, row2 + 2.6f, leftW * 0.5f - 2f, 3f, 0.16f,
+        put(thirdMin, clip, leftX + leftW * 0.5f, row2 + 3.4f, leftW * 0.5f - 2f, 3f, 0.19f,
             min2 + " 分钟", 0xFFECE682);
 
         clock.text.set(null);
