@@ -199,8 +199,8 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             float hx = 2f + i * (halfW + 1f);
             int idx = dual ? i : 0;
 
-            // 上方色带：线路色（左 62%）+ 蓝（右 38%）
-            float yellowW = halfW * 0.62f;
+            // 上方色带：线路色占 41%（与 3x2 同比例），其余蓝
+            float yellowW = halfW * 0.41f;
             rects.add(new Rect(hx, 2f, 0f, yellowW, 4f, accent));
             rects.add(new Rect(hx + yellowW + 0.4f, 2f, 0f, halfW - yellowW - 0.4f, 4f, blue));
 
@@ -208,38 +208,44 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             BERLabel dest = lab(i * 7 + 1);
             BERLabel right = lab(i * 7 + 2);
 
+            // 带内的字全部在 4px 带子里垂直居中
             small.horizontalAlign.set(ETextAlignment.LEFT);
-            put(small, clip, hx + 0.8f, 2.4f, yellowW * 0.5f, 3f, 0.10f, "本次列车开往",
-                contrastText(accent));
+            put(small, clip, hx + 0.8f, 2 + (4f - 8f * 0.14f) / 2f, yellowW * 0.52f, 3f, 0.14f,
+                "本次列车开往", contrastText(accent));
 
             dest.horizontalAlign.set(ETextAlignment.CENTER);
-            put(dest, clip, hx + yellowW * 0.48f, 2.3f, yellowW * 0.52f - 0.5f, 3f, 0.15f,
-                nameOf(stops, idx), contrastText(accent));
+            put(dest, clip, hx + yellowW * 0.50f, 2 + (4f - 8f * 0.20f) / 2f,
+                yellowW * 0.50f - 0.5f, 3f, 0.20f, nameOf(stops, idx), contrastText(accent));
 
             right.horizontalAlign.set(ETextAlignment.CENTER);
             String rightText = dual ? (i == 0 ? settings.platform() : settings.platform2()) : time;
-            put(right, clip, hx + yellowW + 0.4f, 2.3f, halfW - yellowW - 0.8f, 3f, 0.14f,
-                rightText, dual ? accent.getAsARGB() : 0xFFFFFFFF);
+            put(right, clip, hx + yellowW + 0.4f, 2 + (4f - 8f * 0.20f) / 2f,
+                halfW - yellowW - 0.8f, 3f, 0.20f, rightText,
+                dual ? accent.getAsARGB() : 0xFFFFFFFF);
 
-            // 中部：左侧大字状态，右侧下一趟
+            // 中部左：大字状态（在 6..12.4 之间垂直居中）
             BERLabel state = lab(i * 7 + 3);
             state.horizontalAlign.set(ETextAlignment.CENTER);
-            put(state, clip, hx, 6.3f, halfW * 0.46f, 4f, 0.26f, statusStr,
+            float stateScale = 0.32f;
+            put(state, clip, hx, 6f + (6.4f - 8f * stateScale) / 2f, halfW * 0.46f,
+                8f * stateScale + 0.3f, stateScale, statusStr,
                 noBoard ? 0xFFFF9800 : 0xFFFFFFFF);
 
+            // 中部右：下一趟三行，整体在 6..12.4 内垂直居中（三行共 3×1.7px）
+            float rowTop = 6f + (6.4f - 3f * 1.7f) / 2f;
             BERLabel nextLbl = lab(i * 7 + 4);
             nextLbl.horizontalAlign.set(ETextAlignment.LEFT);
-            put(nextLbl, clip, hx + halfW * 0.5f, 6.3f, halfW * 0.5f, 2f, 0.11f, "下一趟开往",
+            put(nextLbl, clip, hx + halfW * 0.5f, rowTop, halfW * 0.5f, 2f, 0.15f, "下一趟开往",
                 0xFF9AA5AD);
 
             BERLabel nextD = lab(i * 7 + 5);
             nextD.horizontalAlign.set(ETextAlignment.LEFT);
-            put(nextD, clip, hx + halfW * 0.5f, 8.1f, halfW * 0.5f, 2f, 0.15f, nameOf(stops, idx + 1),
-                0xFFFFFFFF);
+            put(nextD, clip, hx + halfW * 0.5f, rowTop + 1.7f, halfW * 0.5f, 2f, 0.19f,
+                nameOf(stops, idx + 1), 0xFFFFFFFF);
 
             BERLabel nextM = lab(i * 7 + 6);
             nextM.horizontalAlign.set(ETextAlignment.LEFT);
-            put(nextM, clip, hx + halfW * 0.5f, 10.0f, halfW * 0.5f, 2f, 0.14f,
+            put(nextM, clip, hx + halfW * 0.5f, rowTop + 3.4f, halfW * 0.5f, 2f, 0.19f,
                 minutesOf(stops, now, idx + 1) + " 分钟", 0xFFFFE082);
         }
 
@@ -251,12 +257,12 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         var barR = Rectangle.withSize(3f + totalW * 0.5f, 12.2f, totalW * 0.5f - 4f, 3f);
 
         if (dual) {
-            put(lab(14), barL, 3f, 12.5f, totalW * 0.5f - 4f, 2.4f, 0.20f, realClockText(),
+            put(lab(14), barL, 3f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.30f, realClockText(),
                 0xFFFFFFFF);
-            put(lab(15), barR, 3f + totalW * 0.5f, 12.5f, totalW * 0.5f - 4f, 2.4f, 0.20f,
+            put(lab(15), barR, 3f + totalW * 0.5f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.30f,
                 "感谢您的配合，尊敬的乘客。", 0xFFFFFFFF);
         } else {
-            put(lab(14), barL, 3f, 12.5f, totalW - 2f, 2.4f, 0.20f, "感谢您的配合，尊敬的乘客。",
+            put(lab(14), barL, 3f, 12.3f, totalW - 2f, 2.6f, 0.30f, "感谢您的配合，尊敬的乘客。",
                 0xFFFFFFFF);
         }
     }
