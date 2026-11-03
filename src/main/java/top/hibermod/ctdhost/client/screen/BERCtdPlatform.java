@@ -247,7 +247,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         float clockScale = 0.18f * k;
         float clockH = 8f * clockScale;
         put(clock, clip, rightX + 1f, 2 + (bandH - clockH) / 2f, rightW - 2f, clockH + 0.3f,
-            clockScale, realClockText(), 0xFFFFFFFF);
+            clockScale, time, 0xFFFFFFFF);
         // 公告：调度没发布就留空，不显示占位
         if (noticeText != null && !noticeText.isBlank()) {
             notice.horizontalScrollMode.set(EScrollMode.ALWAYS);
