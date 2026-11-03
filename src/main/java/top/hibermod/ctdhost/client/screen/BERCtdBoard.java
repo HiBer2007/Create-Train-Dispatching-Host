@@ -108,6 +108,8 @@ public class BERCtdBoard implements AbstractAdvancedDisplayRenderer<CtdPlatformS
         label.text.set(TextUtils.text(text));
         label.preferredWidth.set((float) Math.max(1, w - 2));
         label.position.set(Point.of(1, Math.max(0, CtdLayout.baseline(bandTop, bandHeight, scale))));
+        label.horizontalScale.set(de.mrjulsen.mcdragonlib.util.Pair.of(scale, scale));
+        label.verticalScale.set(de.mrjulsen.mcdragonlib.util.Pair.of(scale, scale));
         label.horizontalMinScale.set(scale);
         label.horizontalMaxScale.set(scale);
         label.verticalMinScale.set(scale);
