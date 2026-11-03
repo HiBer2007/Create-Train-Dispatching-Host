@@ -35,5 +35,7 @@
   "gui.ctdhost.door_light": "显示门灯",
   "gui.ctdhost.door_light.description": "1 格高时在右侧显示屏蔽门开关指示",
   "gui.ctdhost.line_mode": "线路形态",
-  "gui.ctdhost.line_mode.description": "环线选内环/外环，屏上显示环别而不是终点站"
+  "gui.ctdhost.line_mode.description": "环线选内环/外环，屏上显示环别而不是终点站",
+  "gui.ctdhost.platform2": "二号站台",
+  "gui.ctdhost.platform2.description": "仅 4x1 双向屏使用，显示在右半屏"
 }

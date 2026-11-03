@@ -56,6 +56,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     private static final String NBT_ROUTE_MAP = "CtdRouteMap";
     private static final String NBT_DOOR_LIGHT = "CtdDoorLight";
     private static final String NBT_LINE_MODE = "CtdLineMode";
+    private static final String NBT_PLATFORM_2 = "CtdPlatform2";
     private static final String NBT_CONTENT = "CtdContent";
 
     private String signalSystem = "";
@@ -86,6 +87,9 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
     }
 
     private LineMode lineMode = LineMode.NORMAL;
+
+    /** 4x1 双向屏的第二个站台 ID（右侧半屏）。 */
+    private String platform2 = "";
     private Content content = Content.DEPARTURES;
 
     public CtdPlatformSettings() {
@@ -124,6 +128,10 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
 
     public boolean showRouteMap() { return showRouteMap; }
     public void setShowRouteMap(boolean v) { showRouteMap = v; }
+
+    public String platform2() { return platform2 == null ? "" : platform2; }
+
+    public void setPlatform2(String v) { platform2 = v == null ? "" : v; }
 
     public LineMode lineMode() { return lineMode; }
     public void setLineMode(LineMode v) { lineMode = v == null ? LineMode.NORMAL : v; }
@@ -167,6 +175,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         showRouteMap = !nbt.contains(NBT_ROUTE_MAP) || nbt.getBoolean(NBT_ROUTE_MAP);
         showDoorLight = !nbt.contains(NBT_DOOR_LIGHT) || nbt.getBoolean(NBT_DOOR_LIGHT);
         lineMode = LineMode.byId(nbt.getString(NBT_LINE_MODE));
+        platform2 = nbt.getString(NBT_PLATFORM_2);
         content = Content.byId(nbt.getString(NBT_CONTENT));
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings loaded station=[{}] platform=[{}] sys=[{}]",
@@ -184,6 +193,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         nbt.putBoolean(NBT_ROUTE_MAP, showRouteMap);
         nbt.putBoolean(NBT_DOOR_LIGHT, showDoorLight);
         nbt.putString(NBT_LINE_MODE, lineMode.name());
+        nbt.putString(NBT_PLATFORM_2, platform2());
         nbt.putString(NBT_CONTENT, content.id());
         org.slf4j.LoggerFactory.getLogger("ctdhost").debug(
             "ctdhost: settings saved station=[{}] platform=[{}] sys=[{}]",
@@ -198,11 +208,10 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
         // 控件照抄 CRN 的 GuiBuilderWrapper.buildStaticTextGui（addLine(String) + CreateTextBox）。
         buildTextLine(context, "gui.ctdhost.station", station(), this::setStation);
         buildTextLine(context, "gui.ctdhost.platform", platform(), this::setPlatform);
+        buildTextLine(context, "gui.ctdhost.platform2", platform2(), this::setPlatform2);
         buildTextLine(context, "gui.ctdhost.line", lineName(), this::setLineName);
         buildColorPickerLine(context, "gui.ctdhost.line_color", lineColor(), this::setLineColor);
         buildModeLine(context);
-        buildCheckLine(context, "gui.ctdhost.route_map", showRouteMap(), this::setShowRouteMap);
-        buildCheckLine(context, "gui.ctdhost.door_light", showDoorLight(), this::setShowDoorLight);
         // 信号系统：用下拉选择（数据来自宿主同步过来的列表）。
         buildPickerLine(context, "gui.ctdhost.signal_system", signalSystem(), this::setSignalSystem);
         // 第一版不做自定义控件：先让类型能被选中、能渲染。
@@ -221,6 +230,7 @@ public class CtdPlatformSettings extends BasicDisplaySettings {
             showRouteMap = old.showRouteMap;
             showDoorLight = old.showDoorLight;
             lineMode = old.lineMode;
+            platform2 = old.platform2;
             content = old.content;
         }
     }

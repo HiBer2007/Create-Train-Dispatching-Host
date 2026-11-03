@@ -155,13 +155,55 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             return;
         }
 
-        // 单格高：简版（屏蔽门上方版式另做）
-        var clip = Rectangle.withSize(2, 2, bw * 16 - 4, bh * 16 - 4);
+        // 1 格高：4x1 两方向拼接，2x1 单方向
+        if (bw >= 4) {
+            dualRow(blockEntity, settings, stops, now, waiting, noBoard);
+        } else {
+            miniRow(blockEntity, settings, stops, now, waiting, noBoard);
+        }
+    }
+
+    /** 4x1：左右两个方向拼接，中间竖分割线；站台号用线路色。 */
+    private void dualRow(AdvancedDisplayBlockEntity be, CtdPlatformSettings settings,
+                         java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops,
+                         long now, boolean waiting, boolean noBoard) {
+
         DLColor accent = lineColor(settings);
-        rects.add(new Rect(2, 2, 0f, bw * 16 - 4, 5f, accent));
-        put(headLabel, clip, 3, 2.8f, bw * 16 - 6, 3f, 0.20f, headDestText, contrastText(accent));
-        put(status, clip, 3, 8f, bw * 16 - 6, 5f, 0.34f,
-            minutesOf(stops, now, 0) + " 分钟", 0xFFFF5252);
+        DLColor divider = DLColor.fromInt(0xFF9AA5AD);
+        var clip = Rectangle.withSize(2, 2, be.getXSizeScaled() * 16 - 4, be.getYSizeScaled() * 16 - 4);
+
+        float half = (be.getXSizeScaled() * 16 - 4f) / 2f;
+        float x1 = 2f;
+        float x2 = 2f + half + 1f;
+        float w = half - 2f;
+
+        rects.add(new Rect(2f + half, 2f, 0.01f, 0.4f, 12f, divider));
+
+        put(headLabel, clip, x1, 2.5f, w * 0.4f, 3f, 0.30f, settings.platform(), accent.getAsARGB());
+        put(headDest, clip, x1 + w * 0.35f, 2.5f, w * 0.65f, 3f, 0.26f, nameOf(stops, 0), 0xFFFFFFFF);
+        put(status, clip, x1, 8f, w, 4f, 0.30f,
+            noBoard ? "请勿上车" : (waiting ? "进站" : minutesOf(stops, now, 0) + " 分"),
+            noBoard ? 0xFFFF9800 : 0xFFFF5252);
+
+        put(headLabel2, clip, x2, 2.5f, w * 0.4f, 3f, 0.30f, settings.platform2(), accent.getAsARGB());
+        put(thirdDest, clip, x2 + w * 0.35f, 2.5f, w * 0.65f, 3f, 0.26f, nameOf(stops, 1), 0xFFFFFFFF);
+        put(thirdMin, clip, x2, 8f, w, 4f, 0.30f, minutesOf(stops, now, 1) + " 分", 0xFFFF5252);
+    }
+
+    /** 2x1：单方向，站台号（线路色）+ 终点站 + 分钟。 */
+    private void miniRow(AdvancedDisplayBlockEntity be, CtdPlatformSettings settings,
+                         java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops,
+                         long now, boolean waiting, boolean noBoard) {
+
+        DLColor accent = lineColor(settings);
+        var clip = Rectangle.withSize(2, 2, be.getXSizeScaled() * 16 - 4, be.getYSizeScaled() * 16 - 4);
+        float leftW = be.getXSizeScaled() * 16 - 4f;
+
+        put(headLabel, clip, 2f, 2.5f, leftW * 0.3f, 3f, 0.32f, settings.platform(), accent.getAsARGB());
+        put(headDest, clip, 2f + leftW * 0.28f, 2.5f, leftW * 0.72f, 3f, 0.28f, nameOf(stops, 0), 0xFFFFFFFF);
+        put(status, clip, 2f, 8f, leftW, 4f, 0.32f,
+            noBoard ? "请勿上车" : (waiting ? "列车进站" : minutesOf(stops, now, 0) + " 分钟"),
+            noBoard ? 0xFFFF9800 : 0xFFFF5252);
     }
 
     /** 左右两栏主体。所有数字都是像素，已含 2px 边距。 */
@@ -244,7 +286,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
 
         // 右栏
-        float clockScale = 0.18f * k;
+        float clockScale = 0.22f * k;
         float clockH = 8f * clockScale;
         put(clock, clip, rightX + 1f, 2 + (bandH - clockH) / 2f, rightW - 2f, clockH + 0.3f,
             clockScale, time, 0xFFFFFFFF);
@@ -302,7 +344,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         // 蓝带里的游戏内时钟，垂直居中
         clock.horizontalAlign.set(ETextAlignment.RIGHT);
-        float gameClock = 0.16f;
+        float gameClock = 0.20f;
         put(clock, clip, leftX + yellowW + 1f, 2 + (bandH - 8f * gameClock) / 2f,
             leftW - yellowW - 2f, 8f * gameClock + 0.3f, gameClock, time, 0xFFFFFFFF);
 

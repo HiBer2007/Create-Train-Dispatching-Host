@@ -35,5 +35,7 @@
   "gui.ctdhost.door_light": "Door light",
   "gui.ctdhost.door_light.description": "Show the platform screen door indicator on the right",
   "gui.ctdhost.line_mode": "Line mode",
-  "gui.ctdhost.line_mode.description": "Loop lines show inner/outer circle instead of a terminus"
+  "gui.ctdhost.line_mode.description": "Loop lines show inner/outer circle instead of a terminus",
+  "gui.ctdhost.platform2": "Second platform",
+  "gui.ctdhost.platform2.description": "Used by the 4x1 dual-direction screen, shown on the right half"
 }
