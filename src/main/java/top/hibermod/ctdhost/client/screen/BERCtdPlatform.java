@@ -287,13 +287,13 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             DLColor.fromInt(0xFF1E4FA3)));
 
         // 两行三字 + 终点站（右）
-        float headLineH = 8f * 0.13f;
+        float headLineH = 8f * 0.18f;
         float headTop = 2 + (bandH - headLineH * 2f) / 2f;
         headLabel.horizontalAlign.set(ETextAlignment.CENTER);
         headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
-        put(headLabel, clip, leftX, headTop, yellowW * 0.45f, headLineH + 0.3f, 0.13f,
+        put(headLabel, clip, leftX, headTop, yellowW * 0.45f, headLineH + 0.3f, 0.18f,
             headLabelText.substring(0, 3), onAccent);
-        put(headLabel2, clip, leftX, headTop + headLineH, yellowW * 0.45f, headLineH + 0.3f, 0.13f,
+        put(headLabel2, clip, leftX, headTop + headLineH, yellowW * 0.45f, headLineH + 0.3f, 0.18f,
             headLine2Text, onAccent);
 
         headDest.horizontalAlign.set(ETextAlignment.CENTER);
