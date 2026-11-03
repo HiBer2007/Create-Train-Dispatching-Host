@@ -113,61 +113,61 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         String tag = line.isEmpty() ? "" : "[" + line + "]";
 
         if (bw == 3 && bh == 2) {
-            // 48x32：色带 7，状态 7，两行各 4，底 3
-            paintStrip(area, 0, 0, 48, 7, accent);
-            put(head, area, 2, 1.6f, 28, 4, 0.42f, "本次列车开往 " + dest0, 0xFFFFFFFF);
-            put(badge, area, 28, 1.6f, 18, 4, 0.42f, tag, 0xFFFFFFFF);
-            put(status, area, 2, 9f, 44, 7, 0.85f, waiting ? "列车进站" : "本次列车", 0xFFFFFFFF);
-            put(nextLine, area, 2, 18f, 44, 4, 0.42f,
+            // 48x32。字号以 0.30 为「正常小字」基准（8*0.30 = 2.4px 高）。
+            paintStrip(area, 0, 0, 48, 6, accent);
+            put(head, area, 2, 1f, 28, 4, 0.30f, "本次列车开往 " + dest0, 0xFFFFFFFF);
+            put(badge, area, 30, 1f, 16, 4, 0.30f, tag, 0xFFFFFFFF);
+            put(status, area, 2, 8f, 44, 6, 0.60f, waiting ? "列车进站" : "本次列车", 0xFFFFFFFF);
+            put(nextLine, area, 2, 16f, 44, 3, 0.30f,
                 "下一趟开往 " + dest1 + "   " + min1 + " 分钟", 0xFFECEFF1);
-            put(thirdLine, area, 2, 24f, 44, 4, 0.42f,
+            put(thirdLine, area, 2, 22f, 44, 3, 0.30f,
                 "第三趟开往 " + dest2 + "   " + min2 + " 分钟", 0xFFECEFF1);
-            put(footer, area, 2, 29f, 44, 3, 0.30f, "感谢您的配合，尊敬的乘客。", 0xFFB0BEC5);
+            put(footer, area, 2, 27f, 44, 3, 0.26f, "感谢您的配合，尊敬的乘客。", 0xFFB0BEC5);
             return;
         }
 
         if (bw == 2 && bh == 2) {
-            // 32x32
-            paintStrip(area, 0, 0, 32, 7, accent);
-            put(head, area, 2, 1.8f, 17, 4, 0.34f, "开往 " + dest0, 0xFFFFFFFF);
-            put(badge, area, 19, 1.8f, 11, 4, 0.34f, tag, 0xFFFFFFFF);
-            put(status, area, 2, 9.5f, 28, 7, 0.78f, waiting ? "列车进站" : "本次列车", 0xFFFFFFFF);
-            put(nextLine, area, 2, 19f, 28, 4, 0.34f,
+            // 32x32。字宽 9*s/汉字，可用宽 28 → 小字 s ≤ 0.31
+            paintStrip(area, 0, 0, 32, 6, accent);
+            put(head, area, 2, 1f, 17, 4, 0.26f, "开往 " + dest0, 0xFFFFFFFF);
+            put(badge, area, 20, 1f, 10, 4, 0.26f, tag, 0xFFFFFFFF);
+            put(status, area, 2, 8f, 28, 6, 0.54f, waiting ? "列车进站" : "本次列车", 0xFFFFFFFF);
+            put(nextLine, area, 2, 16f, 28, 3, 0.26f,
                 "下一趟 " + dest1 + " " + min1 + "分", 0xFFECEFF1);
-            put(thirdLine, area, 2, 25f, 28, 4, 0.34f,
+            put(thirdLine, area, 2, 22f, 28, 3, 0.26f,
                 "第三趟 " + dest2 + " " + min2 + "分", 0xFFECEFF1);
-            put(footer, area, 2, 29.5f, 28, 3, 0.26f, "感谢您的配合。", 0xFFB0BEC5);
+            put(footer, area, 2, 27f, 28, 3, 0.22f, "感谢您的配合。", 0xFFB0BEC5);
             return;
         }
 
         if (bw == 4 && bh == 1) {
-            // 64x16
-            paintStrip(area, 0, 0, 64, 6, accent);
-            put(head, area, 2, 1.2f, 40, 4, 0.36f, "本次列车开往 " + dest0, 0xFFFFFFFF);
-            put(badge, area, 44, 1.2f, 18, 4, 0.36f, tag, 0xFFFFFFFF);
-            put(status, area, 2, 8f, 24, 7, 0.70f, min0 + " 分钟", 0xFFFF5252);
-            put(nextLine, area, 28, 9f, 34, 4, 0.36f,
+            // 64x16。横向排：方向（左）| 分钟（中）| 下一趟（右）| 底栏
+            paintStrip(area, 0, 0, 64, 5, accent);
+            put(head, area, 2, 1f, 44, 3, 0.26f, "本次列车开往 " + dest0, 0xFFFFFFFF);
+            put(badge, area, 48, 1f, 14, 3, 0.26f, tag, 0xFFFFFFFF);
+            put(status, area, 2, 6f, 20, 5, 0.50f, min0 + " 分钟", 0xFFFF5252);
+            put(nextLine, area, 24, 7f, 38, 3, 0.26f,
                 "下一趟 " + dest1 + " " + min1 + " 分钟", 0xFFECEFF1);
-            put(footer, area, 2, 12.5f, 60, 3, 0.26f, "感谢您的配合，尊敬的乘客。", 0xFFB0BEC5);
+            put(footer, area, 2, 12f, 60, 3, 0.22f, "感谢您的配合，尊敬的乘客。", 0xFFB0BEC5);
             return;
         }
 
         if (bw == 3 && bh == 1) {
             // 48x16
-            paintStrip(area, 0, 0, 48, 6, accent);
-            put(head, area, 2, 1.2f, 30, 4, 0.32f, "开往 " + dest0, 0xFFFFFFFF);
-            put(badge, area, 32, 1.2f, 14, 4, 0.32f, tag, 0xFFFFFFFF);
-            put(status, area, 2, 8f, 20, 7, 0.66f, min0 + " 分钟", 0xFFFF5252);
-            put(nextLine, area, 24, 9f, 22, 4, 0.32f, "下一趟 " + min1 + " 分钟", 0xFFECEFF1);
-            put(footer, area, 2, 12.5f, 44, 3, 0.24f, "感谢您的配合。", 0xFFB0BEC5);
+            paintStrip(area, 0, 0, 48, 5, accent);
+            put(head, area, 2, 1f, 32, 3, 0.24f, "开往 " + dest0, 0xFFFFFFFF);
+            put(badge, area, 36, 1f, 10, 3, 0.24f, tag, 0xFFFFFFFF);
+            put(status, area, 2, 6f, 18, 5, 0.46f, min0 + " 分钟", 0xFFFF5252);
+            put(nextLine, area, 22, 7f, 26, 3, 0.24f, "下一趟 " + min1 + " 分钟", 0xFFECEFF1);
+            put(footer, area, 2, 12f, 44, 3, 0.20f, "感谢您的配合。", 0xFFB0BEC5);
             return;
         }
 
         // 2x1 及其它窄格
-        paintStrip(area, 0, 0, 32, 6, accent);
-        put(head, area, 2, 1.2f, 20, 4, 0.30f, "开往 " + dest0, 0xFFFFFFFF);
-        put(badge, area, 22, 1.2f, 9, 4, 0.30f, tag, 0xFFFFFFFF);
-        put(status, area, 2, 8f, 28, 7, 0.62f, min0 + " 分钟", 0xFFFF5252);
+        paintStrip(area, 0, 0, 32, 5, accent);
+        put(head, area, 2, 1f, 20, 3, 0.22f, "开往 " + dest0, 0xFFFFFFFF);
+        put(badge, area, 22, 1f, 9, 3, 0.22f, tag, 0xFFFFFFFF);
+        put(status, area, 2, 6f, 28, 5, 0.44f, min0 + " 分钟", 0xFFFF5252);
     }
 
     // ── 绘制原语 ──────────────────────────────────────────────────────
