@@ -37,5 +37,18 @@
   "gui.ctdhost.line_mode": "线路形态",
   "gui.ctdhost.line_mode.description": "环线选内环/外环，屏上显示环别而不是终点站",
   "gui.ctdhost.platform2": "二号站台",
-  "gui.ctdhost.platform2.description": "仅 4x1 双向屏使用，显示在右半屏"
+  "gui.ctdhost.platform2.description": "仅 4x1 双向屏使用，显示在右半屏",
+  "display.createrailwaysnavigator.platform.ctd_psd": "CTD 屏蔽门挡板",
+  "gui.ctdhost.psd_name": "车站名称",
+  "gui.ctdhost.psd_name.description": "挡板正中显示的大字站名",
+  "gui.ctdhost.psd_next": "下一站",
+  "gui.ctdhost.psd_next.description": "左下角「下一站：X ←」",
+  "gui.ctdhost.psd_station_id": "车站 ID",
+  "gui.ctdhost.psd_station_id.description": "右上角圆章下方的小字",
+  "gui.ctdhost.psd_door": "屏蔽门号",
+  "gui.ctdhost.psd_door.description": "圆章里的门号，与屏蔽门联动",
+  "gui.ctdhost.psd_map": "显示线路图",
+  "gui.ctdhost.psd_map.description": "4x1 固定显示；3x1 可选",
+  "gui.ctdhost.psd_indicator": "显示开关门指示",
+  "gui.ctdhost.psd_indicator.description": "由调度下发的开门状态点亮"
 }

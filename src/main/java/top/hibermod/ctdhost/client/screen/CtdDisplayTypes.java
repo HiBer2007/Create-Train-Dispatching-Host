@@ -51,6 +51,12 @@ public final class CtdDisplayTypes {
                 CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdPlatform"),
                 new DisplayProperties(false, be -> be.getYSize() * 3 - 1));
 
+            // 屏蔽门挡板：单行显示件（4x1 线路图 / 3x1 两种 / 2x1 指示灯）
+            AdvancedDisplaysRegistry.register(
+                EDisplayType.PLATFORM, "ctd_psd",
+                CtdPsdSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdPsd"),
+                new DisplayProperties(false, be -> 1));
+
             AdvancedDisplaysRegistry.register(
                 EDisplayType.PLATFORM, "ctd_departure",
                 CtdPlatformSettings::new, rendererOf("top.hibermod.ctdhost.client.screen.BERCtdDeparture"),

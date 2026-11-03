@@ -587,9 +587,13 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     }
 
     static DLColor lineColor(CtdPlatformSettings settings) {
-        if (settings.lineColor() != 0) return DLColor.fromInt(settings.lineColor());
+        return lineColor(settings.lineName(), settings.lineColor());
+    }
 
-        String key = settings.lineName();
+    /** 线路颜色：显式 ARGB > 注册表 ctd:lineN > 关键字散列调色板。供其它显示件复用。 */
+    static DLColor lineColor(String key, int argb) {
+        if (argb != 0) return DLColor.fromInt(argb);
+
         if (key != null) {
             java.util.regex.Matcher m = java.util.regex.Pattern.compile("([0-9]+)").matcher(key);
             if (m.find()) {

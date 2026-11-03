@@ -37,5 +37,18 @@
   "gui.ctdhost.line_mode": "Line mode",
   "gui.ctdhost.line_mode.description": "Loop lines show inner/outer circle instead of a terminus",
   "gui.ctdhost.platform2": "Second platform",
-  "gui.ctdhost.platform2.description": "Used by the 4x1 dual-direction screen, shown on the right half"
+  "gui.ctdhost.platform2.description": "Used by the 4x1 dual-direction screen, shown on the right half",
+  "display.createrailwaysnavigator.platform.ctd_psd": "CTD Platform Screen Door Panel",
+  "gui.ctdhost.psd_name": "Station name",
+  "gui.ctdhost.psd_name.description": "Large name in the middle",
+  "gui.ctdhost.psd_next": "Next station",
+  "gui.ctdhost.psd_next.description": "Shown bottom-left",
+  "gui.ctdhost.psd_station_id": "Station id",
+  "gui.ctdhost.psd_station_id.description": "Small text under the badge",
+  "gui.ctdhost.psd_door": "Door number",
+  "gui.ctdhost.psd_door.description": "Number inside the badge",
+  "gui.ctdhost.psd_map": "Show line map",
+  "gui.ctdhost.psd_map.description": "Always on 4x1, optional on 3x1",
+  "gui.ctdhost.psd_indicator": "Show door indicator",
+  "gui.ctdhost.psd_indicator.description": "Driven by the dispatch door state"
 }
