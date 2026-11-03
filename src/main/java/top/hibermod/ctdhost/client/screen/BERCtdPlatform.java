@@ -68,7 +68,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final BERLabel marquee = new BERLabel();
 
     /** 1 格高版式专用的标签池，避免复用导致互相覆盖。 */
-    private final BERLabel[] pool = new BERLabel[16];
+    private final BERLabel[] pool = new BERLabel[18];
 
     public BERCtdPlatform() {
         setup(headLabel, ETextAlignment.LEFT, 0xFFFFFFFF);
@@ -202,18 +202,20 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         for (int i = 0; i < (dual ? 2 : 1); i++) {
             float hx = 2f + i * (halfW + 1f);
             int idx = dual ? i : 0;
-            int base = i * 8;
+            int base = i * 9;
 
-            // 上方色带：线路色与蓝色各半
+            // 上方色带：左半线路色；右半在 4x1 时是「线路色站台标签」，2x1 时是蓝底时钟
             float yellowW = halfW * 0.50f;
             rects.add(new Rect(hx, 2f, 0f, yellowW, 4f, accent));
-            rects.add(new Rect(hx + yellowW + 0.4f, 2f, 0f, halfW - yellowW - 0.4f, 4f, blue));
+            rects.add(new Rect(hx + yellowW + 0.4f, 2f, 0f, halfW - yellowW - 0.4f, 4f,
+                dual ? accent : blue));
 
             // 黄带：两行三字靠左 + 终点站居中于剩余空间
             BERLabel line1 = lab(base);
             BERLabel line2 = lab(base + 1);
             BERLabel dest = lab(base + 3);
             BERLabel clockLab = lab(base + 2);
+            BERLabel unit = lab(base + 8);
 
             line1.horizontalAlign.set(ETextAlignment.LEFT);
             line2.horizontalAlign.set(ETextAlignment.LEFT);
@@ -230,15 +232,25 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             put(dest, clip, hx + 8.4f, 2 + (4f - 8f * 0.18f) / 2f, yellowW - 8.8f, 3f, 0.18f,
                 destText, contrastText(accent));
 
-            // 蓝带：4x1 站台号（「1 站台」，线路色，字号同底栏）/ 2x1 时钟（右对齐）
-            clockLab.horizontalAlign.set(dual ? ETextAlignment.CENTER : ETextAlignment.RIGHT);
-            float idScale = dual ? 0.30f : 0.24f;
-            String rightText = dual
-                ? (i == 0 ? settings.platform() : settings.platform2()) + " 站台"
-                : time;
-            put(clockLab, clip, hx + yellowW + 0.4f, 2 + (4f - 8f * idScale) / 2f,
-                halfW - yellowW - 0.8f, 3f, idScale, rightText,
-                dual ? accent.getAsARGB() : 0xFFFFFFFF);
+            // 右段：4x1 = 线路色底 + [站台号]（对比色）+ 「站台」（白色）；2x1 = 蓝底时钟
+            float idScale = dual ? 0.28f : 0.24f;
+            float segX = hx + yellowW + 0.4f;
+            float segW = halfW - yellowW - 0.8f;
+            float segY = 2 + (4f - 8f * idScale) / 2f;
+
+            if (dual) {
+                String id = i == 0 ? settings.platform() : settings.platform2();
+                clockLab.horizontalAlign.set(ETextAlignment.RIGHT);
+                put(clockLab, clip, segX, segY, segW * 0.52f, 3f, idScale, id, contrastText(accent));
+
+                unit.horizontalAlign.set(ETextAlignment.LEFT);
+                put(unit, clip, segX + segW * 0.5f, segY, segW * 0.5f, 3f, idScale, "站台",
+                    0xFFFFFFFF);
+            } else {
+                clockLab.horizontalAlign.set(ETextAlignment.RIGHT);
+                put(clockLab, clip, segX, segY, segW, 3f, idScale, time, 0xFFFFFFFF);
+                unit.text.set(null);
+            }
 
             // 中部左：大字状态
             BERLabel state = lab(base + 4);
