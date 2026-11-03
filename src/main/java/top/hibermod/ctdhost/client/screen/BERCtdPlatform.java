@@ -150,8 +150,8 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
             return;
         }
         if (bh >= 2) {
-            twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 13f, 30f, 0.84f, stops, now, noBoard, noticeText, headLabelText, nextLabelText, thirdLabelText);
+            singleColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
+                noBoard, headLabelText, nextLabelText, thirdLabelText, stops, now);
             return;
         }
 
