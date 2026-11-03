@@ -53,7 +53,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final List<Rect> rects = new ArrayList<>();
 
     private final BERLabel headLabel = new BERLabel();
-    private final BERLabel headDest = new BERLabel();
+    private final BERLabel headLabel2 = new BERLabel();
     private final BERLabel status = new BERLabel();
     private final BERLabel nextLabel = new BERLabel();
     private final BERLabel nextDest = new BERLabel();
@@ -67,7 +67,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
     public BERCtdPlatform() {
         setup(headLabel, ETextAlignment.LEFT, 0xFFFFFFFF);
-        setup(headDest, ETextAlignment.RIGHT, 0xFFFFFFFF);
+        setup(headLabel2, ETextAlignment.LEFT, 0xFFFFFFFF);
         setup(status, ETextAlignment.LEFT, 0xFFFFFFFF);
         setup(nextLabel, ETextAlignment.LEFT, 0xFF9AA5AD);
         setup(nextDest, ETextAlignment.LEFT, 0xFFFFFFFF);
@@ -132,12 +132,12 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
 
         if (bw >= 3 && bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 19f, 46f, 1.0f);
+                currentClock(lvl), 19f, 46f, 1.0f, stops, now);
             return;
         }
         if (bh >= 2) {
             twoColumn(blockEntity, settings, waiting, headDestText, dest1, dest2, min1, min2,
-                currentClock(lvl), 13f, 30f, 0.84f);
+                currentClock(lvl), 13f, 30f, 0.84f, stops, now);
             return;
         }
 
@@ -154,7 +154,8 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private void twoColumn(AdvancedDisplayBlockEntity be, CtdPlatformSettings settings,
                            boolean waiting, String headDestText, String dest1, String dest2,
                            String min1, String min2, String time,
-                           float leftRightEdge, float panelRightEdge, float k) {
+                           float leftRightEdge, float panelRightEdge, float k,
+                           java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops, long now) {
 
         DLColor accent = lineColor(settings);
         DLColor blue = DLColor.fromInt(0xFF1E4FA3);
@@ -168,7 +169,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         float rightX = leftRightEdge + 1f;
         float rightW = panelRightEdge - rightX;
 
-        float bandH = 5f * k;
+        float bandH = 7f * k;
 
         // 亮色线路用黑字，暗色线路用白字
         int onAccent = contrastText(accent);
@@ -177,14 +178,15 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         rects.add(new Rect(leftX, 2, 0f, leftW, bandH, accent));
         rects.add(new Rect(rightX, 2, 0f, rightW, bandH, blue));
 
-        // 左栏文本
-        put(headLabel, clip, leftX + 1f, 2.7f, leftW * 0.52f, 3f, 0.13f * k,
-            "本次列车开往", onAccent);
-        put(headDest, clip, leftX + leftW * 0.52f, 2.7f, leftW * 0.48f - 1f, 3f, 0.15f * k,
-            headDestText, onAccent);
+        // 左带：两行三字（本次列 / 车开往），水平居中
+        put(headLabel, clip, leftX, 2.2f, leftW, 3.5f, 0.30f * k, "本次列", onAccent);
+        put(headLabel2, clip, leftX, 5.4f, leftW, 3.5f, 0.30f * k, "车开往", onAccent);
+        headLabel.horizontalAlign.set(ETextAlignment.CENTER);
+        headLabel2.horizontalAlign.set(ETextAlignment.CENTER);
 
-        put(status, clip, leftX + 1f, 2 + bandH + 1.5f, leftW - 2f, 5f, 0.30f * k,
-            waiting ? "列车进站" : "本次列车", 0xFFFFFFFF);
+        put(status, clip, leftX, 2 + bandH + 1.5f, leftW, 5f, 0.30f * k,
+            statusText(waiting, min1, now, stops), 0xFFFFFFFF);
+        status.horizontalAlign.set(ETextAlignment.CENTER);
 
         float y = 2 + bandH + 8f * k;
         rects.add(new Rect(leftX, y, 0.01f, leftW, 0.3f, divider));
@@ -201,12 +203,12 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         put(thirdMin, clip, leftX + 1f, y2 + 7f, leftW - 2f, 3f, 0.14f * k, min2 + " 分钟", 0xFFECEFF1);
 
         // 右栏
-        put(clock, clip, rightX + 1f, 2.7f, rightW - 2f, 3f, 0.13f * k, time, 0xFFFFFFFF);
+        put(clock, clip, rightX + 1f, 2.6f, rightW - 2f, 4f, 0.42f * k, time, 0xFFFFFFFF);
         put(notice, clip, rightX + 1f, 10f, rightW - 2f, 4f, 0.12f * k, "通知与提示区", 0xFF9AA5AD);
 
         float bottomY = be.getYSizeScaled() * 16 - 6f;
         rects.add(new Rect(rightX, bottomY, 0f, rightW, 4f, blue));
-        put(marquee, clip, rightX + 1f, bottomY + 0.8f, rightW - 2f, 3f, 0.11f * k,
+        put(marquee, clip, rightX + 1f, bottomY + 0.6f, rightW - 2f, 3.4f, 0.38f * k,
             "感谢您的配合，尊敬的乘客。", 0xFFFFFFFF);
     }
 
@@ -227,7 +229,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     }
 
     private BERLabel[] labels() {
-        return new BERLabel[]{headLabel, headDest, status, nextLabel, nextDest, nextMin,
+        return new BERLabel[]{headLabel, headLabel2, status, nextLabel, nextDest, nextMin,
             thirdLabel, thirdDest, thirdMin, clock, notice, marquee};
     }
 
@@ -237,6 +239,23 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     }
 
     // ── 数据 ──────────────────────────────────────────────────────────
+
+    /** 主状态：进站 / 即将到达 / 剩余 N 分钟。 */
+    private static String statusText(boolean waiting, String minNext,
+                                     long now,
+                                     java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops) {
+        if (waiting) return "列车进站";
+        if (stops.isEmpty()) return "暂无列车";
+        String m0 = minutesOf(stops, now, 0);
+        if ("--".equals(m0)) return "暂无列车";
+        try {
+            int m = Integer.parseInt(m0);
+            if (m <= 1) return "即将到达";
+            return m + " 分钟";
+        } catch (NumberFormatException e) {
+            return "即将到达";
+        }
+    }
 
     private static String nameOf(java.util.List<de.mrjulsen.crn.api.core.snapshot.BoardEntry> stops, int i) {
         if (i >= stops.size()) return "—";
