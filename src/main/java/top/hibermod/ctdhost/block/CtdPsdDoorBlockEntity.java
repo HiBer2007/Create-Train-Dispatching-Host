@@ -28,6 +28,8 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
     private float progress;
     /** 上一 tick 的进度，供渲染插值，让动画连续。 */
     private float prevProgress;
+    /** 本组主格坐标。非主格也有实体，靠它找回主格，避免误认旁边另一樘门。 */
+    private BlockPos mainPos;
     private boolean open;
 
     /** 门高（格），决定形状与渲染高度；由放置时的撑高逻辑写入。 */
@@ -95,6 +97,15 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         return prevProgress;
     }
 
+    public BlockPos mainPos() {
+        return mainPos == null ? worldPosition : mainPos;
+    }
+
+    public void setMainPos(BlockPos p) {
+        mainPos = p;
+        setChanged();
+    }
+
     public String station() { return station; }
     public void setStation(String v) { station = v == null ? "" : v; setChanged(); }
 
@@ -128,6 +139,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         tag.putFloat("Height", height);
         tag.putFloat("Width", width);
         tag.putBoolean("TestMode", testMode);
+        if (mainPos != null) tag.putLong("MainPos", mainPos.asLong());
     }
 
     @Override
@@ -142,6 +154,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         height = tag.contains("Height") ? tag.getFloat("Height") : 2f;
         width = tag.contains("Width") ? tag.getFloat("Width") : 2f;
         testMode = tag.getBoolean("TestMode");
+        if (tag.contains("MainPos")) mainPos = BlockPos.of(tag.getLong("MainPos"));
     }
 
     @Override

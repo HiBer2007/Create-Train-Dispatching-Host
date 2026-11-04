@@ -45,7 +45,7 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         Direction side = facing.getClockWise();
 
         // 找到主格：主格自己 tick，其余格读它的进度
-        BlockPos mainPos = findMain(be, state, side);
+        BlockPos mainPos = be.mainPos();
         if (mainPos == null) return;
         if (!(be.getLevel().getBlockEntity(mainPos) instanceof CtdPsdDoorBlockEntity main)) return;
 

@@ -139,7 +139,8 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
                                            CollisionContext ctx) {
         Direction side0 = state.getValue(FACING).getClockWise();
-        BlockPos mainPos = state.getValue(MAIN) ? pos : findMain(level, pos, state, side0);
+        BlockPos mainPos = level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity self
+            ? self.mainPos() : pos;
 
         // 每格只负责自己那一层：门高 3 格时，第 0 层 1 格、第 1 层 1 格、第 2 层 1 格；
         // 1.5 格时第 0 层 1 格、第 1 层 0.5 格
@@ -211,6 +212,11 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
                 BlockPos at = pos.offset(0, row, 0).relative(side, i);
                 if (!level.getBlockState(at).canBeReplaced()) continue;
                 level.setBlock(at, state.setValue(MAIN, false).setValue(ROW, row), 3);
+                if (level.getBlockEntity(at) instanceof CtdPsdDoorBlockEntity part) {
+                    part.setMainPos(pos);
+                    part.setWidth(width);
+                    part.setHeight(height);
+                }
             }
         }
     }
