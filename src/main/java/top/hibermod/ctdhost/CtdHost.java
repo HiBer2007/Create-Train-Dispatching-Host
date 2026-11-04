@@ -81,6 +81,27 @@ public final class CtdHost {
         // 创造模式物品栏：不挂这个事件的话，方块在创造模式里看不到。
         modBus.addListener(top.hibermod.ctdhost.block.CtdCreativeTab::onBuildContents);
 
+        // 屏蔽门配置包：客户端 GUI → 服务端写回方块实体。
+        modBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) -> {
+            var registrar = event.registrar("1");
+            registrar.playToServer(
+                top.hibermod.ctdhost.network.CtdDoorConfigPayload.TYPE,
+                top.hibermod.ctdhost.network.CtdDoorConfigPayload.CODEC,
+                (payload, context) -> context.enqueueWork(() -> {
+                    var level = context.player().level();
+                    if (level.getBlockEntity(payload.pos())
+                            instanceof top.hibermod.ctdhost.block.CtdPsdDoorBlockEntity door) {
+                        door.setStation(payload.station());
+                        door.setPlatform(payload.platform());
+                        door.setDoorId(payload.doorId());
+                        door.setSpeed(payload.speed());
+                        door.setChanged();
+                        level.sendBlockUpdated(payload.pos(), door.getBlockState(),
+                            door.getBlockState(), 3);
+                    }
+                }));
+        });
+
         // 客户端注册（站台屏类型 / 灯头渲染器）。
         //
         // 以前挂在 @Mixin 类的静态初始化块里——**mixin 的静态块不保证执行**，

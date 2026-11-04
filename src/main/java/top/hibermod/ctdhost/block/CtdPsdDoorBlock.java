@@ -125,6 +125,27 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
     }
 
+    /** 扳手右键：打开屏蔽门配置界面（只在客户端执行，服务端不加载客户端类）。 */
+    @Override
+    protected net.minecraft.world.ItemInteractionResult useItemOn(
+            net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos,
+            net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand,
+            net.minecraft.world.phys.BlockHitResult hit) {
+
+        String path = net.minecraft.core.registries.BuiltInRegistries.ITEM
+            .getKey(stack.getItem()).getPath();
+        if (!path.endsWith("wrench")) {
+            return net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+
+        if (level.isClientSide && level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity be) {
+            net.minecraft.client.Minecraft.getInstance().setScreen(
+                new top.hibermod.ctdhost.client.screen.CtdDoorScreen(
+                    pos, be.station(), be.platform(), be.doorId(), be.speed()));
+        }
+        return net.minecraft.world.ItemInteractionResult.SUCCESS;
+    }
+
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
         BlockPos pos = ctx.getClickedPos();
