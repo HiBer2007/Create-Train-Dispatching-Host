@@ -1,6 +1,7 @@
 package top.hibermod.ctdhost.block;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -50,8 +51,18 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
 
         boolean shouldOpen;
         if (be.testMode) {
-            // 调试模式：红石信号控制，方便在没有调度系统时验证动画与碰撞
-            shouldOpen = level.hasNeighborSignal(pos);
+            // 调试模式：整樘门任意一格收到红石信号就算开门
+            // （只查主格会漏掉贴在上层/侧格上的拉杆，表现为门刚开又弹回）
+            boolean powered = level.hasNeighborSignal(pos);
+            if (!powered && state.getBlock() instanceof CtdPsdDoorBlock block) {
+                Direction side = state.getValue(CtdPsdDoorBlock.FACING).getClockWise();
+                for (int row = 0; row < block.rows() && !powered; row++) {
+                    for (int i = 0; i < block.cells() && !powered; i++) {
+                        powered = level.hasNeighborSignal(pos.offset(0, row, 0).relative(side, i));
+                    }
+                }
+            }
+            shouldOpen = powered;
         } else {
             try {
                 shouldOpen = top.hibermod.ctdapi.status.DoorStates
