@@ -29,6 +29,8 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
 
     /** 门高（格），决定形状与渲染高度；由放置时的撑高逻辑写入。 */
     private float height = 2f;
+    /** 门宽（格）：固定门 1，滑动门 2 或 3。 */
+    private float width = 2f;
 
     public CtdPsdDoorBlockEntity(BlockPos pos, BlockState state) {
         super(CtdBlocks.PSD_DOOR_BE.get(), pos, state);
@@ -78,6 +80,9 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
     public float height() { return height <= 0 ? 2f : height; }
     public void setHeight(float v) { height = Math.max(1.5f, Math.min(3f, v)); setChanged(); }
 
+    public float width() { return width < 1f ? 1f : Math.min(3f, width); }
+    public void setWidth(float v) { width = Math.max(1f, Math.min(3f, v)); setChanged(); }
+
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
@@ -88,6 +93,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         tag.putFloat("Progress", progress);
         tag.putBoolean("Open", open);
         tag.putFloat("Height", height);
+        tag.putFloat("Width", width);
     }
 
     @Override
@@ -100,6 +106,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         progress = tag.getFloat("Progress");
         open = tag.getBoolean("Open");
         height = tag.contains("Height") ? tag.getFloat("Height") : 2f;
+        width = tag.contains("Width") ? tag.getFloat("Width") : 2f;
     }
 
     @Override
