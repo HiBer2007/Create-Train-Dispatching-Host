@@ -39,25 +39,24 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
 
         BlockState state = be.getBlockState();
         if (!(state.getBlock() instanceof CtdPsdDoorBlock block) || !block.isSliding()) return;
-        // 完全关闭时由 blockstate 的静态模型渲染，这里只负责动画中的那一份
         Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
         Direction widthAxis = facing.getClockWise();
-        boolean mirror = facing == Direction.NORTH || facing == Direction.WEST;
+        // 双开门：两扇对称地向两侧滑开，不需要镜像
 
         float leaf = block.width() / 2f;
         float slide = leaf * be.progress();
 
         VertexConsumer vb = buffer.getBuffer(RenderType.translucent());
-        draw(be, facing, widthAxis, mirror, ms, vb, light, -slide, 0.25f, leaf);
-        draw(be, facing, widthAxis, mirror, ms, vb, light, leaf + slide, 0.5f, leaf);
+        draw(be, facing, widthAxis, ms, vb, light, -slide, 0.25f, leaf);
+        draw(be, facing, widthAxis, ms, vb, light, leaf + slide, 0.5f, leaf);
     }
 
     private void draw(CtdPsdDoorBlockEntity be, Direction facing, Direction widthAxis,
-                      boolean mirror, PoseStack ms, VertexConsumer vb, int light,
+                      PoseStack ms, VertexConsumer vb, int light,
                       float along, float across, float leaf) {
 
         SuperByteBuffer buf = CachedBuffers.block(staticStateFor(be, facing));
-        Vec3 offset = Vec3.atLowerCornerOf(widthAxis.getNormal()).scale(mirror ? -along : along)
+        Vec3 offset = Vec3.atLowerCornerOf(widthAxis.getNormal()).scale(along)
             .add(Vec3.atLowerCornerOf(facing.getOpposite().getNormal()).scale(across));
 
         buf.translate(offset)
