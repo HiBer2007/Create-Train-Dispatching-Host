@@ -9,6 +9,7 @@ import net.createmod.catnip.render.SuperByteBuffer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,15 +20,15 @@ import top.hibermod.ctdhost.block.CtdPsdDoorBlock;
 import top.hibermod.ctdhost.block.CtdPsdDoorBlockEntity;
 
 /**
- * 滑动门渲染，做法照机械动力的 {@code SlidingDoorRenderer}：
- * 用 {@link CachedBuffers#block(BlockState)} 取到已经烘焙好的门扇模型，
- * 加上平移偏移后 {@code renderInto}，而不是自己去 ModelManager 里翻模型。
+ * 滑动门渲染：**每一格只画自己那一扇**。
  *
- * <p>方块本体在 blockstate 里始终是空模型，所以这里画的就是唯一的门扇副本：
- * <ul>
- *   <li>左扇：沿门宽方向 −leaf×progress，厚度方向 +0.25</li>
- *   <li>右扇：沿门宽方向 +leaf+leaf×progress，厚度方向 +0.5</li>
- * </ul>
+ * <p>门是多格结构，主格（{@code MAIN=true}）负责 tick 与进度同步，
+ * 其余格在渲染时向主格要 {@code progress}。这样每格的渲染范围与它的碰撞箱
+ * 落在同一格内，不会出现「半扇门画在空气方块里」。
+ *
+ * <h2>3 格宽（奇数）</h2>
+ * 左扇 = 第 0 格整格；右扇 = 第 2 格整格；**中间格切成两片半宽**，
+ * 左半并入左扇、右半并入右扇，接缝在中线（方案 A）。
  */
 public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockEntity> {
 
@@ -39,35 +40,68 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
 
         BlockState state = be.getBlockState();
         if (!(state.getBlock() instanceof CtdPsdDoorBlock block) || !block.isSliding()) return;
-        Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
-        Direction widthAxis = facing.getClockWise();
-        // 双开门：两扇对称地向两侧滑开，不需要镜像
 
-        float leaf = block.width() / 2f;
-        float slide = leaf * be.progress();
+        Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
+        Direction side = facing.getClockWise();
+
+        // 找到主格：主格自己 tick，其余格读它的进度
+        BlockPos mainPos = findMain(be, state, side);
+        if (mainPos == null) return;
+        if (!(be.getLevel().getBlockEntity(mainPos) instanceof CtdPsdDoorBlockEntity main)) return;
+
+        int cells = block.cells();
+        float progress = main.progress();
+
+        BlockPos pos = be.getBlockPos();
+        int index = 0;
+        for (int i = 0; i < cells; i++) {
+            if (mainPos.relative(side, i).equals(pos)) {
+                index = i;
+                break;
+            }
+        }
 
         VertexConsumer vb = buffer.getBuffer(RenderType.translucent());
-        draw(be, facing, widthAxis, ms, vb, light, -slide, 0.25f, leaf);
-        draw(be, facing, widthAxis, ms, vb, light, leaf + slide, 0.5f, leaf);
+        float half = cells / 2f;                 // 左半格数（3 格时 = 1.5）
+
+        if (index < half) {
+            // 左半：整格向左滑
+            draw(be, facing, side, ms, vb, light, -progress, 0.25f, 1f);
+        } else if (index >= cells - half) {
+            // 右半：整格向右滑
+            draw(be, facing, side, ms, vb, light, progress, 0.25f, 1f);
+        } else {
+            // 中间格（3 格宽）：切成两片半宽，各向一侧滑
+            draw(be, facing, side, ms, vb, light, -progress, 0.25f, 0.5f);
+            draw(be, facing, side, ms, vb, light, 0.5f + progress, 0.5f, 0.5f);
+        }
     }
 
-    private void draw(CtdPsdDoorBlockEntity be, Direction facing, Direction widthAxis,
-                      PoseStack ms, VertexConsumer vb, int light,
-                      float along, float across, float leaf) {
+    private static BlockPos findMain(CtdPsdDoorBlockEntity be, BlockState state, Direction side) {
+        if (state.getValue(CtdPsdDoorBlock.MAIN)) return be.getBlockPos();
+        for (int i = 1; i <= 3; i++) {
+            BlockPos at = be.getBlockPos().relative(side, -i);
+            BlockState s = be.getLevel().getBlockState(at);
+            if (s.getBlock() == state.getBlock() && s.getValue(CtdPsdDoorBlock.MAIN)) {
+                return at;
+            }
+        }
+        return null;
+    }
+
+    private void draw(CtdPsdDoorBlockEntity be, Direction facing, Direction side, PoseStack ms,
+                      VertexConsumer vb, int light,
+                      float along, float across, float widthScale) {
 
         SuperByteBuffer buf = CachedBuffers.block(staticStateFor(be, facing));
-        if (leaf != 1f) {
-            buf.scale(leaf, 1f, 1f);
-        }
-        Vec3 offset = Vec3.atLowerCornerOf(widthAxis.getNormal()).scale(along)
+        if (widthScale != 1f) buf.scale(widthScale, 1f, 1f);
+
+        Vec3 offset = Vec3.atLowerCornerOf(side.getNormal()).scale(along)
             .add(Vec3.atLowerCornerOf(facing.getOpposite().getNormal()).scale(across));
 
-        buf.translate(offset)
-            .light(light)
-            .renderInto(ms, vb);
+        buf.translate(offset).light(light).renderInto(ms, vb);
     }
 
-    /** 用同高度的固定门方块取静态模型（两者模型完全一致）。 */
     private static BlockState staticStateFor(CtdPsdDoorBlockEntity be, Direction facing) {
         float h = be.height();
         BlockState base = h <= 1.6f ? CtdBlocks.PSD_FIXED_1_5.get().defaultBlockState()

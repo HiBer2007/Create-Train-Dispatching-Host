@@ -41,6 +41,10 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
 
     public static void tick(Level level, BlockPos pos, BlockState state, CtdPsdDoorBlockEntity be) {
         if (level.isClientSide) return;
+        // 只有主格推进进度，其余格在渲染时向主格取
+        if (state.hasProperty(CtdPsdDoorBlock.MAIN) && !state.getValue(CtdPsdDoorBlock.MAIN)) {
+            return;
+        }
 
         boolean shouldOpen;
         if (be.testMode) {

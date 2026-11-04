@@ -86,7 +86,8 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return state.getValue(MAIN) ? new CtdPsdDoorBlockEntity(pos, state) : null;
+        // 每一格都有实体：渲染时每格只画自己那一扇
+        return new CtdPsdDoorBlockEntity(pos, state);
     }
 
     @Override
