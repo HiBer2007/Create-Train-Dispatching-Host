@@ -234,6 +234,11 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
             net.minecraft.world.entity.player.Player player, net.minecraft.world.InteractionHand hand,
             net.minecraft.world.phys.BlockHitResult hit) {
 
+        // 固定门不受调度控制，也不需要配置界面
+        if (!sliding) {
+            return net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
+
         String path = net.minecraft.core.registries.BuiltInRegistries.ITEM
             .getKey(stack.getItem()).getPath();
         if (!path.endsWith("wrench")) {
