@@ -215,11 +215,15 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         if (!(originState.getBlock() instanceof CtdPsdDoorBlock block)) return;
 
         Direction os = originState.getValue(FACING).getClockWise();
-        for (int i = 0; i < block.cells(); i++) {
-            BlockPos at = origin.relative(os, i);
-            if (at.equals(pos)) continue;
-            if (level.getBlockState(at).is(state.getBlock())) {
-                level.setBlock(at, net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+        // 整组一起消失：横向 cells 格、纵向 rows 格
+        for (int row = 0; row < block.rows(); row++) {
+            for (int i = 0; i < block.cells(); i++) {
+                BlockPos at = origin.offset(0, row, 0).relative(os, i);
+                if (at.equals(pos)) continue;
+                if (level.getBlockState(at).is(state.getBlock())) {
+                    level.setBlock(at,
+                        net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);
+                }
             }
         }
         super.onRemove(state, level, pos, newState, moved);
@@ -268,9 +272,9 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
             try {
                 Class.forName("top.hibermod.ctdhost.client.screen.CtdDoorClientHook")
                     .getMethod("open", BlockPos.class, String.class, String.class,
-                        String.class, float.class, float.class)
+                        String.class, float.class, float.class, boolean.class)
                     .invoke(null, target, be.station(), be.platform(), be.doorId(),
-                        be.speed(), be.height());
+                        be.speed(), be.height(), be.testMode());
             } catch (Throwable ignored) {
             }
         }
