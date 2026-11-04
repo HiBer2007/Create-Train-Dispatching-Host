@@ -134,6 +134,12 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         float leaf = width / 2f;
         float slide = leaf * progress;
 
+        if (progress <= 0.001f) {
+            // 关闭时整樘门是一块整体（左扇 + 右扇在厚度上相邻，合成一块）
+            return rotate(state, 0, 0, 0.25, width, height, 0.75);
+        }
+
+        // 开启过程中两扇门各自滑向相邻的固定门，碰撞箱跟着分开
         float left = -slide;
         float right = leaf + slide;
         return Shapes.or(
