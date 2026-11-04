@@ -139,9 +139,14 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         }
 
         if (level.isClientSide && level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity be) {
-            net.minecraft.client.Minecraft.getInstance().setScreen(
-                new top.hibermod.ctdhost.client.screen.CtdDoorScreen(
-                    pos, be.station(), be.platform(), be.doorId(), be.speed()));
+            // 反射调用，避免专用服务器在类加载阶段解析客户端 Screen
+            try {
+                Class.forName("top.hibermod.ctdhost.client.screen.CtdDoorClientHook")
+                    .getMethod("open", BlockPos.class, String.class, String.class,
+                        String.class, float.class)
+                    .invoke(null, pos, be.station(), be.platform(), be.doorId(), be.speed());
+            } catch (Throwable ignored) {
+            }
         }
         return net.minecraft.world.ItemInteractionResult.SUCCESS;
     }
