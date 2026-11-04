@@ -56,6 +56,9 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
                       float along, float across, float leaf) {
 
         SuperByteBuffer buf = CachedBuffers.block(staticStateFor(be, facing));
+        if (leaf != 1f) {
+            buf.scale(leaf, 1f, 1f);
+        }
         Vec3 offset = Vec3.atLowerCornerOf(widthAxis.getNormal()).scale(along)
             .add(Vec3.atLowerCornerOf(facing.getOpposite().getNormal()).scale(across));
 

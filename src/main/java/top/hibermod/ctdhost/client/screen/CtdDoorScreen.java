@@ -100,7 +100,8 @@ public class CtdDoorScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        renderBackground(graphics, mouseX, mouseY, partialTick);
+        // 先让 Screen 自己画背景与控件；之后画的才不会被第二次 renderBackground 盖掉
+        super.render(graphics, mouseX, mouseY, partialTick);
 
         // 面板
         graphics.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xC8101010);
@@ -117,8 +118,6 @@ public class CtdDoorScreen extends Screen {
         label(graphics, "gui.ctdhost.psd_door", rowY + ROW_GAP * 2);
         label(graphics, "gui.ctdhost.psd_speed", rowY + ROW_GAP * 3);
         label(graphics, "gui.ctdhost.psd_height", rowY + ROW_GAP * 4);
-
-        super.render(graphics, mouseX, mouseY, partialTick);
     }
 
     private void label(GuiGraphics graphics, String key, int fieldY) {
