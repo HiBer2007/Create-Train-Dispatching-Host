@@ -32,6 +32,9 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
     /** 门宽（格）：固定门 1，滑动门 2 或 3。 */
     private float width = 2f;
 
+    /** 调试模式：用红石信号开关门，不读调度系统。 */
+    private boolean testMode = false;
+
     public CtdPsdDoorBlockEntity(BlockPos pos, BlockState state) {
         super(CtdBlocks.PSD_DOOR_BE.get(), pos, state);
     }
@@ -40,11 +43,16 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         if (level.isClientSide) return;
 
         boolean shouldOpen;
-        try {
-            shouldOpen = top.hibermod.ctdapi.status.DoorStates
-                .isOpen(be.station, be.platform);
-        } catch (Throwable t) {
-            shouldOpen = false;
+        if (be.testMode) {
+            // 调试模式：红石信号控制，方便在没有调度系统时验证动画与碰撞
+            shouldOpen = level.hasNeighborSignal(pos);
+        } else {
+            try {
+                shouldOpen = top.hibermod.ctdapi.status.DoorStates
+                    .isOpen(be.station, be.platform);
+            } catch (Throwable t) {
+                shouldOpen = false;
+            }
         }
 
         if (shouldOpen != be.open) {
@@ -77,6 +85,9 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
     public float speed() { return speed; }
     public void setSpeed(float v) { speed = Math.max(0.1f, Math.min(8f, v)); setChanged(); }
 
+    public boolean testMode() { return testMode; }
+    public void setTestMode(boolean v) { testMode = v; setChanged(); }
+
     public float height() { return height <= 0 ? 2f : height; }
     public void setHeight(float v) { height = Math.max(1.5f, Math.min(3f, v)); setChanged(); }
 
@@ -94,6 +105,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         tag.putBoolean("Open", open);
         tag.putFloat("Height", height);
         tag.putFloat("Width", width);
+        tag.putBoolean("TestMode", testMode);
     }
 
     @Override
@@ -107,6 +119,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         open = tag.getBoolean("Open");
         height = tag.contains("Height") ? tag.getFloat("Height") : 2f;
         width = tag.contains("Width") ? tag.getFloat("Width") : 2f;
+        testMode = tag.getBoolean("TestMode");
     }
 
     @Override
