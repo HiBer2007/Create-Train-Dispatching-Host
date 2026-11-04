@@ -50,7 +50,7 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         if (!(be.getLevel().getBlockEntity(mainPos) instanceof CtdPsdDoorBlockEntity main)) return;
 
         int cells = block.cells();
-        float progress = main.progress();
+        float progress = net.minecraft.util.Mth.lerp(partialTicks, main.prevProgress(), main.progress());
 
         BlockPos pos = be.getBlockPos();
         int index = 0;
@@ -62,18 +62,17 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         }
 
         VertexConsumer vb = buffer.getBuffer(RenderType.translucent());
-        float half = cells / 2f;                 // 左半格数（3 格时 = 1.5）
 
-        if (index < half) {
-            // 左半：整格向左滑
+        // 每一格只画自己那一份：
+        //   最左格 / 最右格 = 整格门扇
+        //   中间格（奇数宽度才有）= 对开两片半宽，接缝在中线
+        if (index == 0) {
             draw(block, facing, side, ms, vb, light, -progress, 0.25f, 1f);
-        } else if (index >= cells - half) {
-            // 右半：整格向右滑
+        } else if (index == cells - 1) {
             draw(block, facing, side, ms, vb, light, progress, 0.25f, 1f);
         } else {
-            // 中间格（3 格宽）：切成两片半宽，各向一侧滑
             draw(block, facing, side, ms, vb, light, -progress, 0.25f, 0.5f);
-            draw(block, facing, side, ms, vb, light, 0.5f + progress, 0.5f, 0.5f);
+            draw(block, facing, side, ms, vb, light, 0.5f + progress, 0.25f, 0.5f);
         }
     }
 

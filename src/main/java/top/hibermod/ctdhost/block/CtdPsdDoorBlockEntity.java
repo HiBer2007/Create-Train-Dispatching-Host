@@ -25,6 +25,8 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
     private float speed = 1.0f;
     /** 0 = 全关，1 = 全开。 */
     private float progress;
+    /** 上一 tick 的进度，供渲染插值，让动画连续。 */
+    private float prevProgress;
     private boolean open;
 
     /** 门高（格），决定形状与渲染高度；由放置时的撑高逻辑写入。 */
@@ -64,6 +66,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
             be.setChanged();
         }
 
+        be.prevProgress = be.progress;
         float step = be.speed / 20f;
         float target = be.open ? 1f : 0f;
         if (Math.abs(be.progress - target) > 0.001f) {
@@ -75,6 +78,10 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
 
     public float progress() {
         return progress;
+    }
+
+    public float prevProgress() {
+        return prevProgress;
     }
 
     public String station() { return station; }
