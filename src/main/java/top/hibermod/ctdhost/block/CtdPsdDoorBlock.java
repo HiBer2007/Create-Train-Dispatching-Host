@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -35,6 +36,8 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     public static final MapCodec<CtdPsdDoorBlock> CODEC = simpleCodec(CtdPsdDoorBlock::new);
 
+    public static final BooleanProperty VISIBLE = BooleanProperty.create("visible");
+
     private final boolean sliding;
     private final float width;
     private final float height;
@@ -48,7 +51,9 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         this.sliding = sliding;
         this.width = width;
         this.height = height;
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any()
+            .setValue(FACING, Direction.NORTH)
+            .setValue(VISIBLE, true));
     }
 
     public boolean isSliding() {
@@ -70,7 +75,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, VISIBLE);
     }
 
     @Override
@@ -131,20 +136,10 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         CtdPsdDoorBlockEntity be = level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity d
             ? d : null;
         float progress = be == null ? 0f : be.progress();
-        float leaf = width / 2f;
-        float slide = leaf * progress;
+        float slide = width * progress;
 
-        if (progress <= 0.001f) {
-            // 关闭时整樘门是一块整体（左扇 + 右扇在厚度上相邻，合成一块）
-            return rotate(state, 0, 0, 0.25, width, height, 0.75);
-        }
-
-        // 开启过程中两扇门各自滑向相邻的固定门，碰撞箱跟着分开
-        float left = -slide;
-        float right = leaf + slide;
-        return Shapes.or(
-            rotate(state, left, 0, 0.25, left + leaf, height, 0.5),
-            rotate(state, right, 0, 0.5, right + leaf, height, 0.75));
+        // 整樘滑动门就是一整块 1/4 厚的板，开门时整块平移进相邻固定门那格
+        return rotate(state, -slide, 0, 0.25, width - slide, height, 0.5);
     }
 
     @Override
