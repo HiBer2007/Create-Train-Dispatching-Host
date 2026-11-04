@@ -1,9 +1,9 @@
 {
   "render_type": "minecraft:translucent",
   "textures": {
-    "glass": "minecraft:block/glass",
-    "iron": "minecraft:block/iron_block",
-    "particle": "minecraft:block/glass"
+    "glass": "create:block/glass_door_side",
+    "iron": "create:block/industrial_iron_block",
+    "particle": "create:block/glass_door_side"
   },
   "elements": [
     { "from": [0, 0, 0], "to": [16, 4, 4],
@@ -29,4 +29,5 @@
       } }
   ]
 }
+
 
