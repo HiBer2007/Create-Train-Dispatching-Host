@@ -30,6 +30,9 @@ public class CtdDoorScreen extends Screen {
     private final String doorId;
     private final float speed;
     private final float doorHeight;
+    private final boolean testMode;
+    private Button testButton;
+    private boolean testModeEdit;
 
     private EditBox stationBox;
     private EditBox platformBox;
@@ -51,6 +54,8 @@ public class CtdDoorScreen extends Screen {
         this.doorId = doorId == null ? "" : doorId;
         this.speed = speed <= 0 ? 1f : speed;
         this.doorHeight = height <= 0 ? 2f : height;
+        this.testMode = false;
+        this.testModeEdit = false;
     }
 
     @Override
@@ -94,7 +99,7 @@ public class CtdDoorScreen extends Screen {
         }
         PacketDistributor.sendToServer(new CtdDoorConfigPayload(
             pos, stationBox.getValue().trim(), platformBox.getValue().trim(),
-            doorBox.getValue().trim(), sp, h));
+            doorBox.getValue().trim(), sp, h, testModeEdit));
         Minecraft.getInstance().setScreen(null);
     }
 

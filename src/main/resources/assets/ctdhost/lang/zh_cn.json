@@ -63,5 +63,6 @@
   "block.ctdhost.psd_sliding_2_1_5": "CTD 屏蔽门（滑动 2x1.5）",
   "block.ctdhost.psd_sliding_2_2": "CTD 屏蔽门（滑动 2x2）",
   "block.ctdhost.psd_sliding_2_3": "CTD 屏蔽门（滑动 2x3）",
-  "block.ctdhost.psd_sliding_3_3": "CTD 屏蔽门（滑动 3x3）"
+  "block.ctdhost.psd_sliding_3_3": "CTD 屏蔽门（滑动 3x3）",
+  "gui.ctdhost.psd_test_mode": "调试模式"
 }

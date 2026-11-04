@@ -63,5 +63,6 @@
   "block.ctdhost.psd_sliding_2_1_5": "CTD Screen Door (Sliding 2x1.5)",
   "block.ctdhost.psd_sliding_2_2": "CTD Screen Door (Sliding 2x2)",
   "block.ctdhost.psd_sliding_2_3": "CTD Screen Door (Sliding 2x3)",
-  "block.ctdhost.psd_sliding_3_3": "CTD Screen Door (Sliding 3x3)"
+  "block.ctdhost.psd_sliding_3_3": "CTD Screen Door (Sliding 3x3)",
+  "gui.ctdhost.psd_test_mode": "Test mode"
 }
