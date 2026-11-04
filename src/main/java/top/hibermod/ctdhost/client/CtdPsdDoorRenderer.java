@@ -49,6 +49,7 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         if (mainPos == null) return;
         if (!(be.getLevel().getBlockEntity(mainPos) instanceof CtdPsdDoorBlockEntity main)) return;
 
+        int row = state.getValue(CtdPsdDoorBlock.ROW);
         int cells = block.cells();
         float progress = net.minecraft.util.Mth.lerp(partialTicks, main.prevProgress(), main.progress());
 
@@ -67,13 +68,13 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         //   最左格 / 最右格 = 整格门扇
         //   中间格（奇数宽度才有）= 对开两片半宽，接缝在中线
         if (index == 0) {
-            draw(block, facing, side, ms, vb, light, -progress, 0.25f, 1f);
+            draw(block, facing, side, ms, vb, light, -progress, 0.25f, 1f, row);
         } else if (index == cells - 1) {
-            draw(block, facing, side, ms, vb, light, progress, 0.25f, 1f);
+            draw(block, facing, side, ms, vb, light, progress, 0.25f, 1f, row);
         } else {
             // 中间格：两片半宽，厚度分层错开，避免共面 z-fighting（表现为闪烁/抽搐）
-            draw(block, facing, side, ms, vb, light, -progress, 0.25f, 0.5f);
-            draw(block, facing, side, ms, vb, light, 0.5f + progress, 0.5f, 0.5f);
+            draw(block, facing, side, ms, vb, light, -progress, 0.25f, 0.5f, row);
+            draw(block, facing, side, ms, vb, light, 0.5f + progress, 0.5f, 0.5f, row);
         }
     }
 
@@ -91,9 +92,9 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
 
     private void draw(CtdPsdDoorBlock block, Direction facing, Direction side, PoseStack ms,
                       VertexConsumer vb, int light,
-                      float along, float across, float widthScale) {
+                      float along, float across, float widthScale, int row) {
 
-        SuperByteBuffer buf = CachedBuffers.block(staticStateFor(block, facing));
+        SuperByteBuffer buf = CachedBuffers.block(staticStateFor(block, facing, row));
         if (widthScale != 1f) buf.scale(widthScale, 1f, 1f);
 
         Vec3 offset = Vec3.atLowerCornerOf(side.getNormal()).scale(along)
@@ -102,11 +103,12 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         buf.translate(offset).light(light).renderInto(ms, vb);
     }
 
-    private static BlockState staticStateFor(CtdPsdDoorBlock block, Direction facing) {
+    private static BlockState staticStateFor(CtdPsdDoorBlock block, Direction facing, int row) {
         float h = block.height();
         BlockState base = h <= 1.6f ? CtdBlocks.PSD_FIXED_1_5.get().defaultBlockState()
             : h >= 2.5f ? CtdBlocks.PSD_FIXED_3.get().defaultBlockState()
             : CtdBlocks.PSD_FIXED_2.get().defaultBlockState();
-        return base.setValue(HorizontalDirectionalBlock.FACING, facing);
+        return base.setValue(HorizontalDirectionalBlock.FACING, facing)
+            .setValue(CtdPsdDoorBlock.ROW, Math.max(0, Math.min(2, row)));
     }
 }

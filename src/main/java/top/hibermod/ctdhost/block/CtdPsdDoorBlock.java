@@ -38,6 +38,9 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     /** 主格：负责存数据、画门扇、响应扳手。 */
     public static final BooleanProperty MAIN = BooleanProperty.create("main");
+    /** 该格在整樘门里的第几行（0 = 最下）。 */
+    public static final net.minecraft.world.level.block.state.properties.IntegerProperty ROW =
+        net.minecraft.world.level.block.state.properties.IntegerProperty.create("row", 0, 2);
 
     private final boolean sliding;
     private final float width;
@@ -54,7 +57,8 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         this.height = height;
         registerDefaultState(stateDefinition.any()
             .setValue(FACING, Direction.NORTH)
-            .setValue(MAIN, true));
+            .setValue(MAIN, true)
+            .setValue(ROW, 0));
     }
 
     public boolean isSliding() {
@@ -81,7 +85,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, MAIN);
+        builder.add(FACING, MAIN, ROW);
     }
 
     @Override
@@ -139,7 +143,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
         // 每格只负责自己那一层：门高 3 格时，第 0 层 1 格、第 1 层 1 格、第 2 层 1 格；
         // 1.5 格时第 0 层 1 格、第 1 层 0.5 格
-        int row = pos.getY() - mainPos.getY();
+        int row = state.getValue(ROW);
         float localHeight = Math.max(0f, Math.min(1f, height - row));
         if (localHeight <= 0f) {
             return Shapes.empty();
@@ -206,7 +210,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
                 if (row == 0 && i == 0) continue;   // 主格
                 BlockPos at = pos.offset(0, row, 0).relative(side, i);
                 if (!level.getBlockState(at).canBeReplaced()) continue;
-                level.setBlock(at, state.setValue(MAIN, false), 3);
+                level.setBlock(at, state.setValue(MAIN, false).setValue(ROW, row), 3);
             }
         }
     }
