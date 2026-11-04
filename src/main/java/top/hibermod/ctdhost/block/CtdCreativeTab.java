@@ -20,8 +20,8 @@ public final class CtdCreativeTab {
             event.accept(CtdBlocks.SIGNAL_HEAD_ITEM.get());
             event.accept(CtdBlocks.PSD_DOOR_ITEM.get());
         }
-        // 屏蔽门属于建筑方块
-        if (event.getTabKey() == net.minecraft.world.item.CreativeModeTabs.BUILDING_BLOCKS) {
+        // 屏蔽门放进 CTD 自己的分页（ctdscript 注册的标签页，按命名空间匹配避免编译期依赖）
+        if (event.getTabKey().location().getNamespace().equals("ctdscript")) {
             event.accept(CtdBlocks.PSD_DOOR_ITEM.get());
         }
     }

@@ -1,5 +1,5 @@
 {
-  "textures": { "glass": "minecraft:block/glass", "iron": "minecraft:block/iron_block", "particle": "minecraft:block/glass" },
+  "textures": { "glass": "create:block/glass_door_side", "iron": "minecraft:block/iron_block", "particle": "create:block/glass_door_side" },
   "elements": [
     { "from": [0,0,4], "to": [16,3,8], "faces": { "north":{"texture":"#iron"}, "east":{"texture":"#iron"}, "south":{"texture":"#iron"}, "west":{"texture":"#iron"}, "up":{"texture":"#iron"}, "down":{"texture":"#iron"} } },
     { "from": [0,3,4], "to": [16,29,8], "faces": { "north":{"texture":"#glass"}, "east":{"texture":"#glass"}, "south":{"texture":"#glass"}, "west":{"texture":"#glass"}, "up":{"texture":"#glass"}, "down":{"texture":"#glass"} } },
@@ -9,3 +9,4 @@
     { "from": [16,29,8], "to": [32,32,12], "faces": { "north":{"texture":"#iron"}, "east":{"texture":"#iron"}, "south":{"texture":"#iron"}, "west":{"texture":"#iron"}, "up":{"texture":"#iron"}, "down":{"texture":"#iron"} } }
   ]
 }
+

@@ -48,5 +48,17 @@ public final class CtdHeadRenderers {
         } catch (Throwable t) {
             log.warn("ctdhost: signal block renderer failed: {}", t.toString());
         }
+
+        try {
+            // 屏蔽门玻璃必须走半透明层，否则透明像素会被画成黑色
+            if (top.hibermod.ctdhost.block.CtdBlocks.PSD_DOOR.isBound()) {
+                net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
+                    top.hibermod.ctdhost.block.CtdBlocks.PSD_DOOR.get(),
+                    net.minecraft.client.renderer.RenderType.translucent());
+                log.info("ctdhost: psd door render layer registered");
+            }
+        } catch (Throwable t) {
+            log.warn("ctdhost: psd door render layer failed: {}", t.toString());
+        }
     }
 }
