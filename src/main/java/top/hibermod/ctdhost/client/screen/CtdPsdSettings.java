@@ -22,6 +22,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
 
     private static final String NBT_STATION = "CtdPsdStation";
     private static final String NBT_PLATFORM = "CtdPsdPlatform";
+    private static final String NBT_PLATFORM_2 = "CtdPsdPlatform2";
     private static final String NBT_NAME = "CtdPsdName";
     private static final String NBT_NEXT = "CtdPsdNext";
     private static final String NBT_STATION_ID = "CtdPsdStationId";
@@ -34,6 +35,8 @@ public class CtdPsdSettings extends BasicDisplaySettings {
 
     private String station = "";
     private String platform = "";
+    /** 4x1 右半屏的第二个站台号。 */
+    private String platform2 = "";
     private String stationName = "";
     private String nextStation = "";
     private String stationId = "";
@@ -57,6 +60,9 @@ public class CtdPsdSettings extends BasicDisplaySettings {
 
     public String platform() { return platform == null ? "" : platform; }
     public void setPlatform(String v) { platform = v == null ? "" : v; }
+
+    public String platform2() { return platform2 == null ? "" : platform2; }
+    public void setPlatform2(String v) { platform2 = v == null ? "" : v; }
 
     public String stationName() { return stationName == null ? "" : stationName; }
     public void setStationName(String v) { stationName = v == null ? "" : v; }
@@ -90,6 +96,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         super.deserializeNbt(nbt);
         station = nbt.getString(NBT_STATION);
         platform = nbt.getString(NBT_PLATFORM);
+        platform2 = nbt.getString(NBT_PLATFORM_2);
         stationName = nbt.getString(NBT_NAME);
         nextStation = nbt.getString(NBT_NEXT);
         stationId = nbt.getString(NBT_STATION_ID);
@@ -108,6 +115,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         super.serializeNbt(nbt);
         nbt.putString(NBT_STATION, station());
         nbt.putString(NBT_PLATFORM, platform());
+        nbt.putString(NBT_PLATFORM_2, platform2());
         nbt.putString(NBT_NAME, stationName());
         nbt.putString(NBT_NEXT, nextStation());
         nbt.putString(NBT_STATION_ID, stationId());
@@ -125,6 +133,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         if (oldSettings instanceof CtdPsdSettings old) {
             station = old.station;
             platform = old.platform;
+            platform2 = old.platform2;
             stationName = old.stationName;
             nextStation = old.nextStation;
             stationId = old.stationId;
@@ -142,6 +151,7 @@ public class CtdPsdSettings extends BasicDisplaySettings {
         super.buildGui(context);
         buildTextLine(context, "gui.ctdhost.station", station(), this::setStation);
         buildTextLine(context, "gui.ctdhost.platform", platform(), this::setPlatform);
+        buildTextLine(context, "gui.ctdhost.platform2", platform2(), this::setPlatform2);
         buildTextLine(context, "gui.ctdhost.psd_door", doorNumber(), this::setDoorNumber);
         buildTextLine(context, "gui.ctdhost.line", lineName(), this::setLineName);
         buildCheckLine(context, "gui.ctdhost.psd_map", showMap(), this::setShowMap);

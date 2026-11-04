@@ -1,0 +1,46 @@
+{
+  "credit": "CTD platform screen door (sliding panels)",
+  "textures": {
+    "glass": "minecraft:block/glass",
+    "iron": "minecraft:block/iron_block",
+    "particle": "minecraft:block/glass"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 4],
+      "to": [8, 3, 8],
+      "faces": {
+        "north": { "texture": "#iron" }, "east": { "texture": "#iron" },
+        "south": { "texture": "#iron" }, "west": { "texture": "#iron" },
+        "up": { "texture": "#iron" }, "down": { "texture": "#iron" }
+      }
+    },
+    {
+      "from": [0, 3, 4],
+      "to": [8, 32, 8],
+      "faces": {
+        "north": { "texture": "#glass" }, "east": { "texture": "#glass" },
+        "south": { "texture": "#glass" }, "west": { "texture": "#glass" },
+        "up": { "texture": "#glass" }, "down": { "texture": "#glass" }
+      }
+    },
+    {
+      "from": [8, 0, 4],
+      "to": [16, 3, 8],
+      "faces": {
+        "north": { "texture": "#iron" }, "east": { "texture": "#iron" },
+        "south": { "texture": "#iron" }, "west": { "texture": "#iron" },
+        "up": { "texture": "#iron" }, "down": { "texture": "#iron" }
+      }
+    },
+    {
+      "from": [8, 3, 4],
+      "to": [16, 32, 8],
+      "faces": {
+        "north": { "texture": "#glass" }, "east": { "texture": "#glass" },
+        "south": { "texture": "#glass" }, "west": { "texture": "#glass" },
+        "up": { "texture": "#glass" }, "down": { "texture": "#glass" }
+      }
+    }
+  ]
+}

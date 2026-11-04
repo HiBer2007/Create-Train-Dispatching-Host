@@ -133,10 +133,16 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
 
         boolean open = isDoorOpen(blockEntity, s);
 
-        // 4x1 或（3x1 且选了线路图）：画线路图
+        // 4x1 或（3x1 且选了线路图）：画「下一趟列车」的运行路线
         if (bw >= 4 || (bw == 3 && s.showMap())) {
-            drawMap(clip, s, line, w, h);
-            // 底部色带
+            if (bw >= 4) {
+                float half = (w - 1f) / 2f;
+                drawRoute(clip, blockEntity, s.platform(), s, line, 0f, half, h);
+                rects.add(new Rect(half, 1f, 0.02f, 0.4f, h - 5f, line));
+                drawRoute(clip, blockEntity, s.platform2(), s, line, half + 1f, half, h);
+            } else {
+                drawRoute(clip, blockEntity, s.platform(), s, line, 0f, w, h);
+            }
             rects.add(new Rect(0, h - 3f, 0.01f, w, 3f, line));
             return;
         }
@@ -215,42 +221,55 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         }
     }
 
-    /** 线路图：一条横向线 + 站点圆点 + 站名（环线上下两排）。 */
-    private void drawMap(Rectangle clip, CtdPsdSettings s, DLColor line, float w, float h) {
-        List<String> names = splitStations(s.mapStations());
+    /**
+     * 按「该站台的下一趟列车」画它的运行路线：
+     * 普通线路画单横线 + 末端方向箭头，环线画闭环 + 两侧环别。
+     *
+     * @param x0 本段起点（4x1 时左右两半各一段）
+     */
+    private void drawRoute(Rectangle clip, AdvancedDisplayBlockEntity be, String platform,
+                           CtdPsdSettings s, DLColor line, float x0, float segW, float h) {
+
+        top.hibermod.ctdapi.route.RouteStore.Line route = resolveNextRoute(be, platform, s);
+        List<String> names = route == null ? List.of() : route.stations();
+        boolean loop = route != null && route.loop();
+
+        float top = h * 0.36f;
+        float bottom = h * 0.72f;
+        float left = x0 + 6f;
+        float right = x0 + segW - 6f;
+        if (right - left < 6f) return;
+
         if (names.isEmpty()) {
-            // 没有站序数据时只画一条空线，绝不能下标越界
-            rects.add(new Rect(7f, 6f, 0.01f, w - 14f, 0.9f, line));
-            rects.add(new Rect(7f, h - 7f, 0.01f, w - 14f, 0.9f, line));
+            rects.add(new Rect(left, top, 0.01f, right - left, 0.9f, line));
             return;
         }
-        boolean loop = names.size() >= 2
-            && names.get(0).equals(names.get(names.size() - 1));
 
-        float top = 6f;
-        float bottom = h - 7f;
-        float left = 7f;
-        float right = w - 7f;
-
-        // 线条
         rects.add(new Rect(left, top, 0.01f, right - left, 0.9f, line));
-        rects.add(new Rect(left, bottom, 0.01f, right - left, 0.9f, line));
         if (loop) {
+            rects.add(new Rect(left, bottom, 0.01f, right - left, 0.9f, line));
             rects.add(new Rect(left - 0.9f, top, 0.01f, 0.9f, bottom - top, line));
             rects.add(new Rect(right, top, 0.01f, 0.9f, bottom - top, line));
+        } else {
+            // 非环线：只在末端画方向箭头
+            boolean rightward = s.arrowRight();
+            float ax = rightward ? right : left;
+            rects.add(new Rect(ax - 1.4f, top - 1.2f, 0.02f, 2.8f, 0.6f, line));
+            rects.add(new Rect(ax - 0.6f, top - 2.0f, 0.02f, 1.4f, 0.6f, line));
         }
 
-        int n = Math.max(2, names.size());
+        int n = Math.min(names.size(), mapLabels.length);
         int perRow = loop ? (n + 1) / 2 : n;
 
-        for (int i = 0; i < n && i < mapLabels.length; i++) {
+        for (int i = 0; i < n; i++) {
             boolean onTop = !loop || i < perRow;
-            float t = onTop ? (float) i / Math.max(1, perRow - 1)
+            float t = onTop
+                ? (float) i / Math.max(1, perRow - 1)
                 : (float) (i - perRow) / Math.max(1, n - perRow - 1);
             float x = left + (right - left) * t;
             float y = onTop ? top : bottom;
 
-            rects.add(new Rect(x - 0.5f, y - 0.5f, 0.02f, 1.6f, 1.6f, line));
+            rects.add(new Rect(x - 0.6f, y - 0.6f, 0.02f, 1.8f, 1.8f, line));
 
             BERLabel l = mapLabels[i];
             if (l == null) {
@@ -259,9 +278,23 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
                 mapLabels[i] = l;
             }
             l.horizontalAlign.set(ETextAlignment.CENTER);
-            put(l, clip, x - 6f, onTop ? y - 3.6f : y + 1.6f, 12f, 3f, 0.10f, names.get(i),
+            put(l, clip, x - 6f, onTop ? y - 3.8f : y + 1.8f, 12f, 3.2f, 0.11f, names.get(i),
                 0xFF000000);
         }
+    }
+
+    /** 取该站台下一趟车次 → 它的 RunPlan → 线路站序。 */
+    private static top.hibermod.ctdapi.route.RouteStore.Line resolveNextRoute(
+            AdvancedDisplayBlockEntity be, String platform, CtdPsdSettings s) {
+
+        var stops = be.getStops();
+        if (stops.isEmpty()) return null;
+
+        String train = stops.get(0).displayName(
+            de.mrjulsen.crn.api.core.CallDirection.DEPARTURE);
+        var plan = top.hibermod.ctdapi.route.RouteStore.plan(train);
+        if (plan == null) return null;
+        return top.hibermod.ctdapi.route.RouteStore.line(plan.line());
     }
 
     private static List<String> splitStations(String raw) {

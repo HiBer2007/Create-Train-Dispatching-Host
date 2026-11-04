@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "facing=north,type=fixed":   { "model": "ctdhost:block/psd_door_fixed" },
+    "facing=east,type=fixed":    { "model": "ctdhost:block/psd_door_fixed", "y": 90 },
+    "facing=south,type=fixed":   { "model": "ctdhost:block/psd_door_fixed", "y": 180 },
+    "facing=west,type=fixed":    { "model": "ctdhost:block/psd_door_fixed", "y": 270 },
+
+    "facing=north,type=sliding": { "model": "ctdhost:block/psd_door_sliding" },
+    "facing=east,type=sliding":  { "model": "ctdhost:block/psd_door_sliding", "y": 90 },
+    "facing=south,type=sliding": { "model": "ctdhost:block/psd_door_sliding", "y": 180 },
+    "facing=west,type=sliding":  { "model": "ctdhost:block/psd_door_sliding", "y": 270 }
+  }
+}

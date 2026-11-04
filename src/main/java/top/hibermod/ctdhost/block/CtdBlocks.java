@@ -73,6 +73,20 @@ public final class CtdBlocks {
             () -> BlockEntityType.Builder.of(SwitchMachineBlockEntity::new,
                 SWITCH_MACHINE.get()).build(null));
 
+    // ── 屏蔽门（固定门 / 滑动门） ────────────────────────────────────
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_DOOR =
+        BLOCKS.register("psd_door",
+            () -> new CtdPsdDoorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties
+                .of().strength(1.5f).noOcclusion()
+                .dynamicShape()));
+
+    public static final DeferredItem<BlockItem> PSD_DOOR_ITEM =
+        ITEMS.registerSimpleBlockItem(PSD_DOOR);
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CtdPsdDoorBlockEntity>> PSD_DOOR_BE =
+        BLOCK_ENTITIES.register("psd_door",
+            () -> BlockEntityType.Builder.of(CtdPsdDoorBlockEntity::new, PSD_DOOR.get()).build(null));
+
     /** 物品栏里的方块（供别的代码引用）。 */
     public static Item itemOf(Block block) {
         return block.asItem();

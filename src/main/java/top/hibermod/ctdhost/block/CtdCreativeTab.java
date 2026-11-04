@@ -19,5 +19,9 @@ public final class CtdCreativeTab {
             event.accept(CtdBlocks.CTD_SIGNAL_ITEM.get());
             event.accept(CtdBlocks.SIGNAL_HEAD_ITEM.get());
         }
+        // 屏蔽门属于建筑方块
+        if (event.getTabKey() == net.minecraft.world.item.CreativeModeTabs.BUILDING_BLOCKS) {
+            event.accept(CtdBlocks.PSD_DOOR_ITEM.get());
+        }
     }
 }

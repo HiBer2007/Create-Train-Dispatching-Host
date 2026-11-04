@@ -1,0 +1,6 @@
+{
+  "parent": "ctdhost:block/psd_door_sliding",
+  "display": {
+    "gui": { "rotation": [30, 225, 0], "scale": [0.6, 0.6, 0.6] }
+  }
+}

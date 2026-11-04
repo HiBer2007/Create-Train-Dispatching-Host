@@ -52,5 +52,6 @@
   "gui.ctdhost.psd_indicator": "显示开关门指示",
   "gui.ctdhost.psd_indicator.description": "由调度下发的开门状态点亮",
   "gui.ctdhost.psd_arrow_right": "列车向右运行",
-  "gui.ctdhost.psd_arrow_right.description": "决定「下一站」那一行的箭头指向：勾选为 →，不勾为 ←"
+  "gui.ctdhost.psd_arrow_right.description": "决定「下一站」那一行的箭头指向：勾选为 →，不勾为 ←",
+  "block.ctdhost.psd_door": "CTD 屏蔽门"
 }
