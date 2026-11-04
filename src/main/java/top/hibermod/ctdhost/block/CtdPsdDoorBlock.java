@@ -146,8 +146,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         if (open) {
             return Shapes.empty();
         }
-        return rotate(state, 0, 0, 0.25, 1, height, 0.5);
-    }
+        return rotate(state, 0, 0, 0.25, 1, height, 0.5);    }
 
     @Override
     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
@@ -217,7 +216,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         super.onRemove(state, level, pos, newState, moved);
     }
 
-    private static BlockPos findMain(Level level, BlockPos pos, BlockState state, Direction side) {
+    private static BlockPos findMain(BlockGetter level, BlockPos pos, BlockState state, Direction side) {
         for (int i = 1; i <= 3; i++) {
             BlockPos at = pos.relative(side, -i);
             BlockState s = level.getBlockState(at);
