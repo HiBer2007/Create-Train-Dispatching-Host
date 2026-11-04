@@ -120,4 +120,11 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
     }
+
+    /** 门扇会超出单格（宽 2–3 格、高 1.5–3 格），渲染包围盒必须跟着放大。 */
+    @Override
+    public net.minecraft.world.phys.AABB getRenderBoundingBox() {
+        return new net.minecraft.world.phys.AABB(worldPosition)
+            .inflate(4.0, height + 2.0, 4.0);
+    }
 }
