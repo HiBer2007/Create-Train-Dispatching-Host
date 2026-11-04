@@ -25,9 +25,9 @@ import top.hibermod.ctdhost.block.CtdPsdDoorBlockEntity;
 public class CtdPsdDoorRenderer implements BlockEntityRenderer<CtdPsdDoorBlockEntity> {
 
     private static final ResourceLocation LEFT =
-        ResourceLocation.fromNamespaceAndPath("ctdhost", "block/psd_panel_left");
+        ResourceLocation.fromNamespaceAndPath("ctdhost", "psd_panel_left");
     private static final ResourceLocation RIGHT =
-        ResourceLocation.fromNamespaceAndPath("ctdhost", "block/psd_panel_right");
+        ResourceLocation.fromNamespaceAndPath("ctdhost", "psd_panel_right");
 
     public CtdPsdDoorRenderer(BlockEntityRendererProvider.Context ctx) {}
 
