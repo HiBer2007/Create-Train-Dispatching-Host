@@ -95,6 +95,7 @@ public final class CtdHost {
                         door.setPlatform(payload.platform());
                         door.setDoorId(payload.doorId());
                         door.setSpeed(payload.speed());
+                        door.setHeight(payload.height());
                         door.setChanged();
                         level.sendBlockUpdated(payload.pos(), door.getBlockState(),
                             door.getBlockState(), 3);

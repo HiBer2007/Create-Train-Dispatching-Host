@@ -24,6 +24,7 @@ public class CtdDoorScreen extends Screen {
     private EditBox platformBox;
     private EditBox doorBox;
     private EditBox speedBox;
+    private EditBox heightBox;
 
     public CtdDoorScreen(BlockPos pos, String station, String platform, String doorId, float speed) {
         super(Component.translatable("gui.ctdhost.psd_door_config"));
@@ -43,9 +44,10 @@ public class CtdDoorScreen extends Screen {
         platformBox = addBox(cx, y + 26, platform);
         doorBox = addBox(cx, y + 52, doorId);
         speedBox = addBox(cx, y + 78, String.valueOf(speed));
+        heightBox = addBox(cx, y + 104, "2");
 
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> save())
-            .bounds(cx, y + 110, 200, 20).build());
+            .bounds(cx, y + 136, 200, 20).build());
     }
 
     private EditBox addBox(int x, int y, String value) {
@@ -63,9 +65,15 @@ public class CtdDoorScreen extends Screen {
         } catch (NumberFormatException e) {
             sp = 1f;
         }
+        float h;
+        try {
+            h = Float.parseFloat(heightBox.getValue().trim());
+        } catch (NumberFormatException e) {
+            h = 2f;
+        }
         PacketDistributor.sendToServer(new CtdDoorConfigPayload(
             pos, stationBox.getValue().trim(), platformBox.getValue().trim(),
-            doorBox.getValue().trim(), sp));
+            doorBox.getValue().trim(), sp, h));
         Minecraft.getInstance().setScreen(null);
     }
 
@@ -78,6 +86,7 @@ public class CtdDoorScreen extends Screen {
         graphics.drawString(this.font, Component.translatable("gui.ctdhost.platform"), cx, y + 14, 0xFFFFFF);
         graphics.drawString(this.font, Component.translatable("gui.ctdhost.psd_door"), cx, y + 40, 0xFFFFFF);
         graphics.drawString(this.font, Component.translatable("gui.ctdhost.psd_speed"), cx, y + 66, 0xFFFFFF);
+        graphics.drawString(this.font, Component.translatable("gui.ctdhost.psd_height"), cx, y + 92, 0xFFFFFF);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 

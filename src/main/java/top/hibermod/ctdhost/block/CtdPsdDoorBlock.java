@@ -101,7 +101,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
                                            CollisionContext ctx) {
-        float h = 2f;
+        float h = level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity be ? be.height() : 2f;
 
         if (state.getValue(TYPE) == Type.FIXED) {
             // 固定门贴边：z 0–0.25

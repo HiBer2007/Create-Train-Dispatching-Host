@@ -28,7 +28,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
     private boolean open;
 
     /** 门高（格），决定形状与渲染高度；由放置时的撑高逻辑写入。 */
-    private int height = 2;
+    private float height = 2f;
 
     public CtdPsdDoorBlockEntity(BlockPos pos, BlockState state) {
         super(CtdBlocks.PSD_DOOR_BE.get(), pos, state);
@@ -75,8 +75,8 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
     public float speed() { return speed; }
     public void setSpeed(float v) { speed = Math.max(0.1f, Math.min(8f, v)); setChanged(); }
 
-    public int height() { return height; }
-    public void setHeight(int v) { height = Math.max(2, Math.min(3, v)); setChanged(); }
+    public float height() { return height <= 0 ? 2f : height; }
+    public void setHeight(float v) { height = Math.max(1.5f, Math.min(3f, v)); setChanged(); }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
@@ -87,7 +87,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         tag.putFloat("Speed", speed);
         tag.putFloat("Progress", progress);
         tag.putBoolean("Open", open);
-        tag.putInt("Height", height);
+        tag.putFloat("Height", height);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
         speed = tag.contains("Speed") ? tag.getFloat("Speed") : 1.0f;
         progress = tag.getFloat("Progress");
         open = tag.getBoolean("Open");
-        height = tag.contains("Height") ? tag.getInt("Height") : 2;
+        height = tag.contains("Height") ? tag.getFloat("Height") : 2f;
     }
 
     @Override

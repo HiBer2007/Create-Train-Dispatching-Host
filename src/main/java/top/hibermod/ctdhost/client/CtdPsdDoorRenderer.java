@@ -43,16 +43,18 @@ public class CtdPsdDoorRenderer implements BlockEntityRenderer<CtdPsdDoorBlockEn
         if (left == null || right == null) return;
 
         float progress = be.progress();
+        float scaleY = be.height() / 2f;   // 模型按 2 格高写，其余高度等比缩放
 
         // 关：左扇 x 0–1 格、右扇 x 1–2 格；开：各再向外平移一格，滑进两侧固定门那格
-        renderPanel(left, state, pose, buffer, light, overlay, -progress);
-        renderPanel(right, state, pose, buffer, light, overlay, 1f + progress);
+        renderPanel(left, state, pose, buffer, light, overlay, -progress, scaleY);
+        renderPanel(right, state, pose, buffer, light, overlay, 1f + progress, scaleY);
     }
 
     private void renderPanel(BakedModel model, BlockState state, PoseStack pose,
-                             MultiBufferSource buffer, int light, int overlay, float shiftX) {
+                             MultiBufferSource buffer, int light, int overlay, float shiftX, float scaleY) {
         pose.pushPose();
         pose.translate(shiftX, 0f, 0f);
+        pose.scale(1f, scaleY, 1f);
         Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(
             pose.last(), buffer.getBuffer(RenderType.translucent()), state, model,
             1f, 1f, 1f, light, overlay,

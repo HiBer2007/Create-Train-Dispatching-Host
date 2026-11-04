@@ -8,7 +8,8 @@ import net.minecraft.resources.ResourceLocation;
 
 /** 客户端把屏蔽门的配置写回服务端。 */
 public record CtdDoorConfigPayload(BlockPos pos, String station, String platform,
-                                   String doorId, float speed) implements CustomPacketPayload {
+                                   String doorId, float speed, float height)
+        implements CustomPacketPayload {
 
     public static final Type<CtdDoorConfigPayload> TYPE =
         new Type<>(ResourceLocation.fromNamespaceAndPath("ctdhost", "door_config"));
@@ -18,7 +19,7 @@ public record CtdDoorConfigPayload(BlockPos pos, String station, String platform
             @Override
             public CtdDoorConfigPayload decode(FriendlyByteBuf buf) {
                 return new CtdDoorConfigPayload(buf.readBlockPos(), buf.readUtf(64),
-                    buf.readUtf(64), buf.readUtf(32), buf.readFloat());
+                    buf.readUtf(64), buf.readUtf(32), buf.readFloat(), buf.readFloat());
             }
 
             @Override
@@ -28,6 +29,7 @@ public record CtdDoorConfigPayload(BlockPos pos, String station, String platform
                 buf.writeUtf(p.platform(), 64);
                 buf.writeUtf(p.doorId(), 32);
                 buf.writeFloat(p.speed());
+                buf.writeFloat(p.height());
             }
         };
 
