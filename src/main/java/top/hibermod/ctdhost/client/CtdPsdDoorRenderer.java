@@ -1,80 +1,76 @@
 package top.hibermod.ctdhost.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
 
-import net.minecraft.client.Minecraft;
+import net.createmod.catnip.render.CachedBuffers;
+import net.createmod.catnip.render.SuperByteBuffer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
+import top.hibermod.ctdhost.block.CtdBlocks;
 import top.hibermod.ctdhost.block.CtdPsdDoorBlock;
 import top.hibermod.ctdhost.block.CtdPsdDoorBlockEntity;
 
 /**
- * 滑动门渲染。固定门由 blockstate 模型直接画，这里只负责滑动门：
+ * 滑动门渲染，做法照机械动力的 {@code SlidingDoorRenderer}：
+ * 用 {@link CachedBuffers#block(BlockState)} 取到已经烘焙好的门扇模型，
+ * 加上平移偏移后 {@code renderInto}，而不是自己去 ModelManager 里翻模型。
  *
- * <pre>
- *   z: 0 ─ 1/4 ─ 1/2 ─ 3/4 ─ 1
- *      [ 1 ][ 2 ][ 3 ][ 4 ]
- *       固定  滑动  滑动  固定
- * </pre>
- *
- * 门扇模型只有一套（16px 宽、z 0–4、1 格高按 height 缩放），
- * 左扇放 z 0.25、右扇放 z 0.5；开门时各向外平移「自身宽度」一格。
+ * <p>方块本体在 blockstate 里始终是空模型，所以这里画的就是唯一的门扇副本：
+ * <ul>
+ *   <li>左扇：沿门宽方向 −leaf×progress，厚度方向 +0.25</li>
+ *   <li>右扇：沿门宽方向 +leaf+leaf×progress，厚度方向 +0.5</li>
+ * </ul>
  */
-public class CtdPsdDoorRenderer implements BlockEntityRenderer<CtdPsdDoorBlockEntity> {
-
-    private static final ResourceLocation PANEL_H3 =
-        ResourceLocation.fromNamespaceAndPath("ctdhost", "block/psd_panel_h3");
-    private static final ResourceLocation PANEL_H4 =
-        ResourceLocation.fromNamespaceAndPath("ctdhost", "block/psd_panel_h4");
-    private static final ResourceLocation PANEL_H6 =
-        ResourceLocation.fromNamespaceAndPath("ctdhost", "block/psd_panel_h6");
+public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockEntity> {
 
     public CtdPsdDoorRenderer(BlockEntityRendererProvider.Context ctx) {}
 
     @Override
-    public void render(CtdPsdDoorBlockEntity be, float partialTick, PoseStack pose,
-                       MultiBufferSource buffer, int light, int overlay) {
+    protected void renderSafe(CtdPsdDoorBlockEntity be, float partialTicks, PoseStack ms,
+                              MultiBufferSource buffer, int light, int overlay) {
 
         BlockState state = be.getBlockState();
         if (!(state.getBlock() instanceof CtdPsdDoorBlock block) || !block.isSliding()) return;
 
-        BakedModel panel = panelFor(block.height());
-        if (panel == null) return;
+        Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
+        Direction widthAxis = facing.getClockWise();
+        boolean mirror = facing == Direction.NORTH || facing == Direction.WEST;
 
-        float leaf = block.width() / 2f;          // 单扇宽（格）
-        float slide = leaf * be.progress();       // 开门滑出距离 = 自身宽度
-        float scaleY = block.height() / 2f;       // 模型按 2 格高写
+        float leaf = block.width() / 2f;
+        float slide = leaf * be.progress();
 
-        // 左扇 z 0.25–0.5，右扇 z 0.5–0.75
-        draw(panel, state, pose, buffer, light, overlay, -slide, 0.25f, leaf, scaleY);
-        draw(panel, state, pose, buffer, light, overlay, leaf + slide, 0.5f, leaf, scaleY);
+        VertexConsumer vb = buffer.getBuffer(RenderType.translucent());
+        draw(be, facing, widthAxis, mirror, ms, vb, light, -slide, 0.25f);
+        draw(be, facing, widthAxis, mirror, ms, vb, light, leaf + slide, 0.5f);
     }
 
-    private static BakedModel panelFor(float height) {
-        ResourceLocation id = height <= 1.6f ? PANEL_H3
-            : height >= 2.5f ? PANEL_H6 : PANEL_H4;
-        return Minecraft.getInstance().getModelManager()
-            .getModel(new ModelResourceLocation(id, "standalone"));
+    private void draw(CtdPsdDoorBlockEntity be, Direction facing, Direction widthAxis,
+                      boolean mirror, PoseStack ms, VertexConsumer vb, int light,
+                      float along, float across) {
+
+        SuperByteBuffer buf = CachedBuffers.block(staticStateFor(be, facing));
+        Vec3 offset = Vec3.atLowerCornerOf(widthAxis.getNormal()).scale(mirror ? -along : along)
+            .add(Vec3.atLowerCornerOf(facing.getOpposite().getNormal()).scale(across));
+
+        buf.translate(offset)
+            .light(light)
+            .renderInto(ms, vb);
     }
 
-    private void draw(BakedModel model, BlockState state, PoseStack pose,
-                      MultiBufferSource buffer, int light, int overlay,
-                      float dx, float dz, float scaleX, float scaleY) {
-        pose.pushPose();
-        pose.translate(dx, 0f, dz);
-        pose.scale(scaleX, scaleY, 1f);
-        Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(
-            pose.last(), buffer.getBuffer(RenderType.translucent()), state, model,
-            1f, 1f, 1f, light, overlay,
-            net.neoforged.neoforge.client.model.data.ModelData.EMPTY,
-            RenderType.translucent());
-        pose.popPose();
+    /** 用同高度的固定门方块取静态模型（两者模型完全一致）。 */
+    private static BlockState staticStateFor(CtdPsdDoorBlockEntity be, Direction facing) {
+        float h = be.height();
+        BlockState base = h <= 1.6f ? CtdBlocks.PSD_FIXED_1_5.get().defaultBlockState()
+            : h >= 2.5f ? CtdBlocks.PSD_FIXED_3.get().defaultBlockState()
+            : CtdBlocks.PSD_FIXED_2.get().defaultBlockState();
+        return base.setValue(HorizontalDirectionalBlock.FACING, facing);
     }
 }
