@@ -9,27 +9,32 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import top.hibermod.ctdhost.block.CtdPsdDoorBlockEntity;
-
 /**
- * CTD 屏蔽门。一个方块承载整樘门的体积，形状可以超出 1 格，
- * 因此不需要多方块结构，放置时检查整块体积是否被占用。
+ * CTD 屏蔽门。整樘门由一个方块承载（`dynamicShape`），因此不需要多方块结构。
  *
- * <p>固定门与滑动门的区别只在 {@link Type}：
- * 固定门占两侧、厚 1/4；滑动门占中间、在第二平面滑动。
+ * <h2>厚度：沿法线把一格均分四份</h2>
+ * <pre>
+ *   z: 0 ─ 1/4 ─ 1/2 ─ 3/4 ─ 1
+ *       固定          滑动        固定
+ * </pre>
+ *
+ * <h2>动画</h2>
+ * 开门时两扇滑动门各**横向平移一整格**，滑进相邻固定门那格；
+ * `progress` 0→1 由方块实体按速度推进，渲染与碰撞箱都读它。
  */
 public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
@@ -52,13 +57,19 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     public static final EnumProperty<Type> TYPE = EnumProperty.create("type", Type.class);
     public static final BooleanProperty OPEN = BooleanProperty.create("open");
+    /** 门宽（格）：固定门 1，滑动门 2 或 3。 */
+    public static final IntegerProperty WIDTH = IntegerProperty.create("width", 1, 3);
+    /** 门高（半格）：3 = 1.5 格，4 = 2 格，6 = 3 格。 */
+    public static final IntegerProperty HEIGHT = IntegerProperty.create("height", 3, 6);
 
     public CtdPsdDoorBlock(Properties props) {
         super(props);
         registerDefaultState(stateDefinition.any()
             .setValue(FACING, Direction.NORTH)
             .setValue(TYPE, Type.SLIDING)
-            .setValue(OPEN, false));
+            .setValue(OPEN, false)
+            .setValue(WIDTH, 2)
+            .setValue(HEIGHT, 4));
     }
 
     @Override
@@ -68,7 +79,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, TYPE, OPEN);
+        builder.add(FACING, TYPE, OPEN, WIDTH, HEIGHT);
     }
 
     @Override
@@ -87,39 +98,40 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         };
     }
 
-    // ── 形状：整体体积，宽度按类型与高度自动推断 ─────────────────────
-
-    /** 门宽（沿门面方向）：固定门 1 格，滑动门 2 格；高度由 BE 的高度值决定。 */
-    public static int width(BlockState state, BlockEntity be) {
-        if (state.getValue(TYPE) == Type.FIXED) return 1;
-        if (be instanceof CtdPsdDoorBlockEntity d) {
-            return Math.max(2, Math.min(3, d.height()));
-        }
-        return 2;
+    public static float heightBlocks(BlockState state) {
+        return state.getValue(HEIGHT) / 2f;
     }
 
-    private static VoxelShape shapeOf(BlockState state, BlockEntity be) {
-        int span = width(state, be);
-        int tall = be instanceof CtdPsdDoorBlockEntity d ? Math.max(2, Math.min(3, d.height())) : 2;
-        boolean fixed = state.getValue(TYPE) == Type.FIXED;
-        // 厚度 1/4：固定门贴外侧，滑动门贴内侧第二平面
-        float z0 = fixed ? 0f : 0.25f;
-        float z1 = fixed ? 0.25f : 0.5f;
-        float x0 = fixed ? 0f : 0.5f - span * 0.25f;
-        float x1 = fixed ? span * 0.25f : 0.5f + span * 0.25f;
-        return Shapes.box(x0, 0, z0, Math.min(1f, x1), tall, z1);
+    public static float widthBlocks(BlockState state) {
+        return state.getValue(TYPE) == Type.FIXED ? 1f : state.getValue(WIDTH);
     }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos,
                                   CollisionContext ctx) {
-        return shapeOf(state, level.getBlockEntity(pos));
+        return getCollisionShape(state, level, pos, ctx);
     }
 
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
                                            CollisionContext ctx) {
-        return shapeOf(state, level.getBlockEntity(pos));
+        float h = heightBlocks(state);
+
+        if (state.getValue(TYPE) == Type.FIXED) {
+            // 固定门贴边：z 0–0.25
+            return Shapes.box(0f, 0f, 0f, 1f, h, 0.25f);
+        }
+
+        float progress = 0f;
+        if (level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity be) {
+            progress = be.progress();
+        }
+        float half = widthBlocks(state) * 0.25f;      // 单扇宽（格）
+        float left = 0.5f - half - progress;          // 左扇左移一格
+        float right = 0.5f + half + progress;         // 右扇右移一格
+        VoxelShape a = Shapes.box(left, 0f, 0.25f, left + half, h, 0.5f);
+        VoxelShape b = Shapes.box(right - half, 0f, 0.5f, right, h, 0.75f);
+        return Shapes.or(a, b);
     }
 
     @Override
@@ -130,11 +142,5 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
         return defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
-    }
-
-    /** 放置前检查整块体积是否空着，放不下就不创建。 */
-    @Override
-    protected boolean canBeReplaced(BlockState state, BlockPlaceContext ctx) {
-        return false;
     }
 }
