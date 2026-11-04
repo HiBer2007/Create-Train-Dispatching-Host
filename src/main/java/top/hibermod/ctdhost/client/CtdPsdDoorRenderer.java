@@ -43,10 +43,10 @@ public class CtdPsdDoorRenderer implements BlockEntityRenderer<CtdPsdDoorBlockEn
         if (left == null || right == null) return;
 
         float progress = be.progress();
-        float shift = progress;                       // 一整格 = 1.0
 
-        renderPanel(left, state, pose, buffer, light, overlay, -shift);
-        renderPanel(right, state, pose, buffer, light, overlay, shift);
+        // 关：左扇 x 0–1 格、右扇 x 1–2 格；开：各再向外平移一格，滑进两侧固定门那格
+        renderPanel(left, state, pose, buffer, light, overlay, -progress);
+        renderPanel(right, state, pose, buffer, light, overlay, 1f + progress);
     }
 
     private void renderPanel(BakedModel model, BlockState state, PoseStack pose,
