@@ -56,5 +56,12 @@
   "block.ctdhost.psd_door": "CTD 屏蔽门",
   "gui.ctdhost.psd_door_config": "屏蔽门配置",
   "gui.ctdhost.psd_speed": "开合速度（格/秒）",
-  "gui.ctdhost.psd_height": "门高（格）"
+  "gui.ctdhost.psd_height": "门高（格）",
+  "block.ctdhost.psd_fixed_1_5": "CTD 屏蔽门（固定 1x1.5）",
+  "block.ctdhost.psd_fixed_2": "CTD 屏蔽门（固定 1x2）",
+  "block.ctdhost.psd_fixed_3": "CTD 屏蔽门（固定 1x3）",
+  "block.ctdhost.psd_sliding_2_1_5": "CTD 屏蔽门（滑动 2x1.5）",
+  "block.ctdhost.psd_sliding_2_2": "CTD 屏蔽门（滑动 2x2）",
+  "block.ctdhost.psd_sliding_2_3": "CTD 屏蔽门（滑动 2x3）",
+  "block.ctdhost.psd_sliding_3_3": "CTD 屏蔽门（滑动 3x3）"
 }

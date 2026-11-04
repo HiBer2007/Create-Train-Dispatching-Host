@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "ctdhost:block/psd_empty" },
+    "facing=east":  { "model": "ctdhost:block/psd_empty", "y": 90 },
+    "facing=south": { "model": "ctdhost:block/psd_empty", "y": 180 },
+    "facing=west":  { "model": "ctdhost:block/psd_empty", "y": 270 }
+  }
+}

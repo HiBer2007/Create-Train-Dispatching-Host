@@ -15,8 +15,9 @@ public final class CtdCreativeTab {
     public static void onBuildContents(BuildCreativeModeTabContentsEvent event) {
         // 屏蔽门放进 CTD 自己的分页（ctdscript 注册的标签页，按命名空间匹配避免编译期依赖）
         if (event.getTabKey().location().getNamespace().equals("ctdscript")) {
-            event.accept(CtdBlocks.PSD_FIXED_ITEM.get());
-            event.accept(CtdBlocks.PSD_SLIDING_ITEM.get());
+            for (var item : CtdBlocks.psdItems()) {
+                event.accept(item.get());
+            }
             return;
         }
 
@@ -25,8 +26,9 @@ public final class CtdCreativeTab {
             event.accept(CtdBlocks.SWITCH_MACHINE_ITEM.get());
             event.accept(CtdBlocks.CTD_SIGNAL_ITEM.get());
             event.accept(CtdBlocks.SIGNAL_HEAD_ITEM.get());
-            event.accept(CtdBlocks.PSD_FIXED_ITEM.get());
-            event.accept(CtdBlocks.PSD_SLIDING_ITEM.get());
+            for (var item : CtdBlocks.psdItems()) {
+                event.accept(item.get());
+            }
         }
     }
 }

@@ -56,5 +56,12 @@
   "block.ctdhost.psd_door": "CTD Platform Screen Door",
   "gui.ctdhost.psd_door_config": "Screen door settings",
   "gui.ctdhost.psd_speed": "Speed (blocks/s)",
-  "gui.ctdhost.psd_height": "Height (blocks)"
+  "gui.ctdhost.psd_height": "Height (blocks)",
+  "block.ctdhost.psd_fixed_1_5": "CTD Screen Door (Fixed 1x1.5)",
+  "block.ctdhost.psd_fixed_2": "CTD Screen Door (Fixed 1x2)",
+  "block.ctdhost.psd_fixed_3": "CTD Screen Door (Fixed 1x3)",
+  "block.ctdhost.psd_sliding_2_1_5": "CTD Screen Door (Sliding 2x1.5)",
+  "block.ctdhost.psd_sliding_2_2": "CTD Screen Door (Sliding 2x2)",
+  "block.ctdhost.psd_sliding_2_3": "CTD Screen Door (Sliding 2x3)",
+  "block.ctdhost.psd_sliding_3_3": "CTD Screen Door (Sliding 3x3)"
 }

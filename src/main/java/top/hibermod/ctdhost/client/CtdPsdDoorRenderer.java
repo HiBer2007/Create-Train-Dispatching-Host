@@ -45,12 +45,12 @@ public class CtdPsdDoorRenderer implements BlockEntityRenderer<CtdPsdDoorBlockEn
         BlockState state = be.getBlockState();
         if (!(state.getBlock() instanceof CtdPsdDoorBlock block) || !block.isSliding()) return;
 
-        BakedModel panel = panelFor(be.height());
+        BakedModel panel = panelFor(block.height());
         if (panel == null) return;
 
-        float leaf = be.width() / 2f;             // 单扇宽（格）
+        float leaf = block.width() / 2f;          // 单扇宽（格）
         float slide = leaf * be.progress();       // 开门滑出距离 = 自身宽度
-        float scaleY = be.height() / 2f;          // 模型按 2 格高写
+        float scaleY = block.height() / 2f;       // 模型按 2 格高写
 
         // 左扇 z 0.25–0.5，右扇 z 0.5–0.75
         draw(panel, state, pose, buffer, light, overlay, -slide, 0.25f, leaf, scaleY);

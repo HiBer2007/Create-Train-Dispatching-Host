@@ -73,33 +73,49 @@ public final class CtdBlocks {
             () -> BlockEntityType.Builder.of(SwitchMachineBlockEntity::new,
                 SWITCH_MACHINE.get()).build(null));
 
-    // ── 屏蔽门：固定门与滑动门是两个独立方块 ─────────────────────────
-    public static final DeferredBlock<CtdPsdDoorBlock> PSD_FIXED =
-        BLOCKS.register("psd_fixed",
-            () -> new CtdPsdDoorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties
-                .of().strength(1.5f).noOcclusion()
-                .dynamicShape(), false));
+    // ── 屏蔽门：七种规格各是一个独立方块 ─────────────────────────────
+    private static CtdPsdDoorBlock door(boolean sliding, float w, float h) {
+        return new CtdPsdDoorBlock(
+            net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()
+                .strength(1.5f).noOcclusion().dynamicShape(),
+            sliding, w, h);
+    }
 
-    public static final DeferredBlock<CtdPsdDoorBlock> PSD_SLIDING =
-        BLOCKS.register("psd_sliding",
-            () -> new CtdPsdDoorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties
-                .of().strength(1.5f).noOcclusion()
-                .dynamicShape(), true));
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_FIXED_1_5 =
+        BLOCKS.register("psd_fixed_1_5", () -> door(false, 1f, 1.5f));
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_FIXED_2 =
+        BLOCKS.register("psd_fixed_2", () -> door(false, 1f, 2f));
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_FIXED_3 =
+        BLOCKS.register("psd_fixed_3", () -> door(false, 1f, 3f));
 
-    public static final DeferredItem<BlockItem> PSD_FIXED_ITEM =
-        ITEMS.registerSimpleBlockItem(PSD_FIXED);
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_SLIDING_2_1_5 =
+        BLOCKS.register("psd_sliding_2_1_5", () -> door(true, 2f, 1.5f));
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_SLIDING_2_2 =
+        BLOCKS.register("psd_sliding_2_2", () -> door(true, 2f, 2f));
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_SLIDING_2_3 =
+        BLOCKS.register("psd_sliding_2_3", () -> door(true, 2f, 3f));
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_SLIDING_3_3 =
+        BLOCKS.register("psd_sliding_3_3", () -> door(true, 3f, 3f));
 
-    public static final DeferredItem<BlockItem> PSD_SLIDING_ITEM =
-        ITEMS.registerSimpleBlockItem(PSD_SLIDING);
+    public static final DeferredItem<BlockItem> PSD_FIXED_1_5_ITEM = ITEMS.registerSimpleBlockItem(PSD_FIXED_1_5);
+    public static final DeferredItem<BlockItem> PSD_FIXED_2_ITEM = ITEMS.registerSimpleBlockItem(PSD_FIXED_2);
+    public static final DeferredItem<BlockItem> PSD_FIXED_3_ITEM = ITEMS.registerSimpleBlockItem(PSD_FIXED_3);
+    public static final DeferredItem<BlockItem> PSD_SLIDING_2_1_5_ITEM = ITEMS.registerSimpleBlockItem(PSD_SLIDING_2_1_5);
+    public static final DeferredItem<BlockItem> PSD_SLIDING_2_2_ITEM = ITEMS.registerSimpleBlockItem(PSD_SLIDING_2_2);
+    public static final DeferredItem<BlockItem> PSD_SLIDING_2_3_ITEM = ITEMS.registerSimpleBlockItem(PSD_SLIDING_2_3);
+    public static final DeferredItem<BlockItem> PSD_SLIDING_3_3_ITEM = ITEMS.registerSimpleBlockItem(PSD_SLIDING_3_3);
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CtdPsdDoorBlockEntity>> PSD_DOOR_BE =
         BLOCK_ENTITIES.register("psd_door",
             () -> BlockEntityType.Builder.of(CtdPsdDoorBlockEntity::new,
-                PSD_FIXED.get(), PSD_SLIDING.get()).build(null));
+                PSD_FIXED_1_5.get(), PSD_FIXED_2.get(), PSD_FIXED_3.get(),
+                PSD_SLIDING_2_1_5.get(), PSD_SLIDING_2_2.get(),
+                PSD_SLIDING_2_3.get(), PSD_SLIDING_3_3.get()).build(null));
 
-    /** 旧名字保留，避免其它代码引用不到。 */
-    public static Block PSD_DOOR() {
-        return PSD_FIXED.get();
+    /** 全部屏蔽门物品，供创造栏使用。 */
+    public static java.util.List<DeferredItem<BlockItem>> psdItems() {
+        return java.util.List.of(PSD_FIXED_1_5_ITEM, PSD_FIXED_2_ITEM, PSD_FIXED_3_ITEM,
+            PSD_SLIDING_2_1_5_ITEM, PSD_SLIDING_2_2_ITEM, PSD_SLIDING_2_3_ITEM, PSD_SLIDING_3_3_ITEM);
     }
 
     /** 物品栏里的方块（供别的代码引用）。 */

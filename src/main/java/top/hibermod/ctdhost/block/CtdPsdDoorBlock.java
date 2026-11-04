@@ -16,65 +16,51 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * CTD 屏蔽门。固定门与滑动门是**两个独立的方块**，共用这一套逻辑：
+ * CTD 屏蔽门。七种规格各是一个独立方块（固定 3 种 + 滑动 4 种），
+ * 尺寸由方块实例自带，不用方块状态表达。
  *
- * <h2>厚度（沿法线把一格均分四份）</h2>
  * <pre>
  *   z: 0 ─ 1/4 ─ 1/2 ─ 3/4 ─ 1
  *       固定          滑动        固定
  * </pre>
  *
- * <h2>体积</h2>
- * 固定门占 1 格宽 × 1/4 厚；滑动门占 N 格宽（2 或 3）× 中间两格厚，
- * **不包含两侧固定门所在的方块**。
+ * 碰撞箱按 {@code FACING} 旋转，四个朝向都正确。
  */
 public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
-    public static final MapCodec<CtdPsdDoorBlock> CODEC =
-        simpleCodec(CtdPsdDoorBlock::new);
-
-    public enum Kind implements net.minecraft.util.StringRepresentable {
-        FIXED("fixed"), SLIDING("sliding");
-
-        private final String name;
-
-        Kind(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String getSerializedName() {
-            return name;
-        }
-    }
-
-    public static final EnumProperty<Kind> KIND = EnumProperty.create("kind", Kind.class);
-    /** 门高（格 × 2）：3 = 1.5 格，4 = 2 格，6 = 3 格。 */
-    public static final IntegerProperty HEIGHT = IntegerProperty.create("height", 3, 6);
+    public static final MapCodec<CtdPsdDoorBlock> CODEC = simpleCodec(CtdPsdDoorBlock::new);
 
     private final boolean sliding;
+    private final float width;
+    private final float height;
 
     public CtdPsdDoorBlock(Properties props) {
-        this(props, false);
+        this(props, false, 1f, 2f);
     }
 
-    public CtdPsdDoorBlock(Properties props, boolean sliding) {
+    public CtdPsdDoorBlock(Properties props, boolean sliding, float width, float height) {
         super(props);
         this.sliding = sliding;
-        registerDefaultState(stateDefinition.any()
-            .setValue(FACING, Direction.NORTH)
-            .setValue(HEIGHT, 4));
+        this.width = width;
+        this.height = height;
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     public boolean isSliding() {
         return sliding;
+    }
+
+    public float width() {
+        return width;
+    }
+
+    public float height() {
+        return height;
     }
 
     @Override
@@ -84,7 +70,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, HEIGHT);
+        builder.add(FACING);
     }
 
     @Override
@@ -103,8 +89,29 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         };
     }
 
-    public static float heightBlocks(BlockState state) {
-        return state.getValue(HEIGHT) / 2f;
+    /** 局部坐标（朝北）的盒子按朝向旋转成世界坐标。 */
+    private static VoxelShape rotate(BlockState state, double x0, double y0, double z0,
+                                     double x1, double y1, double z1) {
+        Direction facing = state.getValue(FACING);
+        double ax0 = x0, ax1 = x1, az0 = z0, az1 = z1;
+        switch (facing) {
+            case EAST -> {
+                double n0 = 1 - z1, n1 = 1 - z0;
+                az0 = x0; az1 = x1;
+                ax0 = n0; ax1 = n1;
+            }
+            case SOUTH -> {
+                ax0 = 1 - x1; ax1 = 1 - x0;
+                az0 = 1 - z1; az1 = 1 - z0;
+            }
+            case WEST -> {
+                double n0 = z0, n1 = z1;
+                ax0 = 1 - n1; ax1 = 1 - n0;
+                az0 = x0; az1 = x1;
+            }
+            default -> { }
+        }
+        return Shapes.box(ax0, y0, az0, ax1, y1, az1);
     }
 
     @Override
@@ -116,24 +123,22 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
                                            CollisionContext ctx) {
-        float h = heightBlocks(state);
-
         if (!sliding) {
-            // 固定门：贴方块外侧边缘那一层（z 0–0.25）
-            return Shapes.box(0f, 0f, 0f, 1f, h, 0.25f);
+            // 固定门：贴方块一边、1/4 厚的板
+            return rotate(state, 0, 0, 0, 1, height, 0.25);
         }
 
         CtdPsdDoorBlockEntity be = level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity d
             ? d : null;
         float progress = be == null ? 0f : be.progress();
-        float leaf = (be == null ? 2f : be.width()) / 2f;   // 单扇宽（格）
+        float leaf = width / 2f;
         float slide = leaf * progress;
 
         float left = -slide;
         float right = leaf + slide;
-        VoxelShape a = Shapes.box(left, 0f, 0.25f, left + leaf, h, 0.5f);
-        VoxelShape b = Shapes.box(right, 0f, 0.5f, right + leaf, h, 0.75f);
-        return Shapes.or(a, b);
+        return Shapes.or(
+            rotate(state, left, 0, 0.25, left + leaf, height, 0.5),
+            rotate(state, right, 0, 0.5, right + leaf, height, 0.75));
     }
 
     @Override
@@ -146,7 +151,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         BlockPos pos = ctx.getClickedPos();
         Level level = ctx.getLevel();
         Direction facing = ctx.getHorizontalDirection().getOpposite();
-        int cells = sliding ? 2 : 1;
+        int cells = sliding ? Math.max(1, (int) Math.ceil(width)) : 1;
 
         Direction side = facing.getClockWise();
         for (int i = 0; i < cells; i++) {
@@ -157,7 +162,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
             }
         }
 
-        return defaultBlockState().setValue(FACING, facing).setValue(HEIGHT, 4);
+        return defaultBlockState().setValue(FACING, facing);
     }
 
     @Override
@@ -166,8 +171,8 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
                             net.minecraft.world.item.ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity be) {
-            be.setWidth(sliding ? 2f : 1f);
-            be.setHeight(heightBlocks(state));
+            be.setWidth(width);
+            be.setHeight(height);
         }
     }
 

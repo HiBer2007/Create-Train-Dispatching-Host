@@ -51,14 +51,12 @@ public final class CtdHeadRenderers {
 
         try {
             // 屏蔽门玻璃必须走半透明层，否则透明像素会被画成黑色
-            if (top.hibermod.ctdhost.block.CtdBlocks.PSD_FIXED.isBound()) {
-                var translucent = net.minecraft.client.renderer.RenderType.translucent();
+            var translucent = net.minecraft.client.renderer.RenderType.translucent();
+            for (var item : top.hibermod.ctdhost.block.CtdBlocks.psdItems()) {
                 net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
-                    top.hibermod.ctdhost.block.CtdBlocks.PSD_FIXED.get(), translucent);
-                net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(
-                    top.hibermod.ctdhost.block.CtdBlocks.PSD_SLIDING.get(), translucent);
-                log.info("ctdhost: psd door render layer registered");
+                    item.get().getBlock(), translucent);
             }
+            log.info("ctdhost: psd door render layer registered");
             if (top.hibermod.ctdhost.block.CtdBlocks.PSD_DOOR_BE.isBound()) {
                 BlockEntityRenderers.register(
                     top.hibermod.ctdhost.block.CtdBlocks.PSD_DOOR_BE.get(),
