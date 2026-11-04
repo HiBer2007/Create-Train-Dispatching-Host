@@ -127,6 +127,25 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        return defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+        BlockPos pos = ctx.getClickedPos();
+        Level level = ctx.getLevel();
+        Direction facing = ctx.getHorizontalDirection().getOpposite();
+
+        // 体积检查：门高 2 格，滑动门还占左右各一格（沿门面方向）
+        if (!level.getBlockState(pos).canBeReplaced(ctx) || !level.getBlockState(pos.above()).canBeReplaced(ctx)) {
+            return null;
+        }
+        Direction side = facing.getClockWise();
+        boolean sliding = ctx.getPlayer() != null && ctx.getPlayer().isShiftKeyDown();
+        if (sliding) {
+            BlockPos right = pos.relative(side);
+            if (!level.getBlockState(right).canBeReplaced(ctx)
+                || !level.getBlockState(right.above()).canBeReplaced(ctx)) {
+                return null;
+            }
+        }
+        return defaultBlockState()
+            .setValue(FACING, facing)
+            .setValue(TYPE, sliding ? Type.SLIDING : Type.FIXED);
     }
 }
