@@ -16,7 +16,6 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -36,7 +35,6 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     public static final MapCodec<CtdPsdDoorBlock> CODEC = simpleCodec(CtdPsdDoorBlock::new);
 
-    public static final BooleanProperty VISIBLE = BooleanProperty.create("visible");
 
     private final boolean sliding;
     private final float width;
@@ -51,9 +49,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         this.sliding = sliding;
         this.width = width;
         this.height = height;
-        registerDefaultState(stateDefinition.any()
-            .setValue(FACING, Direction.NORTH)
-            .setValue(VISIBLE, true));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     public boolean isSliding() {
@@ -75,7 +71,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, VISIBLE);
+        builder.add(FACING);
     }
 
     @Override

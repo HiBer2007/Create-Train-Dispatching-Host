@@ -1,12 +1,8 @@
 {
   "variants": {
-    "visible=true,facing=north": { "model": "ctdhost:block/psd_panel_h6" },
-    "visible=true,facing=east":  { "model": "ctdhost:block/psd_panel_h6", "y": 90 },
-    "visible=true,facing=south": { "model": "ctdhost:block/psd_panel_h6", "y": 180 },
-    "visible=true,facing=west":  { "model": "ctdhost:block/psd_panel_h6", "y": 270 },
-    "visible=false,facing=north": { "model": "ctdhost:block/psd_empty" },
-    "visible=false,facing=east":  { "model": "ctdhost:block/psd_empty" },
-    "visible=false,facing=south": { "model": "ctdhost:block/psd_empty" },
-    "visible=false,facing=west":  { "model": "ctdhost:block/psd_empty" }
+    "facing=north": { "model": "ctdhost:block/psd_empty" },
+    "facing=east":  { "model": "ctdhost:block/psd_empty", "y": 90 },
+    "facing=south": { "model": "ctdhost:block/psd_empty", "y": 180 },
+    "facing=west":  { "model": "ctdhost:block/psd_empty", "y": 270 }
   }
 }

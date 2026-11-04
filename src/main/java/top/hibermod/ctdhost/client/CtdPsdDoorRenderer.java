@@ -40,8 +40,6 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         BlockState state = be.getBlockState();
         if (!(state.getBlock() instanceof CtdPsdDoorBlock block) || !block.isSliding()) return;
         // 完全关闭时由 blockstate 的静态模型渲染，这里只负责动画中的那一份
-        if (state.getValue(CtdPsdDoorBlock.VISIBLE)) return;
-
         Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
         Direction widthAxis = facing.getClockWise();
         boolean mirror = facing == Direction.NORTH || facing == Direction.WEST;
