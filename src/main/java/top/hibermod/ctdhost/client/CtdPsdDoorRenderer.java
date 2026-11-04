@@ -50,13 +50,13 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         float slide = leaf * be.progress();
 
         VertexConsumer vb = buffer.getBuffer(RenderType.translucent());
-        draw(be, facing, widthAxis, mirror, ms, vb, light, -slide, 0.25f);
-        draw(be, facing, widthAxis, mirror, ms, vb, light, leaf + slide, 0.5f);
+        draw(be, facing, widthAxis, mirror, ms, vb, light, -slide, 0.25f, leaf);
+        draw(be, facing, widthAxis, mirror, ms, vb, light, leaf + slide, 0.5f, leaf);
     }
 
     private void draw(CtdPsdDoorBlockEntity be, Direction facing, Direction widthAxis,
                       boolean mirror, PoseStack ms, VertexConsumer vb, int light,
-                      float along, float across) {
+                      float along, float across, float leaf) {
 
         SuperByteBuffer buf = CachedBuffers.block(staticStateFor(be, facing));
         Vec3 offset = Vec3.atLowerCornerOf(widthAxis.getNormal()).scale(mirror ? -along : along)
