@@ -68,7 +68,7 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
     private final BERLabel marquee = new BERLabel();
 
     /** 1 格高版式专用的标签池，避免复用导致互相覆盖。 */
-    private final BERLabel[] pool = new BERLabel[18];
+    private final BERLabel[] pool = new BERLabel[20];
 
     public BERCtdPlatform() {
         setup(headLabel, ETextAlignment.LEFT, 0xFFFFFFFF);
@@ -288,22 +288,22 @@ public class BERCtdPlatform implements AbstractAdvancedDisplayRenderer<CtdPlatfo
         rects.add(new Rect(2f, 12.2f, 0f, totalW, 2.8f, blue));
 
         // 底栏拆成两个独立组件：左「日期 时间」静态居中，右「滚动提示」滚动
-        lab(14).horizontalScrollMode.set(dual ? EScrollMode.NEVER : EScrollMode.ALWAYS);
-        lab(15).horizontalScrollMode.set(EScrollMode.ALWAYS);
+        lab(18).horizontalScrollMode.set(dual ? EScrollMode.NEVER : EScrollMode.ALWAYS);
+        lab(19).horizontalScrollMode.set(EScrollMode.ALWAYS);
 
         var barL = Rectangle.withSize(3f, 12.2f,
             dual ? totalW * 0.5f - 4f : totalW - 2f, 3f);
         var barR = Rectangle.withSize(3f + totalW * 0.5f, 12.2f, totalW * 0.5f - 4f, 3f);
 
         if (dual) {
-            lab(14).horizontalAlign.set(ETextAlignment.LEFT);
-            put(lab(14), barL, 3f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.24f, realClockText(),
+            lab(18).horizontalAlign.set(ETextAlignment.LEFT);
+            put(lab(18), barL, 3f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.24f, realClockText(),
                 0xFFFFFFFF);
-            lab(15).horizontalAlign.set(ETextAlignment.LEFT);
-            put(lab(15), barR, 3f + totalW * 0.5f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.30f,
+            lab(19).horizontalAlign.set(ETextAlignment.LEFT);
+            put(lab(19), barR, 3f + totalW * 0.5f, 12.3f, totalW * 0.5f - 4f, 2.6f, 0.30f,
                 "感谢您的配合，尊敬的乘客。", 0xFFFFFFFF);
         } else {
-            put(lab(14), barL, 3f, 12.3f, totalW - 2f, 2.6f, 0.30f, "感谢您的配合，尊敬的乘客。",
+            put(lab(18), barL, 3f, 12.3f, totalW - 2f, 2.6f, 0.30f, "感谢您的配合，尊敬的乘客。",
                 0xFFFFFFFF);
         }
     }

@@ -158,7 +158,7 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         float nameScale = Math.min(0.52f, leftW / (4f * 9f) * 0.95f);
         float nameH = 8f * nameScale;
         name.horizontalAlign.set(ETextAlignment.CENTER);
-        put(name, clip, 1f, 3.4f, leftW, nameH + 0.4f, nameScale, nameText, 0xFF000000);
+        put(name, clip, 0f, 3.4f, w, nameH + 0.4f, nameScale, nameText, 0xFF000000);
 
         // 下一站：站名下方，左对齐
         float nextScale = Math.min(0.20f, leftW / (9f * 9f) * 0.95f);
@@ -218,6 +218,12 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
     /** 线路图：一条横向线 + 站点圆点 + 站名（环线上下两排）。 */
     private void drawMap(Rectangle clip, CtdPsdSettings s, DLColor line, float w, float h) {
         List<String> names = splitStations(s.mapStations());
+        if (names.isEmpty()) {
+            // 没有站序数据时只画一条空线，绝不能下标越界
+            rects.add(new Rect(7f, 6f, 0.01f, w - 14f, 0.9f, line));
+            rects.add(new Rect(7f, h - 7f, 0.01f, w - 14f, 0.9f, line));
+            return;
+        }
         boolean loop = names.size() >= 2
             && names.get(0).equals(names.get(names.size() - 1));
 
