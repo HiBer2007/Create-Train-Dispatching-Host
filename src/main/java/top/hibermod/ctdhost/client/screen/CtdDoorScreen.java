@@ -19,6 +19,7 @@ public class CtdDoorScreen extends Screen {
     private final String platform;
     private final String doorId;
     private final float speed;
+    private final float doorHeight;
 
     private EditBox stationBox;
     private EditBox platformBox;
@@ -26,13 +27,15 @@ public class CtdDoorScreen extends Screen {
     private EditBox speedBox;
     private EditBox heightBox;
 
-    public CtdDoorScreen(BlockPos pos, String station, String platform, String doorId, float speed) {
+    public CtdDoorScreen(BlockPos pos, String station, String platform, String doorId,
+                         float speed, float height) {
         super(Component.translatable("gui.ctdhost.psd_door_config"));
         this.pos = pos;
         this.station = station == null ? "" : station;
         this.platform = platform == null ? "" : platform;
         this.doorId = doorId == null ? "" : doorId;
         this.speed = speed <= 0 ? 1f : speed;
+        this.doorHeight = height <= 0 ? 2f : height;
     }
 
     @Override
@@ -44,7 +47,7 @@ public class CtdDoorScreen extends Screen {
         platformBox = addBox(cx, y + 26, platform);
         doorBox = addBox(cx, y + 52, doorId);
         speedBox = addBox(cx, y + 78, String.valueOf(speed));
-        heightBox = addBox(cx, y + 104, "2");
+        heightBox = addBox(cx, y + 104, String.valueOf(doorHeight));
 
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> save())
             .bounds(cx, y + 136, 200, 20).build());

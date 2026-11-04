@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "height=3,facing=north": { "model": "ctdhost:block/psd_empty" },
+    "height=3,facing=east":  { "model": "ctdhost:block/psd_empty" },
+    "height=3,facing=south": { "model": "ctdhost:block/psd_empty" },
+    "height=3,facing=west":  { "model": "ctdhost:block/psd_empty" },
+    "height=4,facing=north": { "model": "ctdhost:block/psd_empty" },
+    "height=4,facing=east":  { "model": "ctdhost:block/psd_empty" },
+    "height=4,facing=south": { "model": "ctdhost:block/psd_empty" },
+    "height=4,facing=west":  { "model": "ctdhost:block/psd_empty" },
+    "height=5,facing=north": { "model": "ctdhost:block/psd_empty" },
+    "height=5,facing=east":  { "model": "ctdhost:block/psd_empty" },
+    "height=5,facing=south": { "model": "ctdhost:block/psd_empty" },
+    "height=5,facing=west":  { "model": "ctdhost:block/psd_empty" },
+    "height=6,facing=north": { "model": "ctdhost:block/psd_empty" },
+    "height=6,facing=east":  { "model": "ctdhost:block/psd_empty" },
+    "height=6,facing=south": { "model": "ctdhost:block/psd_empty" },
+    "height=6,facing=west":  { "model": "ctdhost:block/psd_empty" }
+  }
+}

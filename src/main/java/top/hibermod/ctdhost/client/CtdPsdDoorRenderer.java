@@ -16,16 +16,16 @@ import top.hibermod.ctdhost.block.CtdPsdDoorBlock;
 import top.hibermod.ctdhost.block.CtdPsdDoorBlockEntity;
 
 /**
- * 屏蔽门渲染。方块本体是空模型，门扇全部由这里画：
+ * 滑动门渲染。固定门由 blockstate 模型直接画，这里只负责滑动门：
  *
- * <ul>
- *   <li><b>固定门</b>：一片门扇贴在方块边缘（z 0–0.25），不参与动画</li>
- *   <li><b>滑动门</b>：左右两片贴在方块中间（z 0.25–0.5 / 0.5–0.75），
- *       开门时各向外平移「自身宽度」，滑进相邻固定门那格</li>
- * </ul>
+ * <pre>
+ *   z: 0 ─ 1/4 ─ 1/2 ─ 3/4 ─ 1
+ *      [ 1 ][ 2 ][ 3 ][ 4 ]
+ *       固定  滑动  滑动  固定
+ * </pre>
  *
- * <p>门扇模型只有一套（1 格宽），宽度用 X 缩放、高度用 Y 缩放适配
- * 1x1.5 / 1x2 / 1x3 与 2x1.5 / 2x2 / 2x3 / 3x3 七种规格。
+ * 门扇模型只有一套（16px 宽、z 0–4、1 格高按 height 缩放），
+ * 左扇放 z 0.25、右扇放 z 0.5；开门时各向外平移「自身宽度」一格。
  */
 public class CtdPsdDoorRenderer implements BlockEntityRenderer<CtdPsdDoorBlockEntity> {
 
@@ -43,33 +43,25 @@ public class CtdPsdDoorRenderer implements BlockEntityRenderer<CtdPsdDoorBlockEn
                        MultiBufferSource buffer, int light, int overlay) {
 
         BlockState state = be.getBlockState();
+        if (!(state.getBlock() instanceof CtdPsdDoorBlock block) || !block.isSliding()) return;
+
         BakedModel panel = panelFor(be.height());
         if (panel == null) return;
 
-        boolean fixed = state.getValue(CtdPsdDoorBlock.TYPE) == CtdPsdDoorBlock.Type.FIXED;
-        float progress = fixed ? 0f : be.progress();
+        float leaf = be.width() / 2f;             // 单扇宽（格）
+        float slide = leaf * be.progress();       // 开门滑出距离 = 自身宽度
+        float scaleY = be.height() / 2f;          // 模型按 2 格高写
 
-        if (fixed) {
-            // 固定门：一片，贴方块边缘那一层（z 0–0.25），宽度 1 格
-            draw(panel, state, pose, buffer, light, overlay, 0f, -0.25f, 1f, 1f);
-            return;
-        }
-
-        float scaleX = be.width() / 2f;       // 2 宽 = 1，3 宽 = 1.5
-        float scaleY = be.height() / 2f;
-        float slide = scaleX * progress;      // 滑开距离 = 自身宽度
-
-        // 左扇：z 0.25–0.5；右扇：z 0.5–0.75
-        draw(panel, state, pose, buffer, light, overlay, -slide, 0f, scaleX, scaleY);
-        draw(panel, state, pose, buffer, light, overlay, scaleX + slide, 0.25f, scaleX, scaleY);
+        // 左扇 z 0.25–0.5，右扇 z 0.5–0.75
+        draw(panel, state, pose, buffer, light, overlay, -slide, 0.25f, leaf, scaleY);
+        draw(panel, state, pose, buffer, light, overlay, leaf + slide, 0.5f, leaf, scaleY);
     }
 
     private static BakedModel panelFor(float height) {
         ResourceLocation id = height <= 1.6f ? PANEL_H3
             : height >= 2.5f ? PANEL_H6 : PANEL_H4;
-        BakedModel model = Minecraft.getInstance().getModelManager()
+        return Minecraft.getInstance().getModelManager()
             .getModel(new ModelResourceLocation(id, "standalone"));
-        return model;
     }
 
     private void draw(BakedModel model, BlockState state, PoseStack pose,

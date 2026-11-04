@@ -6,37 +6,26 @@
     "particle": "create:block/glass_door_side"
   },
   "elements": [
-    {
-      "from": [0, 0, 4],
-      "to": [16, 3, 8],
+    { "from": [0, 0, 0], "to": [16, 4, 4],
       "faces": {
-        "north": { "texture": "#iron", "uv": [0, 0, 16, 3] },
-        "south": { "texture": "#iron", "uv": [0, 0, 16, 3] },
-        "east":  { "texture": "#iron", "uv": [0, 0, 4, 3] },
-        "west":  { "texture": "#iron", "uv": [0, 0, 4, 3] },
-        "up":    { "texture": "#iron", "uv": [0, 0, 16, 4] },
-        "down":  { "texture": "#iron", "uv": [0, 0, 16, 4] }
-      }
-    },
-    {
-      "from": [0, 3, 4],
-      "to": [16, 19, 8],
+        "north": { "texture": "#iron", "uv": [0, 0, 16, 4] },
+        "south": { "texture": "#iron", "uv": [0, 0, 16, 4] },
+        "east":  { "texture": "#iron", "uv": [0, 0, 4, 4] },
+        "west":  { "texture": "#iron", "uv": [0, 0, 4, 4] }
+      } },
+    { "from": [0, 4, 0], "to": [16, 8, 4],
+      "faces": {
+        "north": { "texture": "#iron", "uv": [0, 12, 16, 16] },
+        "south": { "texture": "#iron", "uv": [0, 12, 16, 16] },
+        "east":  { "texture": "#iron", "uv": [0, 12, 4, 16] },
+        "west":  { "texture": "#iron", "uv": [0, 12, 4, 16] }
+      } },
+    { "from": [0, 8, 0], "to": [16, 24, 4],
       "faces": {
         "north": { "texture": "#glass", "uv": [0, 0, 16, 16] },
         "south": { "texture": "#glass", "uv": [0, 0, 16, 16] },
         "east":  { "texture": "#glass", "uv": [0, 0, 4, 16] },
         "west":  { "texture": "#glass", "uv": [0, 0, 4, 16] }
-      }
-    },
-    {
-      "from": [0, 19, 4],
-      "to": [16, 24, 8],
-      "faces": {
-        "north": { "texture": "#glass", "uv": [0, 0, 16, 5] },
-        "south": { "texture": "#glass", "uv": [0, 0, 16, 5] },
-        "east":  { "texture": "#glass", "uv": [0, 0, 4, 5] },
-        "west":  { "texture": "#glass", "uv": [0, 0, 4, 5] }
-      }
-    }
+      } }
   ]
 }

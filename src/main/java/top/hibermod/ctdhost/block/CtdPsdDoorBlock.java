@@ -16,7 +16,6 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -24,28 +23,29 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * CTD 屏蔽门。整樘门由一个方块承载（`dynamicShape`），因此不需要多方块结构。
+ * CTD 屏蔽门。固定门与滑动门是**两个独立的方块**，共用这一套逻辑：
  *
- * <h2>厚度：沿法线把一格均分四份</h2>
+ * <h2>厚度（沿法线把一格均分四份）</h2>
  * <pre>
  *   z: 0 ─ 1/4 ─ 1/2 ─ 3/4 ─ 1
  *       固定          滑动        固定
  * </pre>
  *
- * <h2>动画</h2>
- * 开门时两扇滑动门各**横向平移一整格**，滑进相邻固定门那格；
- * `progress` 0→1 由方块实体按速度推进，渲染与碰撞箱都读它。
+ * <h2>体积</h2>
+ * 固定门占 1 格宽 × 1/4 厚；滑动门占 N 格宽（2 或 3）× 中间两格厚，
+ * **不包含两侧固定门所在的方块**。
  */
 public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
-    public static final MapCodec<CtdPsdDoorBlock> CODEC = simpleCodec(CtdPsdDoorBlock::new);
+    public static final MapCodec<CtdPsdDoorBlock> CODEC =
+        simpleCodec(CtdPsdDoorBlock::new);
 
-    public enum Type implements net.minecraft.util.StringRepresentable {
+    public enum Kind implements net.minecraft.util.StringRepresentable {
         FIXED("fixed"), SLIDING("sliding");
 
         private final String name;
 
-        Type(String name) {
+        Kind(String name) {
             this.name = name;
         }
 
@@ -55,13 +55,26 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         }
     }
 
-    public static final EnumProperty<Type> TYPE = EnumProperty.create("type", Type.class);
+    public static final EnumProperty<Kind> KIND = EnumProperty.create("kind", Kind.class);
+    /** 门高（格 × 2）：3 = 1.5 格，4 = 2 格，6 = 3 格。 */
+    public static final IntegerProperty HEIGHT = IntegerProperty.create("height", 3, 6);
+
+    private final boolean sliding;
 
     public CtdPsdDoorBlock(Properties props) {
+        this(props, false);
+    }
+
+    public CtdPsdDoorBlock(Properties props, boolean sliding) {
         super(props);
+        this.sliding = sliding;
         registerDefaultState(stateDefinition.any()
             .setValue(FACING, Direction.NORTH)
-            .setValue(TYPE, Type.SLIDING));
+            .setValue(HEIGHT, 4));
+    }
+
+    public boolean isSliding() {
+        return sliding;
     }
 
     @Override
@@ -71,7 +84,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, TYPE);
+        builder.add(FACING, HEIGHT);
     }
 
     @Override
@@ -90,7 +103,9 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         };
     }
 
-
+    public static float heightBlocks(BlockState state) {
+        return state.getValue(HEIGHT) / 2f;
+    }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos,
@@ -101,23 +116,23 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
                                            CollisionContext ctx) {
-        CtdPsdDoorBlockEntity be = level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity d
-            ? d : null;
-        float h = be == null ? 2f : be.height();
+        float h = heightBlocks(state);
 
-        if (state.getValue(TYPE) == Type.FIXED) {
-            // 固定门：贴方块边缘那一层（z 0–0.25），宽 1 格
+        if (!sliding) {
+            // 固定门：贴方块外侧边缘那一层（z 0–0.25）
             return Shapes.box(0f, 0f, 0f, 1f, h, 0.25f);
         }
 
+        CtdPsdDoorBlockEntity be = level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity d
+            ? d : null;
         float progress = be == null ? 0f : be.progress();
-        float half = (be == null ? 2f : be.width()) / 2f;   // 单扇宽度（格）
-        float slide = half * progress;
+        float leaf = (be == null ? 2f : be.width()) / 2f;   // 单扇宽（格）
+        float slide = leaf * progress;
 
         float left = -slide;
-        float right = half + slide;
-        VoxelShape a = Shapes.box(left, 0f, 0.25f, left + half, h, 0.5f);
-        VoxelShape b = Shapes.box(right, 0f, 0.5f, right + half, h, 0.75f);
+        float right = leaf + slide;
+        VoxelShape a = Shapes.box(left, 0f, 0.25f, left + leaf, h, 0.5f);
+        VoxelShape b = Shapes.box(right, 0f, 0.5f, right + leaf, h, 0.75f);
         return Shapes.or(a, b);
     }
 
@@ -126,7 +141,37 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         return level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP);
     }
 
-    /** 扳手右键：打开屏蔽门配置界面（只在客户端执行，服务端不加载客户端类）。 */
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+        BlockPos pos = ctx.getClickedPos();
+        Level level = ctx.getLevel();
+        Direction facing = ctx.getHorizontalDirection().getOpposite();
+        int cells = sliding ? 2 : 1;
+
+        Direction side = facing.getClockWise();
+        for (int i = 0; i < cells; i++) {
+            BlockPos at = pos.relative(side, i);
+            if (!level.getBlockState(at).canBeReplaced(ctx)
+                || !level.getBlockState(at.above()).canBeReplaced(ctx)) {
+                return null;
+            }
+        }
+
+        return defaultBlockState().setValue(FACING, facing).setValue(HEIGHT, 4);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state,
+                            net.minecraft.world.entity.LivingEntity placer,
+                            net.minecraft.world.item.ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity be) {
+            be.setWidth(sliding ? 2f : 1f);
+            be.setHeight(heightBlocks(state));
+        }
+    }
+
+    /** 扳手右键：打开配置界面（反射调用客户端类，避免专用服务器解析 Screen）。 */
     @Override
     protected net.minecraft.world.ItemInteractionResult useItemOn(
             net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos,
@@ -140,50 +185,15 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         }
 
         if (level.isClientSide && level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity be) {
-            // 反射调用，避免专用服务器在类加载阶段解析客户端 Screen
             try {
                 Class.forName("top.hibermod.ctdhost.client.screen.CtdDoorClientHook")
                     .getMethod("open", BlockPos.class, String.class, String.class,
-                        String.class, float.class)
-                    .invoke(null, pos, be.station(), be.platform(), be.doorId(), be.speed());
+                        String.class, float.class, float.class)
+                    .invoke(null, pos, be.station(), be.platform(), be.doorId(),
+                        be.speed(), be.height());
             } catch (Throwable ignored) {
             }
         }
         return net.minecraft.world.ItemInteractionResult.SUCCESS;
-    }
-
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        BlockPos pos = ctx.getClickedPos();
-        Level level = ctx.getLevel();
-        Direction facing = ctx.getHorizontalDirection().getOpposite();
-        boolean sliding = ctx.getPlayer() != null && ctx.getPlayer().isShiftKeyDown();
-        int cells = sliding ? 2 : 1;      // 占几格宽
-
-        // 体积检查：高度按 2 格算，宽度占 cells 格（沿门面方向）
-        Direction side = facing.getClockWise();
-        for (int i = 0; i < cells; i++) {
-            BlockPos at = pos.relative(side, i);
-            if (!level.getBlockState(at).canBeReplaced(ctx)
-                || !level.getBlockState(at.above()).canBeReplaced(ctx)) {
-                return null;
-            }
-        }
-
-        return defaultBlockState()
-            .setValue(FACING, facing)
-            .setValue(TYPE, sliding ? Type.SLIDING : Type.FIXED);
-    }
-
-    /** 放好后把宽度/高度写进方块实体（形状与渲染都读它）。 */
-    @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state,
-                            net.minecraft.world.entity.LivingEntity placer,
-                            net.minecraft.world.item.ItemStack stack) {
-        super.setPlacedBy(level, pos, state, placer, stack);
-        if (level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity be) {
-            be.setWidth(state.getValue(TYPE) == Type.FIXED ? 1f : 2f);
-            be.setHeight(2f);
-        }
     }
 }

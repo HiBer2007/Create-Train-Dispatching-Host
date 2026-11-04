@@ -73,19 +73,34 @@ public final class CtdBlocks {
             () -> BlockEntityType.Builder.of(SwitchMachineBlockEntity::new,
                 SWITCH_MACHINE.get()).build(null));
 
-    // ── 屏蔽门（固定门 / 滑动门） ────────────────────────────────────
-    public static final DeferredBlock<CtdPsdDoorBlock> PSD_DOOR =
-        BLOCKS.register("psd_door",
+    // ── 屏蔽门：固定门与滑动门是两个独立方块 ─────────────────────────
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_FIXED =
+        BLOCKS.register("psd_fixed",
             () -> new CtdPsdDoorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties
                 .of().strength(1.5f).noOcclusion()
-                .dynamicShape()));
+                .dynamicShape(), false));
 
-    public static final DeferredItem<BlockItem> PSD_DOOR_ITEM =
-        ITEMS.registerSimpleBlockItem(PSD_DOOR);
+    public static final DeferredBlock<CtdPsdDoorBlock> PSD_SLIDING =
+        BLOCKS.register("psd_sliding",
+            () -> new CtdPsdDoorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties
+                .of().strength(1.5f).noOcclusion()
+                .dynamicShape(), true));
+
+    public static final DeferredItem<BlockItem> PSD_FIXED_ITEM =
+        ITEMS.registerSimpleBlockItem(PSD_FIXED);
+
+    public static final DeferredItem<BlockItem> PSD_SLIDING_ITEM =
+        ITEMS.registerSimpleBlockItem(PSD_SLIDING);
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CtdPsdDoorBlockEntity>> PSD_DOOR_BE =
         BLOCK_ENTITIES.register("psd_door",
-            () -> BlockEntityType.Builder.of(CtdPsdDoorBlockEntity::new, PSD_DOOR.get()).build(null));
+            () -> BlockEntityType.Builder.of(CtdPsdDoorBlockEntity::new,
+                PSD_FIXED.get(), PSD_SLIDING.get()).build(null));
+
+    /** 旧名字保留，避免其它代码引用不到。 */
+    public static Block PSD_DOOR() {
+        return PSD_FIXED.get();
+    }
 
     /** 物品栏里的方块（供别的代码引用）。 */
     public static Item itemOf(Block block) {
