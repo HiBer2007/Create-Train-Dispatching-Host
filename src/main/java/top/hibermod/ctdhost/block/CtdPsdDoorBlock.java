@@ -171,6 +171,11 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         return defaultBlockState().setValue(FACING, facing).setValue(MAIN, true);
     }
 
+    /** 这樘门占几格（高）。1.5 格也要占满 2 格，否则最上面一格是空气、没有碰撞。 */
+    public int rows() {
+        return Math.max(1, (int) Math.ceil(height));
+    }
+
     /** 放好后把整樘门占的其余格子填上同一个方块（MAIN=false）。 */
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state,
@@ -184,10 +189,13 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         }
 
         Direction side = state.getValue(FACING).getClockWise();
-        for (int i = 1; i < cells(); i++) {
-            BlockPos at = pos.relative(side, i);
-            BlockState part = state.setValue(MAIN, false);
-            level.setBlock(at, part, 3);
+        for (int row = 0; row < rows(); row++) {
+            for (int i = 0; i < cells(); i++) {
+                if (row == 0 && i == 0) continue;   // 主格
+                BlockPos at = pos.offset(0, row, 0).relative(side, i);
+                if (!level.getBlockState(at).canBeReplaced()) continue;
+                level.setBlock(at, state.setValue(MAIN, false), 3);
+            }
         }
     }
 
@@ -218,11 +226,17 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
     }
 
     private static BlockPos findMain(BlockGetter level, BlockPos pos, BlockState state, Direction side) {
-        for (int i = 1; i <= 3; i++) {
-            BlockPos at = pos.relative(side, -i);
-            BlockState s = level.getBlockState(at);
-            if (s.getBlock() == state.getBlock() && s.getValue(MAIN)) {
-                return at;
+        if (state.hasProperty(MAIN) && state.getValue(MAIN)) return pos;
+        for (int dy = -3; dy <= 3; dy++) {
+            for (int dx = -3; dx <= 3; dx++) {
+                for (int dz = -3; dz <= 3; dz++) {
+                    BlockPos at = pos.offset(dx, dy, dz);
+                    BlockState s = level.getBlockState(at);
+                    if (s.getBlock() == state.getBlock()
+                        && s.hasProperty(MAIN) && s.getValue(MAIN)) {
+                        return at;
+                    }
+                }
             }
         }
         return pos;
