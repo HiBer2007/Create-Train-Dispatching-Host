@@ -81,6 +81,19 @@ public final class CtdHost {
         // 创造模式物品栏：不挂这个事件的话，方块在创造模式里看不到。
         modBus.addListener(top.hibermod.ctdhost.block.CtdCreativeTab::onBuildContents);
 
+        // 客户端注册（渲染层 + BER）必须挂在客户端初始化事件上，
+        // 用反射调用，避免专用服务器加载客户端类。
+        if (net.neoforged.fml.loading.FMLEnvironment.dist
+                == net.neoforged.api.distmarker.Dist.CLIENT) {
+            try {
+                Class.forName("top.hibermod.ctdhost.client.CtdClientEvents")
+                    .getMethod("register", net.neoforged.bus.api.IEventBus.class)
+                    .invoke(null, modBus);
+            } catch (Throwable t) {
+                LOG.warn("ctdhost: client setup hook failed: {}", t.toString());
+            }
+        }
+
         // 屏蔽门配置包：客户端 GUI → 服务端写回方块实体。
         modBus.addListener((net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent event) -> {
             var registrar = event.registrar("1");
