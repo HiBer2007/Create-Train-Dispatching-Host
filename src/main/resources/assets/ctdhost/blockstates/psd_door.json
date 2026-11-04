@@ -4,9 +4,10 @@
     "type=fixed,facing=east":    { "model": "ctdhost:block/psd_fixed_h4", "y": 90 },
     "type=fixed,facing=south":   { "model": "ctdhost:block/psd_fixed_h4", "y": 180 },
     "type=fixed,facing=west":    { "model": "ctdhost:block/psd_fixed_h4", "y": 270 },
-    "type=sliding,facing=north": { "model": "ctdhost:block/psd_sliding_w2_h4" },
-    "type=sliding,facing=east":  { "model": "ctdhost:block/psd_sliding_w2_h4", "y": 90 },
-    "type=sliding,facing=south": { "model": "ctdhost:block/psd_sliding_w2_h4", "y": 180 },
-    "type=sliding,facing=west":  { "model": "ctdhost:block/psd_sliding_w2_h4", "y": 270 }
+    "type=sliding,facing=north": { "model": "ctdhost:block/psd_empty" },
+    "type=sliding,facing=east":  { "model": "ctdhost:block/psd_empty", "y": 90 },
+    "type=sliding,facing=south": { "model": "ctdhost:block/psd_empty", "y": 180 },
+    "type=sliding,facing=west":  { "model": "ctdhost:block/psd_empty", "y": 270 }
   }
 }
+

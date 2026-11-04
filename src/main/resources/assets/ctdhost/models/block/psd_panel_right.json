@@ -1,0 +1,14 @@
+{
+  "render_type": "minecraft:translucent",
+  "textures": { "glass": "create:block/glass_door_side", "iron": "minecraft:block/iron_block", "particle": "create:block/glass_door_side" },
+  "elements": [
+    { "from": [0,0,8], "to": [16,3,12],
+      "faces": { "north":{"texture":"#iron","uv":[0,0,16,3]}, "south":{"texture":"#iron","uv":[0,0,16,3]}, "east":{"texture":"#iron","uv":[0,0,4,3]}, "west":{"texture":"#iron","uv":[0,0,4,3]} } },
+    { "from": [0,3,8], "to": [16,16,12],
+      "faces": { "north":{"texture":"#glass","uv":[0,0,16,13]}, "south":{"texture":"#glass","uv":[0,0,16,13]}, "east":{"texture":"#glass","uv":[0,0,4,13]}, "west":{"texture":"#glass","uv":[0,0,4,13]} } },
+    { "from": [0,16,8], "to": [16,29,12],
+      "faces": { "north":{"texture":"#glass","uv":[0,0,16,13]}, "south":{"texture":"#glass","uv":[0,0,16,13]}, "east":{"texture":"#glass","uv":[0,0,4,13]}, "west":{"texture":"#glass","uv":[0,0,4,13]} } },
+    { "from": [0,29,8], "to": [16,32,12],
+      "faces": { "north":{"texture":"#iron","uv":[0,3,16,6]}, "south":{"texture":"#iron","uv":[0,3,16,6]}, "east":{"texture":"#iron","uv":[0,3,4,6]}, "west":{"texture":"#iron","uv":[0,3,4,6]} } }
+  ]
+}

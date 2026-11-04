@@ -57,6 +57,12 @@ public final class CtdHeadRenderers {
                     net.minecraft.client.renderer.RenderType.translucent());
                 log.info("ctdhost: psd door render layer registered");
             }
+            if (top.hibermod.ctdhost.block.CtdBlocks.PSD_DOOR_BE.isBound()) {
+                BlockEntityRenderers.register(
+                    top.hibermod.ctdhost.block.CtdBlocks.PSD_DOOR_BE.get(),
+                    CtdPsdDoorRenderer::new);
+                log.info("ctdhost: psd door renderer registered");
+            }
         } catch (Throwable t) {
             log.warn("ctdhost: psd door render layer failed: {}", t.toString());
         }
