@@ -56,20 +56,12 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
     }
 
     public static final EnumProperty<Type> TYPE = EnumProperty.create("type", Type.class);
-    public static final BooleanProperty OPEN = BooleanProperty.create("open");
-    /** 门宽（格）：固定门 1，滑动门 2 或 3。 */
-    public static final IntegerProperty WIDTH = IntegerProperty.create("width", 1, 3);
-    /** 门高（半格）：3 = 1.5 格，4 = 2 格，6 = 3 格。 */
-    public static final IntegerProperty HEIGHT = IntegerProperty.create("height", 3, 6);
 
     public CtdPsdDoorBlock(Properties props) {
         super(props);
         registerDefaultState(stateDefinition.any()
             .setValue(FACING, Direction.NORTH)
-            .setValue(TYPE, Type.SLIDING)
-            .setValue(OPEN, false)
-            .setValue(WIDTH, 2)
-            .setValue(HEIGHT, 4));
+            .setValue(TYPE, Type.SLIDING));
     }
 
     @Override
@@ -79,7 +71,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, TYPE, OPEN, WIDTH, HEIGHT);
+        builder.add(FACING, TYPE);
     }
 
     @Override
@@ -98,13 +90,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         };
     }
 
-    public static float heightBlocks(BlockState state) {
-        return state.getValue(HEIGHT) / 2f;
-    }
 
-    public static float widthBlocks(BlockState state) {
-        return state.getValue(TYPE) == Type.FIXED ? 1f : state.getValue(WIDTH);
-    }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos,
@@ -115,7 +101,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
                                            CollisionContext ctx) {
-        float h = heightBlocks(state);
+        float h = 2f;
 
         if (state.getValue(TYPE) == Type.FIXED) {
             // 固定门贴边：z 0–0.25
@@ -126,7 +112,7 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         if (level.getBlockEntity(pos) instanceof CtdPsdDoorBlockEntity be) {
             progress = be.progress();
         }
-        float half = widthBlocks(state) * 0.25f;      // 单扇宽（格）
+        float half = 0.5f;
         float left = 0.5f - half - progress;          // 左扇左移一格
         float right = 0.5f + half + progress;         // 右扇右移一格
         VoxelShape a = Shapes.box(left, 0f, 0.25f, left + half, h, 0.5f);

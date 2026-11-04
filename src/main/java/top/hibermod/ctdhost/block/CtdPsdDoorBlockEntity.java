@@ -47,7 +47,6 @@ public class CtdPsdDoorBlockEntity extends BlockEntity {
 
         if (shouldOpen != be.open) {
             be.open = shouldOpen;
-            level.setBlock(pos, state.setValue(CtdPsdDoorBlock.OPEN, shouldOpen), 3);
             be.setChanged();
         }
 
