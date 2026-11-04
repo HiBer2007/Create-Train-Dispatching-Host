@@ -134,20 +134,30 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
     @Override
     protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos,
                                            CollisionContext ctx) {
-        if (!sliding) {
-            // 固定门：贴方块一边、1/4 厚
-            return rotate(state, 0, 0, 0, 1, height, 0.25);
-        }
-
-        // 滑动门：每一格只占自己那格的截面；门开了这一格就空出来
         Direction side0 = state.getValue(FACING).getClockWise();
         BlockPos mainPos = state.getValue(MAIN) ? pos : findMain(level, pos, state, side0);
+
+        // 每格只负责自己那一层：门高 3 格时，第 0 层 1 格、第 1 层 1 格、第 2 层 1 格；
+        // 1.5 格时第 0 层 1 格、第 1 层 0.5 格
+        int row = pos.getY() - mainPos.getY();
+        float localHeight = Math.max(0f, Math.min(1f, height - row));
+        if (localHeight <= 0f) {
+            return Shapes.empty();
+        }
+
+        if (!sliding) {
+            // 固定门：贴方块一边、1/4 厚
+            return rotate(state, 0, 0, 0, 1, localHeight, 0.25);
+        }
+
+        // 滑动门：门开了这一格就空出来
         boolean open = level.getBlockEntity(mainPos) instanceof CtdPsdDoorBlockEntity be
             && be.progress() > 0.001f;
         if (open) {
             return Shapes.empty();
         }
-        return rotate(state, 0, 0, 0.25, 1, height, 0.5);    }
+        return rotate(state, 0, 0, 0.25, 1, localHeight, 0.5);
+    }
 
     @Override
     protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {

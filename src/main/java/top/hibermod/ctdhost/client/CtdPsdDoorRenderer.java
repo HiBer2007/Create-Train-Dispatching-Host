@@ -71,8 +71,9 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         } else if (index == cells - 1) {
             draw(block, facing, side, ms, vb, light, progress, 0.25f, 1f);
         } else {
+            // 中间格：两片半宽，厚度分层错开，避免共面 z-fighting（表现为闪烁/抽搐）
             draw(block, facing, side, ms, vb, light, -progress, 0.25f, 0.5f);
-            draw(block, facing, side, ms, vb, light, 0.5f + progress, 0.25f, 0.5f);
+            draw(block, facing, side, ms, vb, light, 0.5f + progress, 0.5f, 0.5f);
         }
     }
 
