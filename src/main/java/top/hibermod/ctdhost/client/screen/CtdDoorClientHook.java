@@ -13,8 +13,8 @@ public final class CtdDoorClientHook {
     private CtdDoorClientHook() {}
 
     public static void open(BlockPos pos, String station, String platform, String doorId,
-                            float speed, float height) {
+                            float speed, float height, boolean testMode) {
         Minecraft.getInstance().setScreen(
-            new CtdDoorScreen(pos, station, platform, doorId, speed, height));
+            new CtdDoorScreen(pos, station, platform, doorId, speed, height, testMode));
     }
 }

@@ -66,14 +66,14 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
 
         if (index < half) {
             // 左半：整格向左滑
-            draw(be, facing, side, ms, vb, light, -progress, 0.25f, 1f);
+            draw(block, facing, side, ms, vb, light, -progress, 0.25f, 1f);
         } else if (index >= cells - half) {
             // 右半：整格向右滑
-            draw(be, facing, side, ms, vb, light, progress, 0.25f, 1f);
+            draw(block, facing, side, ms, vb, light, progress, 0.25f, 1f);
         } else {
             // 中间格（3 格宽）：切成两片半宽，各向一侧滑
-            draw(be, facing, side, ms, vb, light, -progress, 0.25f, 0.5f);
-            draw(be, facing, side, ms, vb, light, 0.5f + progress, 0.5f, 0.5f);
+            draw(block, facing, side, ms, vb, light, -progress, 0.25f, 0.5f);
+            draw(block, facing, side, ms, vb, light, 0.5f + progress, 0.5f, 0.5f);
         }
     }
 
@@ -89,11 +89,11 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         return null;
     }
 
-    private void draw(CtdPsdDoorBlockEntity be, Direction facing, Direction side, PoseStack ms,
+    private void draw(CtdPsdDoorBlock block, Direction facing, Direction side, PoseStack ms,
                       VertexConsumer vb, int light,
                       float along, float across, float widthScale) {
 
-        SuperByteBuffer buf = CachedBuffers.block(staticStateFor(be, facing));
+        SuperByteBuffer buf = CachedBuffers.block(staticStateFor(block, facing));
         if (widthScale != 1f) buf.scale(widthScale, 1f, 1f);
 
         Vec3 offset = Vec3.atLowerCornerOf(side.getNormal()).scale(along)
@@ -102,8 +102,8 @@ public class CtdPsdDoorRenderer extends SafeBlockEntityRenderer<CtdPsdDoorBlockE
         buf.translate(offset).light(light).renderInto(ms, vb);
     }
 
-    private static BlockState staticStateFor(CtdPsdDoorBlockEntity be, Direction facing) {
-        float h = be.height();
+    private static BlockState staticStateFor(CtdPsdDoorBlock block, Direction facing) {
+        float h = block.height();
         BlockState base = h <= 1.6f ? CtdBlocks.PSD_FIXED_1_5.get().defaultBlockState()
             : h >= 2.5f ? CtdBlocks.PSD_FIXED_3.get().defaultBlockState()
             : CtdBlocks.PSD_FIXED_2.get().defaultBlockState();

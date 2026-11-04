@@ -46,7 +46,7 @@ public class CtdDoorScreen extends Screen {
     private int panelH = 190;
 
     public CtdDoorScreen(BlockPos pos, String station, String platform, String doorId,
-                         float speed, float height) {
+                         float speed, float height, boolean testMode) {
         super(Component.translatable("gui.ctdhost.psd_door_config"));
         this.pos = pos;
         this.station = station == null ? "" : station;
@@ -54,8 +54,8 @@ public class CtdDoorScreen extends Screen {
         this.doorId = doorId == null ? "" : doorId;
         this.speed = speed <= 0 ? 1f : speed;
         this.doorHeight = height <= 0 ? 2f : height;
-        this.testMode = false;
-        this.testModeEdit = false;
+        this.testMode = testMode;
+        this.testModeEdit = testMode;
     }
 
     @Override
@@ -73,7 +73,12 @@ public class CtdDoorScreen extends Screen {
         heightBox = addBox(fieldX, rowY + ROW_GAP * 4, String.valueOf(doorHeight));
 
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), b -> save())
-            .bounds(panelX + (panelW - 120) / 2, panelY + panelH - 30, 120, 20).build());
+            .bounds(panelX + (panelW - 120) / 2, panelY + panelH - 28, 120, 20).build());
+
+        testButton = addRenderableWidget(Button.builder(testLabel(), b -> {
+            testModeEdit = !testModeEdit;
+            b.setMessage(testLabel());
+        }).bounds(panelX + (panelW - 120) / 2, panelY + panelH - 54, 120, 20).build());
     }
 
     private EditBox addBox(int x, int y, String value) {
@@ -129,6 +134,11 @@ public class CtdDoorScreen extends Screen {
         Component text = Component.translatable(key);
         int textY = fieldY + (FIELD_H - this.font.lineHeight) / 2;
         graphics.drawString(this.font, text, panelX + 10, textY, 0xFFB0B0B0, false);
+    }
+
+    private Component testLabel() {
+        return Component.translatable("gui.ctdhost.psd_test_mode")
+            .append(Component.literal(testModeEdit ? ": ON" : ": OFF"));
     }
 
     @Override
