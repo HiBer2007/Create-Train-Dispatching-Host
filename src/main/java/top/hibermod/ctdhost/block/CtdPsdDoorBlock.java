@@ -161,11 +161,13 @@ public class CtdPsdDoorBlock extends HorizontalDirectionalBlock implements Entit
         Direction facing = ctx.getHorizontalDirection().getOpposite();
         Direction side = facing.getClockWise();
 
-        for (int i = 0; i < cells(); i++) {
-            BlockPos at = pos.relative(side, i);
-            if (!level.getBlockState(at).canBeReplaced(ctx)
-                || !level.getBlockState(at.above()).canBeReplaced(ctx)) {
-                return null;
+        // 检查整樘门的体积：宽 cells 格、高 rows 格
+        for (int row = 0; row < rows(); row++) {
+            for (int i = 0; i < cells(); i++) {
+                BlockPos at = pos.offset(0, row, 0).relative(side, i);
+                if (!level.getBlockState(at).canBeReplaced(ctx)) {
+                    return null;
+                }
             }
         }
         return defaultBlockState().setValue(FACING, facing).setValue(MAIN, true);
