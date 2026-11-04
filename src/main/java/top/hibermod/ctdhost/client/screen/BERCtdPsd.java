@@ -133,16 +133,9 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
 
         boolean open = isDoorOpen(blockEntity, s);
 
-        // 4x1 或（3x1 且选了线路图）：画「下一趟列车」的运行路线
+        // 4x1 或（3x1 且选了线路图）：整条屏画一张「下一趟列车」的路线图
         if (bw >= 4 || (bw == 3 && s.showMap())) {
-            if (bw >= 4) {
-                float half = (w - 1f) / 2f;
-                drawRoute(clip, blockEntity, s.platform(), s, line, 0f, half, h);
-                rects.add(new Rect(half, 1f, 0.02f, 0.4f, h - 5f, line));
-                drawRoute(clip, blockEntity, s.platform2(), s, line, half + 1f, half, h);
-            } else {
-                drawRoute(clip, blockEntity, s.platform(), s, line, 0f, w, h);
-            }
+            drawRoute(clip, blockEntity, s.platform(), s, line, 0f, w, h);
             rects.add(new Rect(0, h - 3f, 0.01f, w, 3f, line));
             return;
         }
@@ -234,10 +227,11 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         List<String> names = route == null ? List.of() : route.stations();
         boolean loop = route != null && route.loop();
 
-        float top = h * 0.36f;
-        float bottom = h * 0.72f;
-        float left = x0 + 6f;
-        float right = x0 + segW - 6f;
+        // 线放低一点，上方留出站名的位置（斜排需要空间）
+        float top = h * 0.52f;
+        float bottom = h * 0.78f;
+        float left = x0 + 8f;
+        float right = x0 + segW - 8f;
         if (right - left < 6f) return;
 
         if (names.isEmpty()) {
