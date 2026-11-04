@@ -62,6 +62,8 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
     private final BERLabel doorUnit2 = new BERLabel();
     private final BERLabel stationId = new BERLabel();
     private final BERLabel[] mapLabels = new BERLabel[24];
+    /** 每个站名的旋转锚点（x,y 交替存放），NaN 表示不旋转。 */
+    private final float[] mapAnchors = new float[48];
 
     public BERCtdPsd() {
         setup(name, ETextAlignment.CENTER, 0xFF000000);
@@ -95,18 +97,29 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         for (BERLabel l : labels()) {
             if (l != null && l.text.get() != null) l.render(graphics);
         }
+        // 线路图站名：绕各自锚点旋转 45°，做出斜排效果
+        for (int i = 0; i < mapLabels.length; i++) {
+            BERLabel l = mapLabels[i];
+            if (l == null || l.text.get() == null) continue;
+            float ax = mapAnchors[i * 2];
+            float ay = mapAnchors[i * 2 + 1];
+            if (Float.isNaN(ax) || Float.isNaN(ay)) {
+                l.render(graphics);
+                continue;
+            }
+            graphics.poseStack().pushPose();
+            graphics.poseStack().translate(0, 0, 0.09f);
+            graphics.poseStack().translate(ax, ay, 0);
+            graphics.poseStack().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-45f));
+            graphics.poseStack().translate(-ax, -ay, 0);
+            l.render(graphics);
+            graphics.poseStack().popPose();
+        }
         graphics.poseStack().popPose();
     }
     private BERLabel[] labels() {
-        BERLabel[] all = new BERLabel[6 + mapLabels.length];
-        all[0] = name;
-        all[1] = next;
-        all[2] = doorNo;
-        all[3] = doorUnit;
-        all[4] = stationId;
-        all[5] = doorUnit2;
-        System.arraycopy(mapLabels, 0, all, 6, mapLabels.length);
-        return all;
+        // 线路图站名单独走旋转分支，不进这里，避免重复绘制
+        return new BERLabel[] { name, next, doorNo, doorUnit, stationId, doorUnit2 };
     }
 
     @Override
@@ -272,8 +285,11 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
                 mapLabels[i] = l;
             }
             l.horizontalAlign.set(ETextAlignment.CENTER);
-            put(l, clip, x - 6f, onTop ? y - 3.8f : y + 1.8f, 12f, 3.2f, 0.11f, names.get(i),
-                0xFF000000);
+            float labelY = onTop ? y - 4.2f : y + 1.8f;
+            put(l, clip, x - 6f, labelY, 12f, 3.2f, 0.11f, names.get(i), 0xFF000000);
+            // 锚点 = 站名中心，绕它旋转 45°
+            mapAnchors[i * 2] = x;
+            mapAnchors[i * 2 + 1] = labelY + 1.6f;
         }
     }
 
@@ -334,6 +350,7 @@ public class BERCtdPsd implements AbstractAdvancedDisplayRenderer<CtdPsdSettings
         doorUnit2.text.set(null);
         stationId.text.set(null);
         for (BERLabel l : mapLabels) if (l != null) l.text.set(null);
+        java.util.Arrays.fill(mapAnchors, Float.NaN);
     }
 
     /** 亮色底用黑字、暗色底用白字。 */
