@@ -30,11 +30,11 @@ import top.hibermod.ctdhost.block.CtdPsdDoorBlockEntity;
 public class CtdPsdDoorRenderer implements BlockEntityRenderer<CtdPsdDoorBlockEntity> {
 
     private static final ResourceLocation PANEL_H3 =
-        ResourceLocation.fromNamespaceAndPath("ctdhost", "psd_panel_h3");
+        ResourceLocation.fromNamespaceAndPath("ctdhost", "block/psd_panel_h3");
     private static final ResourceLocation PANEL_H4 =
-        ResourceLocation.fromNamespaceAndPath("ctdhost", "psd_panel_h4");
+        ResourceLocation.fromNamespaceAndPath("ctdhost", "block/psd_panel_h4");
     private static final ResourceLocation PANEL_H6 =
-        ResourceLocation.fromNamespaceAndPath("ctdhost", "psd_panel_h6");
+        ResourceLocation.fromNamespaceAndPath("ctdhost", "block/psd_panel_h6");
 
     public CtdPsdDoorRenderer(BlockEntityRendererProvider.Context ctx) {}
 
